@@ -95,18 +95,23 @@ export function useTutor({ nickname, homeworkContext }) {
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({ text }),
       })
-      if (!res.ok) throw new Error('TTS алдаа')
-      const blob = await res.blob()
-      const url  = URL.createObjectURL(blob)
-      await new Promise((resolve, reject) => {
-        const audio = new Audio(url)
-        audio.onended = resolve
-        audio.onerror = reject
-        audio.play().catch(reject)
+      if (!res.ok) {
+        const err = await res.text()
+        throw new Error(`TTS алдаа: ${err}`)
+      }
+      const arrayBuffer = await res.arrayBuffer()
+      const audioCtx    = new AudioContext()
+      const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer)
+      await new Promise((resolve) => {
+        const source = audioCtx.createBufferSource()
+        source.buffer = audioBuffer
+        source.connect(audioCtx.destination)
+        source.onended = resolve
+        source.start(0)
       })
-      URL.revokeObjectURL(url)
+      audioCtx.close()
     } catch (e) {
-      console.error(e)
+      console.error('speak error:', e)
       setError('Дуу тоглуулахад алдаа гарлаа.')
     } finally {
       setIsSpeaking(false)
