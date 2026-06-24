@@ -11,8 +11,12 @@
   },
   "dependencies": {
     "@splinetool/react-spline": "^4.1.0",
+    "@studio-freight/lenis": "^1.0.42",
+    "gsap": "^3.15.0",
+    "lucide-react": "^1.21.0",
     "react": "^19.2.6",
-    "react-dom": "^19.2.6"
+    "react-dom": "^19.2.6",
+    "rough-notation": "^0.5.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
