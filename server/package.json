@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "cors": "^2.8.6",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "openai": "^6.44.0"
   }
 }
