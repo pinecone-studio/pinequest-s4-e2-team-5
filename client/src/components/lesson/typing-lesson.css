@@ -1,0 +1,26 @@
+/* ── Center layout for typing lesson ─────────────────── */
+.typing-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  padding: 24px 20px 0;
+}
+
+/* ── Tile slot (read-only display slot) ──────────────── */
+.typing-slot {
+  min-height: 100px;
+  width: 58px;
+}
+
+/* ── Tile result feedback ─────────────────────────────── */
+.tile-wrap { display: contents; }
+
+.tile-wrap.tile-correct .domino-tile {
+  filter: drop-shadow(0 0 8px rgba(46,168,122,.7));
+  animation: celebrate .4s ease;
+}
+.tile-wrap.tile-wrong .domino-tile {
+  filter: drop-shadow(0 0 8px rgba(224,82,82,.7));
+  animation: shake .35s ease;
+}
