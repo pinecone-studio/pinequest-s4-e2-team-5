@@ -285,43 +285,6 @@
   padding: 0 24px;
 }
 
-/* Mic button */
-.tutor-mic {
-  width: 68px;
-  height: 68px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.06);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  backdrop-filter: blur(6px);
-}
-
-.tutor-mic:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.35);
-}
-
-.tutor-mic.mic-listening {
-  background: rgba(239, 68, 68, 0.18);
-  border-color: rgba(239, 68, 68, 0.55);
-  animation: mic-pulse 0.9s ease-in-out infinite;
-}
-
-.tutor-mic:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-@keyframes mic-pulse {
-  0%, 100% { transform: scale(1); }
-  50%       { transform: scale(1.07); }
-}
-
 /* Text fallback */
 .tutor-text-row {
   display: flex;
@@ -365,16 +328,38 @@
   cursor: not-allowed;
 }
 
+/* Status row */
+.tutor-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 18px;
+}
+
+/* Пульсирующая точка — always-listening индикатор */
+.tutor-listen-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  flex-shrink: 0;
+  animation: listen-pulse 1s ease-in-out infinite;
+}
+
+@keyframes listen-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.75); }
+}
+
 /* Status label */
 .tutor-status {
   font-size: 11px;
   font-weight: 700;
   color: rgba(255, 255, 255, 0.38);
   letter-spacing: 0.06em;
-  height: 16px;
 }
 
-.tutor-status.status-speaking { color: #65d99d; }
+.tutor-status.status-speaking  { color: #65d99d; }
 .tutor-status.status-listening { color: #ef4444; }
 .tutor-status.status-thinking  { color: #f6cf69; }
 
@@ -384,6 +369,7 @@
   color: rgba(239, 68, 68, 0.8);
   font-weight: 600;
   text-align: center;
+  margin: 0;
 }
 
 /* ===== Landing form additions ===== */

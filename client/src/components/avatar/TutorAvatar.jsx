@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef } from 'react'
 import { SplineScene } from '../SplineScene.jsx'
 import { useTutor } from './useTutor.js'
 
@@ -10,22 +10,20 @@ export function TutorAvatar({ nickname, homeworkContext }) {
     error,
     greet,
     announceHomework,
-    chat,
     startAlwaysListen,
     stopAlwaysListen,
   } = useTutor({ nickname, homeworkContext })
 
-  const [textInput, setTextInput] = useState('')
-  const prevHomeworkRef           = useRef('')
-  const greetedRef                = useRef(false)
+  const prevHomeworkRef = useRef('')
+  const greetedRef      = useRef(false)
 
-  // Initial greeting + start always-listen
+  // Wait for nickname before greeting, then start always-listen
   useEffect(() => {
-    if (greetedRef.current) return
+    if (greetedRef.current || !nickname) return
     greetedRef.current = true
     greet().then(() => startAlwaysListen())
     return () => stopAlwaysListen()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [nickname]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Announce when homework is first uploaded
   useEffect(() => {
@@ -35,30 +33,14 @@ export function TutorAvatar({ nickname, homeworkContext }) {
     }
   }, [homeworkContext, announceHomework])
 
-  const isBusy = isSpeaking || isThinking
-
   function statusLabel() {
-    if (isSpeaking)  return { text: 'ЯРЬЖ БАЙНА…',   cls: 'status-speaking' }
-    if (isListening) return { text: 'СОНСОЖ БАЙНА…',  cls: 'status-listening' }
-    if (isThinking)  return { text: 'БОДОЖ БАЙНА…',   cls: 'status-thinking' }
+    if (isSpeaking)  return { text: 'ЯРЬЖ БАЙНА…',  cls: 'status-speaking' }
+    if (isListening) return { text: 'СОНСОЖ БАЙНА…', cls: 'status-listening' }
+    if (isThinking)  return { text: 'БОДОЖ БАЙНА…',  cls: 'status-thinking' }
     return { text: 'БЭЛЭН', cls: '' }
   }
 
   const { text: statusText, cls: statusCls } = statusLabel()
-
-  const handleTextSend = useCallback(async () => {
-    const msg = textInput.trim()
-    if (!msg || isBusy) return
-    setTextInput('')
-    await chat(msg)
-  }, [textInput, isBusy, chat])
-
-  function handleKeyDown(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleTextSend()
-    }
-  }
 
   return (
     <div className="tutor-avatar">
@@ -77,37 +59,14 @@ export function TutorAvatar({ nickname, homeworkContext }) {
         <div className={`tutor-ring tutor-ring-3${isSpeaking ? ' ring-active' : ''}`} />
       </div>
 
-      {/* Controls */}
+      {/* Status */}
       <div className="tutor-controls">
-        {/* Status + listen indicator */}
         <div className="tutor-status-row">
           {isListening && <span className="tutor-listen-dot" />}
           <span className={`tutor-status${statusCls ? ` ${statusCls}` : ''}`}>
             {statusText}
           </span>
         </div>
-
-        {/* Text fallback */}
-        <div className="tutor-text-row">
-          <input
-            className="tutor-text-input"
-            type="text"
-            placeholder="Бичиж асуух…"
-            value={textInput}
-            onChange={(e) => setTextInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={isBusy}
-          />
-          <button
-            type="button"
-            className="tutor-text-send"
-            onClick={handleTextSend}
-            disabled={isBusy || !textInput.trim()}
-          >
-            →
-          </button>
-        </div>
-
         {error && <p className="tutor-error">{error}</p>}
       </div>
     </div>

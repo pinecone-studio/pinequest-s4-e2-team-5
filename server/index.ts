@@ -13,8 +13,6 @@ app.get("/", (_req, res) => {
   res.json({ message: "PineQuest server ажиллаж байна! 🌲" });
 });
 
-// --- AI Tutor endpoints ---
-
 app.post("/api/chat", async (req: any, res: any) => {
   const { nickname = "хүүхэд", homeworkContext = "", messages = [] } = req.body;
 
@@ -31,7 +29,7 @@ app.post("/api/chat", async (req: any, res: any) => {
 5. Хүүхэд буруу хариулбал хэзээ ч битгий загна. "Ойролцоо боллоо, дахиад нэг хамт харъя" гэх мэт зөөлөн дэмжиж зас.
 6. Хүүхэд зөв хариулбал чин сэтгэлээсээ магтаж урамшуул.
 7. Бага ангийн хүүхдэд ойлгомжтой, маш энгийн, БОГИНО өгүүлбэр хэрэглэ. Урт яриа битгий хий — нэг хариуд 1-3 өгүүлбэр.
-8. Чиний хариу ДУУ хоолойгоор уншигдана. Тиймээс байгалийн, дулаахан, ярианы хэлээр бич. Emoji, тусгай тэмдэгт, markdown, дугаарлал БҮҮ хэрэглэ — зөвхөн хүн ярьдаг шиг цэвэр өгүүлбэр.
+8. Чиний хариу ДУУ хоолойгоор уншигдана. Тиймээс байгалийн, дулаахан, ярианы хэлээр бич. Emoji, тусгай тэмдэгт, markdown, дугаарлал БҮҮ хэрэглэ — зөвхөн хүн ярьдаг шиг цэвэр өгүүлбэр. ТООГ ХЭЗЭЭ Ч ЦИФРЭЭР бичихгүй — заавал үгэнд хөрвүүлж бич. Жишээ нь: 315 → "гурван зуун арван тав", 114 → "нэг зуун арван дөрөв".
 9. +18, хүчирхийлэл, айдас төрүүлэх, аюултай ямар ч агуулга огт бүү дурд. Үргэлж эерэг, найрсаг, аюулгүй бай.`;
 
   try {
@@ -41,34 +39,99 @@ app.post("/api/chat", async (req: any, res: any) => {
       temperature: 0.75,
       max_tokens: 200,
     });
-    res.json({ text: completion.choices[0].message.content ?? "" });
+    res.json({ text: completion.choices[0]?.message.content ?? "" });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
 });
 
+function sanitizeForChimege(text: string): string {
+  return text
+    .replace(/[^Ѐ-ӿ\s?!.\-'":,]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function splitIntoChunks(text: string, maxLen = 280): string[] {
+  if (text.length <= maxLen) return [text];
+  const chunks: string[] = [];
+  let remaining = text;
+  while (remaining.length > 0) {
+    if (remaining.length <= maxLen) {
+      chunks.push(remaining);
+      break;
+    }
+    let cut = maxLen;
+    for (let i = maxLen - 1; i > 0; i--) {
+      if (".!?,".includes(remaining[i] ?? "")) {
+        cut = i + 1;
+        break;
+      }
+    }
+    chunks.push(remaining.slice(0, cut).trim());
+    remaining = remaining.slice(cut).trim();
+  }
+  return chunks.filter((c) => c.length > 0);
+}
+
+function concatWavBuffers(buffers: Buffer[]): Buffer {
+  const first = buffers[0];
+  if (buffers.length === 1 || !first) return first ?? Buffer.alloc(0);
+  const findData = (buf: Buffer): { offset: number; size: number } | null => {
+    for (let i = 12; i < buf.length - 8; i++) {
+      if (buf.readUInt32BE(i) === 0x64617461) {
+        return { offset: i + 8, size: buf.readUInt32LE(i + 4) };
+      }
+    }
+    return null;
+  };
+  const firstChunk = findData(first);
+  if (!firstChunk) return first;
+  const pcm = buffers.map((b) => {
+    const d = findData(b);
+    return d ? b.subarray(d.offset, d.offset + d.size) : Buffer.alloc(0);
+  });
+  const totalPcm = pcm.reduce((s, c) => s + c.length, 0);
+  const header = Buffer.from(first.subarray(0, firstChunk.offset));
+  header.writeUInt32LE(totalPcm, firstChunk.offset - 4);
+  header.writeUInt32LE(header.length - 8 + totalPcm, 4);
+  return Buffer.concat([header, ...pcm]);
+}
+
 app.post("/api/tts", async (req: any, res: any) => {
   const { text } = req.body;
   if (!text) return res.status(400).json({ error: "text required" });
 
+  const clean = sanitizeForChimege(text);
+  if (!clean)
+    return res.status(400).json({ error: "empty text after sanitize" });
+
   try {
-    const chimegeRes = await fetch("https://api.chimege.com/v1.2/synthesize", {
-      method: "POST",
-      headers: {
-        "Content-Type": "text/plain",
-        "Token": process.env.CHIMEGE_API_TTS ?? "",
-      },
-      body: text,
-    });
-
-    if (!chimegeRes.ok) {
-      const detail = await chimegeRes.text();
-      return res.status(chimegeRes.status).json({ error: "Chimege API failed", detail });
+    const chunks = splitIntoChunks(clean);
+    const audioBuffers: Buffer[] = [];
+    for (const chunk of chunks) {
+      const chimegeRes = await fetch(
+        "https://api.chimege.com/v1.2/synthesize",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "text/plain",
+            Token: process.env.CHIMEGE_API_TTS ?? "",
+          },
+          body: chunk,
+        },
+      );
+      if (!chimegeRes.ok) {
+        const detail = await chimegeRes.text();
+        return res
+          .status(chimegeRes.status)
+          .json({ error: "Chimege API failed", detail });
+      }
+      audioBuffers.push(Buffer.from(await chimegeRes.arrayBuffer()));
     }
-
-    const buffer = Buffer.from(await chimegeRes.arrayBuffer());
-    res.set("Content-Type", "audio/mpeg");
-    res.send(buffer);
+    const combined = concatWavBuffers(audioBuffers);
+    res.set("Content-Type", "audio/wav");
+    res.send(combined);
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
@@ -95,7 +158,8 @@ app.post("/api/stt", async (req: any, res: any) => {
 
 app.post("/api/analyze-homework", async (req: any, res: any) => {
   const { imageBase64, mimeType = "image/jpeg" } = req.body;
-  if (!imageBase64) return res.status(400).json({ error: "imageBase64 required" });
+  if (!imageBase64)
+    return res.status(400).json({ error: "imageBase64 required" });
 
   try {
     const response = await openai.chat.completions.create({
@@ -117,7 +181,7 @@ app.post("/api/analyze-homework", async (req: any, res: any) => {
       ],
       max_tokens: 600,
     });
-    res.json({ context: response.choices[0].message.content ?? "" });
+    res.json({ context: response.choices[0]?.message.content ?? "" });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
