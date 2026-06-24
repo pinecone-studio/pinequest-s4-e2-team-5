@@ -3,6 +3,7 @@ import "./App.css";
 import "./components/avatar/avatar.css";
 import { getPageFromPath } from "./navigation.js";
 import { AvatarSession } from "./components/avatar/AvatarSession.jsx";
+import { MathLesson } from "./components/lesson/MathLesson.jsx";
 
 function App() {
   const [page, setPage] = useState(() =>
@@ -29,6 +30,10 @@ function App() {
     setSessionNickname(name);
     navigate("/learn", { nickname: name, avatar: selectedAvatar });
   };
+
+  if (page === "lesson") {
+    return <MathLesson onBack={() => navigate("/")} />;
+  }
 
   if (page === "learn") {
     const name = sessionNickname || window.history.state?.nickname || "хүүхэд";
@@ -118,6 +123,14 @@ function App() {
 
             <button className="start-button" onClick={handleStart}>
               Эхлэх <span>→</span>
+            </button>
+
+            <button
+              className="choose-button"
+              style={{ marginTop: 12, fontSize: 14, padding: "0 20px", display: "flex", alignItems: "center", gap: 10 }}
+              onClick={() => navigate("/lesson")}
+            >
+              🎲 Тоо нэмэх дасгал
             </button>
           </div>
         </div>
