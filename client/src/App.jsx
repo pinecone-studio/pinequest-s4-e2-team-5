@@ -1,13 +1,16 @@
 import { useEffect, useState } from "react";
 import "./App.css";
+import "./components/avatar/avatar.css";
 import { getPageFromPath } from "./navigation.js";
-import { SplineScene } from "./components/SplineScene.jsx";
-import { CameraOverlay } from "./components/CameraOverlay.jsx";
+import { AvatarSession } from "./components/avatar/AvatarSession.jsx";
 
 function App() {
   const [page, setPage] = useState(() =>
     getPageFromPath(window.location.pathname),
   );
+  const [nickname, setNickname]             = useState("");
+  const [selectedAvatar, setSelectedAvatar] = useState("narsbagsh");
+  const [sessionNickname, setSessionNickname] = useState("");
 
   useEffect(() => {
     const handlePopState = () =>
@@ -16,12 +19,19 @@ function App() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
-  const navigate = (path) => {
-    window.history.pushState({}, "", path);
+  const navigate = (path, state = {}) => {
+    window.history.pushState(state, "", path);
     setPage(getPageFromPath(path));
   };
 
+  const handleStart = () => {
+    const name = nickname.trim() || "хүүхэд";
+    setSessionNickname(name);
+    navigate("/learn", { nickname: name, avatar: selectedAvatar });
+  };
+
   if (page === "learn") {
+    const name = sessionNickname || window.history.state?.nickname || "хүүхэд";
     return (
       <main className="learn-page">
         <nav className="topbar">
@@ -35,18 +45,15 @@ function App() {
           <a
             className="brand"
             href="/"
-            onClick={(event) => {
-              event.preventDefault();
+            onClick={(e) => {
+              e.preventDefault();
               navigate("/");
             }}
           ></a>
-          <div className="step">Алхам 1 / 3</div>
+          <div className="step">Нарс багштай суралц</div>
         </nav>
 
-        <div className="spline-frame">
-          <SplineScene className="robot-spline" />
-          <CameraOverlay />
-        </div>
+        <AvatarSession nickname={name} />
       </main>
     );
   }
@@ -76,9 +83,43 @@ function App() {
             Бодлогын зургаа оруулаарай. AI багш хүүхдэд хариуг нь хэлэхгүй,
             өөрөөр нь ойлгуулж бодуулна.
           </p>
-          <button className="start-button" onClick={() => navigate("/learn")}>
-            Get started <span>→</span>
-          </button>
+
+          {/* Avatar module — landing form */}
+          <div className="landing-form">
+            <div>
+              <label className="landing-field-label" htmlFor="nickname-input">
+                Нэрээ оруул
+              </label>
+              <input
+                id="nickname-input"
+                type="text"
+                className="landing-name-input"
+                placeholder="Жишээ: Болд, Нарангэрэл…"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleStart()}
+                maxLength={30}
+              />
+            </div>
+
+            <div>
+              <label className="landing-field-label">Багш сонго</label>
+              <div className="avatar-cards">
+                <button
+                  type="button"
+                  className={`avatar-card${selectedAvatar === "narsbagsh" ? " avatar-selected" : ""}`}
+                  onClick={() => setSelectedAvatar("narsbagsh")}
+                >
+                  <span className="avatar-card-icon">🤖</span>
+                  <span className="avatar-card-name">Нарс багш</span>
+                </button>
+              </div>
+            </div>
+
+            <button className="start-button" onClick={handleStart}>
+              Эхлэх <span>→</span>
+            </button>
+          </div>
         </div>
 
         <div className="number-art" aria-hidden="true">

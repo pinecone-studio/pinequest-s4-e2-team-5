@@ -41,7 +41,7 @@ app.post("/api/chat", async (req: any, res: any) => {
       temperature: 0.75,
       max_tokens: 200,
     });
-    res.json({ text: completion.choices[0].message.content });
+    res.json({ text: completion.choices[0].message.content ?? "" });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
@@ -110,7 +110,7 @@ app.post("/api/analyze-homework", async (req: any, res: any) => {
       ],
       max_tokens: 600,
     });
-    res.json({ context: response.choices[0].message.content });
+    res.json({ context: response.choices[0].message.content ?? "" });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
