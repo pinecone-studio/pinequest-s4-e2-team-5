@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import './App.css'
 import { getPageFromPath } from './navigation.js'
 import { SplineScene } from './components/SplineScene.jsx'
+import { CameraOverlay } from './components/CameraOverlay.jsx'
 
 function App() {
   const [page, setPage] = useState(() => getPageFromPath(window.location.pathname))
@@ -29,6 +30,7 @@ function App() {
 
           <div className="spline-frame">
             <SplineScene className="robot-spline" />
+            <CameraOverlay />
           </div>
       </main>
     )
