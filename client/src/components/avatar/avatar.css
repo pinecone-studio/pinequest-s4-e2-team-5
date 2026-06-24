@@ -1,0 +1,477 @@
+/* ===== Session Layout ===== */
+.session-layout {
+  display: flex;
+  height: calc(100vh - 90px);
+  background: var(--cream);
+  overflow: hidden;
+}
+
+.session-left {
+  width: 30%;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid rgba(22, 43, 42, 0.1);
+}
+
+.session-homework {
+  flex: 7;
+  display: flex;
+  flex-direction: column;
+  padding: 18px;
+  border-bottom: 1px solid rgba(22, 43, 42, 0.1);
+  overflow: auto;
+}
+
+.session-camera {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  background: #080e0d;
+  min-height: 0;
+}
+
+.session-right {
+  flex: 1;
+  position: relative;
+  background: #070908;
+  overflow: hidden;
+}
+
+/* ===== Homework Upload ===== */
+.hw-upload {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hw-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: 0.04em;
+}
+
+.hw-drop-area {
+  flex: 1;
+  border: 2px dashed rgba(22, 43, 42, 0.2);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  overflow: hidden;
+  position: relative;
+  min-height: 0;
+}
+
+.hw-drop-area:hover {
+  border-color: var(--green);
+  background: rgba(24, 93, 86, 0.04);
+}
+
+.hw-drop-icon {
+  font-size: 28px;
+  opacity: 0.45;
+}
+
+.hw-drop-label {
+  font-size: 12px;
+  color: #6d7d79;
+  text-align: center;
+  line-height: 1.5;
+}
+
+.hw-drop-btn {
+  background: var(--green);
+  color: white;
+  border: 0;
+  border-radius: 10px;
+  padding: 7px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.hw-image-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.hw-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hw-analyzing {
+  font-size: 12px;
+  color: var(--green);
+  font-weight: 700;
+}
+
+.hw-done {
+  font-size: 12px;
+  color: #65d99d;
+  font-weight: 700;
+}
+
+.hw-retry-btn {
+  background: transparent;
+  border: 1px solid rgba(22, 43, 42, 0.2);
+  border-radius: 8px;
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+/* ===== Student Camera ===== */
+.student-cam {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+}
+
+.student-cam-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.12em;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.student-cam-wrap {
+  flex: 1;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-height: 0;
+}
+
+.student-cam-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.student-cam-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: #4b5563;
+}
+
+.student-cam-placeholder svg {
+  opacity: 0.45;
+}
+
+.student-cam-placeholder span {
+  font-size: 11px;
+}
+
+.student-cam-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 7px;
+  padding: 5px 11px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.student-cam-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* ===== Tutor Avatar (right panel) ===== */
+.tutor-avatar {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 40px;
+}
+
+/* SplineScene sits absolute full behind */
+.tutor-spline-wrap {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* Sound rings overlay — centered on the scene */
+.tutor-rings {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tutor-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid rgba(101, 217, 157, 0.35);
+  opacity: 0;
+}
+
+.tutor-ring.ring-active {
+  animation: ring-expand 1.6s ease-out infinite;
+}
+
+.tutor-ring-1 { width: 260px; height: 260px; animation-delay: 0s; }
+.tutor-ring-2 { width: 340px; height: 340px; animation-delay: 0.45s; }
+.tutor-ring-3 { width: 420px; height: 420px; animation-delay: 0.9s; }
+
+@keyframes ring-expand {
+  0%   { transform: scale(0.65); opacity: 0.7; }
+  100% { transform: scale(1.2);  opacity: 0; }
+}
+
+/* Glow vignette when speaking */
+.tutor-glow {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at 50% 50%,
+    rgba(101, 217, 157, 0.08) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+.tutor-glow.glow-active { opacity: 1; }
+
+/* Controls row */
+.tutor-controls {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 360px;
+  padding: 0 24px;
+}
+
+/* Mic button */
+.tutor-mic {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  backdrop-filter: blur(6px);
+}
+
+.tutor-mic:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.tutor-mic.mic-listening {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.55);
+  animation: mic-pulse 0.9s ease-in-out infinite;
+}
+
+.tutor-mic:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+@keyframes mic-pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.07); }
+}
+
+/* Text fallback */
+.tutor-text-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.tutor-text-input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  color: white;
+  padding: 9px 13px;
+  font-size: 13px;
+  outline: none;
+  font-family: inherit;
+}
+
+.tutor-text-input:focus {
+  border-color: rgba(101, 217, 157, 0.4);
+}
+
+.tutor-text-input::placeholder {
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.tutor-text-send {
+  background: var(--green);
+  border: 0;
+  border-radius: 12px;
+  color: white;
+  padding: 9px 14px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.tutor-text-send:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Status label */
+.tutor-status {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.38);
+  letter-spacing: 0.06em;
+  height: 16px;
+}
+
+.tutor-status.status-speaking { color: #65d99d; }
+.tutor-status.status-listening { color: #ef4444; }
+.tutor-status.status-thinking  { color: #f6cf69; }
+
+/* Error */
+.tutor-error {
+  font-size: 11px;
+  color: rgba(239, 68, 68, 0.8);
+  font-weight: 600;
+  text-align: center;
+}
+
+/* ===== Landing form additions ===== */
+.landing-form {
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 380px;
+}
+
+.landing-field-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  opacity: 0.6;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.landing-name-input {
+  width: 100%;
+  height: 50px;
+  border: 2px solid rgba(22, 43, 42, 0.14);
+  border-radius: 14px;
+  background: white;
+  padding: 0 16px;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--ink);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.landing-name-input:focus {
+  border-color: var(--green);
+}
+
+.avatar-cards {
+  display: flex;
+  gap: 10px;
+}
+
+.avatar-card {
+  flex: 1;
+  padding: 14px 12px;
+  border: 2px solid rgba(22, 43, 42, 0.14);
+  border-radius: 14px;
+  background: white;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transition: border-color 0.2s, background 0.2s;
+  font-family: inherit;
+}
+
+.avatar-card.avatar-selected {
+  border-color: var(--green);
+  background: rgba(24, 93, 86, 0.06);
+}
+
+.avatar-card-icon { font-size: 36px; }
+
+.avatar-card-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 760px) {
+  .session-layout {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 74px);
+  }
+
+  .session-left {
+    width: 100%;
+    height: 45vh;
+    border-right: none;
+    border-bottom: 1px solid rgba(22, 43, 42, 0.1);
+  }
+
+  .session-right {
+    height: 60vh;
+  }
+}
