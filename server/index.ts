@@ -52,14 +52,21 @@ app.post("/api/tts", async (req: any, res: any) => {
   if (!text) return res.status(400).json({ error: "text required" });
 
   try {
-    const mp3 = await openai.audio.speech.create({
-      model: "tts-1",
-      voice: "nova",
-      input: text,
-      response_format: "mp3",
-      speed: 0.95,
+    const chimegeRes = await fetch("https://api.chimege.com/v1.2/synthesize", {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain",
+        "Token": process.env.CHIMEGE_API_TTS ?? "",
+      },
+      body: text,
     });
-    const buffer = Buffer.from(await mp3.arrayBuffer());
+
+    if (!chimegeRes.ok) {
+      const detail = await chimegeRes.text();
+      return res.status(chimegeRes.status).json({ error: "Chimege API failed", detail });
+    }
+
+    const buffer = Buffer.from(await chimegeRes.arrayBuffer());
     res.set("Content-Type", "audio/mpeg");
     res.send(buffer);
   } catch (e: any) {
