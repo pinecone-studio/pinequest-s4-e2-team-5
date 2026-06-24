@@ -15,32 +15,35 @@ export function TutorAvatar({ nickname, homeworkContext }) {
     stopAlwaysListen,
   } = useTutor({ nickname, homeworkContext })
 
-  const [textInput, setTextInput] = useState('')
-  const prevHomeworkRef           = useRef('')
-  const greetedRef                = useRef(false)
+  const [textInput, setTextInput]   = useState('')
+  const [started, setStarted]       = useState(false)
+  const prevHomeworkRef             = useRef('')
 
-  // Initial greeting + start always-listen
-  useEffect(() => {
-    if (greetedRef.current) return
-    greetedRef.current = true
-    greet().then(() => startAlwaysListen())
-    return () => stopAlwaysListen()
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  // Cleanup on unmount
+  useEffect(() => () => stopAlwaysListen(), []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Announce when homework is first uploaded
+  // Announce when homework is first uploaded (only after session started)
   useEffect(() => {
+    if (!started) return
     if (homeworkContext && !prevHomeworkRef.current) {
       prevHomeworkRef.current = homeworkContext
       announceHomework()
     }
-  }, [homeworkContext, announceHomework])
+  }, [homeworkContext, announceHomework, started])
+
+  // Called on the "Start" button click — inside a user gesture → autoplay allowed
+  const handleStart = useCallback(async () => {
+    setStarted(true)
+    await greet()
+    await startAlwaysListen()
+  }, [greet, startAlwaysListen])
 
   const isBusy = isSpeaking || isThinking
 
   function statusLabel() {
-    if (isSpeaking)  return { text: 'ЯРЬЖ БАЙНА…',   cls: 'status-speaking' }
-    if (isListening) return { text: 'СОНСОЖ БАЙНА…',  cls: 'status-listening' }
-    if (isThinking)  return { text: 'БОДОЖ БАЙНА…',   cls: 'status-thinking' }
+    if (isSpeaking)  return { text: 'ЯРЬЖ БАЙНА…',  cls: 'status-speaking' }
+    if (isListening) return { text: 'СОНСОЖ БАЙНА…', cls: 'status-listening' }
+    if (isThinking)  return { text: 'БОДОЖ БАЙНА…',  cls: 'status-thinking' }
     return { text: 'БЭЛЭН', cls: '' }
   }
 
@@ -77,39 +80,49 @@ export function TutorAvatar({ nickname, homeworkContext }) {
         <div className={`tutor-ring tutor-ring-3${isSpeaking ? ' ring-active' : ''}`} />
       </div>
 
-      {/* Controls */}
-      <div className="tutor-controls">
-        {/* Status + listen indicator */}
-        <div className="tutor-status-row">
-          {isListening && <span className="tutor-listen-dot" />}
-          <span className={`tutor-status${statusCls ? ` ${statusCls}` : ''}`}>
-            {statusText}
-          </span>
-        </div>
-
-        {/* Text fallback */}
-        <div className="tutor-text-row">
-          <input
-            className="tutor-text-input"
-            type="text"
-            placeholder="Бичиж асуух…"
-            value={textInput}
-            onChange={(e) => setTextInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={isBusy}
-          />
-          <button
-            type="button"
-            className="tutor-text-send"
-            onClick={handleTextSend}
-            disabled={isBusy || !textInput.trim()}
-          >
-            →
+      {/* START overlay — shown before first interaction */}
+      {!started && (
+        <div className="tutor-start-overlay">
+          <button type="button" className="tutor-start-btn" onClick={handleStart}>
+            <span className="tutor-start-icon">🤖</span>
+            <span>Нарс багштай уулзах</span>
           </button>
         </div>
+      )}
 
-        {error && <p className="tutor-error">{error}</p>}
-      </div>
+      {/* Controls — shown after start */}
+      {started && (
+        <div className="tutor-controls">
+          <div className="tutor-status-row">
+            {isListening && <span className="tutor-listen-dot" />}
+            <span className={`tutor-status${statusCls ? ` ${statusCls}` : ''}`}>
+              {statusText}
+            </span>
+          </div>
+
+          <div className="tutor-text-row">
+            <input
+              className="tutor-text-input"
+              type="text"
+              placeholder="Бичиж асуух…"
+              value={textInput}
+              onChange={(e) => setTextInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={isBusy}
+            />
+            <button
+              type="button"
+              className="tutor-text-send"
+              onClick={handleTextSend}
+              disabled={isBusy || !textInput.trim()}
+            >
+              →
+            </button>
+          </div>
+
+          {error && <p className="tutor-error">{error}</p>}
+        </div>
+      )}
     </div>
   )
 }
