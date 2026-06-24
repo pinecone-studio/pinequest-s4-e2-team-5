@@ -1,121 +1,93 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
+import { useEffect, useRef, useState } from 'react'
 import './App.css'
+import { getPageFromPath } from './navigation.js'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [page, setPage] = useState(() => getPageFromPath(window.location.pathname))
+  const [preview, setPreview] = useState('')
+  const fileRef = useRef(null)
+
+  useEffect(() => {
+    const handlePopState = () => setPage(getPageFromPath(window.location.pathname))
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [])
+
+  useEffect(() => () => preview && URL.revokeObjectURL(preview), [preview])
+
+  const navigate = (path) => {
+    window.history.pushState({}, '', path)
+    setPage(getPageFromPath(path))
+  }
+
+  const chooseFile = (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    if (preview) URL.revokeObjectURL(preview)
+    setPreview(URL.createObjectURL(file))
+  }
+
+  if (page === 'learn') {
+    return (
+      <main className="learn-page">
+        <nav className="topbar">
+          <button className="back-button" onClick={() => navigate('/')} aria-label="Нүүр хуудас руу буцах">←</button>
+          <a className="brand" href="/" onClick={(event) => { event.preventDefault(); navigate('/') }}>
+            <span>Q</span> PineQuest
+          </a>
+          <div className="step">Алхам 1 / 3</div>
+        </nav>
+
+        <section className="learn-content">
+          <div className="intro-copy">
+            <p className="eyebrow">AI МАТЕМАТИКИЙН БАГШ</p>
+            <h1>Бодлогын зургаа<br />оруулаарай</h1>
+            <p>AI багш бодлогыг таньж, хариуг шууд хэлэхгүйгээр тоглоомоор ойлгуулна.</p>
+          </div>
+
+          <button className={`upload-box ${preview ? 'with-preview' : ''}`} onClick={() => fileRef.current?.click()}>
+            {preview ? (
+              <img src={preview} alt="Сонгосон бодлогын зураг" />
+            ) : (
+              <>
+                <span className="upload-icon">↥</span>
+                <strong>Зургаа энд оруулна уу</strong>
+                <small>JPG, PNG · 10MB хүртэл</small>
+              </>
+            )}
+          </button>
+
+          <input ref={fileRef} type="file" accept="image/png,image/jpeg" hidden onChange={chooseFile} />
+          <button className="choose-button" onClick={() => fileRef.current?.click()}>{preview ? 'Өөр зураг сонгох' : 'Зураг сонгох'}</button>
+          <p className="privacy">Таны зураг хадгалагдахгүй · Зөвхөн бодлогыг танихад ашиглана</p>
+        </section>
+      </main>
+    )
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <main className="home-page">
+      <nav className="home-nav">
+        <a className="brand" href="/" onClick={(event) => event.preventDefault()}><span>Q</span> PineQuest</a>
+        <p>Хүүхэд бүр бодож чадна.</p>
+      </nav>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+      <section className="hero-section">
+        <div className="hero-copy">
+          <p className="eyebrow">МОНГОЛ AI БАГШ</p>
+          <h1>Математикийг<br /><em>тоглож</em> ойлгоё.</h1>
+          <p>Бодлогын зургаа оруулаарай. AI багш хүүхдэд хариуг нь хэлэхгүй, өөрөөр нь ойлгуулж бодуулна.</p>
+          <button className="start-button" onClick={() => navigate('/learn')}>Get started <span>→</span></button>
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
+
+        <div className="number-art" aria-hidden="true">
+          <span className="orb orb-one">1</span>
+          <span className="orb orb-two">2</span>
+          <span className="orb orb-three">3</span>
+          <div className="smile">⌣</div>
         </div>
       </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    </main>
   )
 }
 
