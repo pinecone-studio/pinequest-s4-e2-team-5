@@ -1,3 +1,5 @@
 export function getPageFromPath(pathname) {
-  return pathname === '/learn' ? 'learn' : 'home'
+  if (pathname === '/learn') return 'learn';
+  if (pathname === '/lesson') return 'lesson';
+  return 'home';
 }
