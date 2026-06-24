@@ -41,7 +41,7 @@ app.post("/api/chat", async (req: any, res: any) => {
       temperature: 0.75,
       max_tokens: 200,
     });
-    res.json({ text: completion.choices[0].message.content ?? "" });
+    res.json({ text: completion.choices[0]?.message.content ?? "" });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
@@ -56,18 +56,21 @@ app.post("/api/tts", async (req: any, res: any) => {
       method: "POST",
       headers: {
         "Content-Type": "text/plain",
-        "Token": process.env.CHIMEGE_API_TTS ?? "",
+        Token: process.env.CHIMEGE_API_TTS ?? "",
       },
       body: text,
     });
 
     if (!chimegeRes.ok) {
       const detail = await chimegeRes.text();
-      return res.status(chimegeRes.status).json({ error: "Chimege API failed", detail });
+      return res
+        .status(chimegeRes.status)
+        .json({ error: "Chimege API failed", detail });
     }
 
     const buffer = Buffer.from(await chimegeRes.arrayBuffer());
-    res.set("Content-Type", "audio/mpeg");
+    const ct = chimegeRes.headers.get("content-type") || "audio/wav";
+    res.set("Content-Type", ct);
     res.send(buffer);
   } catch (e: any) {
     res.status(500).json({ error: e.message });
@@ -95,7 +98,8 @@ app.post("/api/stt", async (req: any, res: any) => {
 
 app.post("/api/analyze-homework", async (req: any, res: any) => {
   const { imageBase64, mimeType = "image/jpeg" } = req.body;
-  if (!imageBase64) return res.status(400).json({ error: "imageBase64 required" });
+  if (!imageBase64)
+    return res.status(400).json({ error: "imageBase64 required" });
 
   try {
     const response = await openai.chat.completions.create({
@@ -117,7 +121,7 @@ app.post("/api/analyze-homework", async (req: any, res: any) => {
       ],
       max_tokens: 600,
     });
-    res.json({ context: response.choices[0].message.content ?? "" });
+    res.json({ context: response.choices[0]?.message.content ?? "" });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
