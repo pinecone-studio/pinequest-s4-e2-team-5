@@ -10,23 +10,24 @@ export function TutorAvatar({ nickname, homeworkContext }) {
     error,
     greet,
     announceHomework,
-    startListening,
-    stopListening,
     chat,
+    startAlwaysListen,
+    stopAlwaysListen,
   } = useTutor({ nickname, homeworkContext })
 
-  const [textInput, setTextInput]           = useState('')
-  const prevHomeworkRef                     = useRef('')
-  const greetedRef                          = useRef(false)
+  const [textInput, setTextInput] = useState('')
+  const prevHomeworkRef           = useRef('')
+  const greetedRef                = useRef(false)
 
-  // Initial greeting once on mount
+  // Initial greeting + start always-listen
   useEffect(() => {
     if (greetedRef.current) return
     greetedRef.current = true
-    greet()
-  }, [greet])
+    greet().then(() => startAlwaysListen())
+    return () => stopAlwaysListen()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Announce when homework is first loaded
+  // Announce when homework is first uploaded
   useEffect(() => {
     if (homeworkContext && !prevHomeworkRef.current) {
       prevHomeworkRef.current = homeworkContext
@@ -37,10 +38,10 @@ export function TutorAvatar({ nickname, homeworkContext }) {
   const isBusy = isSpeaking || isThinking
 
   function statusLabel() {
-    if (isSpeaking)  return { text: 'ЯРЬЖ БАЙНА…',  cls: 'status-speaking' }
-    if (isListening) return { text: 'СОНСОЖ БАЙНА…', cls: 'status-listening' }
-    if (isThinking)  return { text: 'БОДОЖ БАЙНА…',  cls: 'status-thinking' }
-    return { text: '',  cls: '' }
+    if (isSpeaking)  return { text: 'ЯРЬЖ БАЙНА…',   cls: 'status-speaking' }
+    if (isListening) return { text: 'СОНСОЖ БАЙНА…',  cls: 'status-listening' }
+    if (isThinking)  return { text: 'БОДОЖ БАЙНА…',   cls: 'status-thinking' }
+    return { text: 'БЭЛЭН', cls: '' }
   }
 
   const { text: statusText, cls: statusCls } = statusLabel()
@@ -61,12 +62,12 @@ export function TutorAvatar({ nickname, homeworkContext }) {
 
   return (
     <div className="tutor-avatar">
-      {/* 3D robot — full background */}
+      {/* 3D robot */}
       <div className="tutor-spline-wrap">
         <SplineScene className="robot-spline" />
       </div>
 
-      {/* Ambient glow when speaking */}
+      {/* Glow when speaking */}
       <div className={`tutor-glow${isSpeaking ? ' glow-active' : ''}`} />
 
       {/* Sound rings when speaking */}
@@ -78,42 +79,20 @@ export function TutorAvatar({ nickname, homeworkContext }) {
 
       {/* Controls */}
       <div className="tutor-controls">
-        {/* Status */}
-        <span className={`tutor-status${statusCls ? ` ${statusCls}` : ''}`}>
-          {statusText}
-        </span>
-
-        {/* Mic button — push to talk */}
-        <button
-          type="button"
-          className={`tutor-mic${isListening ? ' mic-listening' : ''}`}
-          disabled={isBusy}
-          onMouseDown={startListening}
-          onMouseUp={stopListening}
-          onTouchStart={startListening}
-          onTouchEnd={stopListening}
-          aria-label={isListening ? 'Зогсоох' : 'Ярих'}
-        >
-          {isListening ? (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <rect x="4" y="4" width="16" height="16" rx="3" />
-            </svg>
-          ) : (
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <rect x="9" y="2" width="6" height="12" rx="3" />
-              <path d="M5 10a7 7 0 0014 0" />
-              <line x1="12" y1="19" x2="12" y2="22" />
-              <line x1="9" y1="22" x2="15" y2="22" />
-            </svg>
-          )}
-        </button>
+        {/* Status + listen indicator */}
+        <div className="tutor-status-row">
+          {isListening && <span className="tutor-listen-dot" />}
+          <span className={`tutor-status${statusCls ? ` ${statusCls}` : ''}`}>
+            {statusText}
+          </span>
+        </div>
 
         {/* Text fallback */}
         <div className="tutor-text-row">
           <input
             className="tutor-text-input"
             type="text"
-            placeholder="Бичиж ярилцах…"
+            placeholder="Бичиж асуух…"
             value={textInput}
             onChange={(e) => setTextInput(e.target.value)}
             onKeyDown={handleKeyDown}
