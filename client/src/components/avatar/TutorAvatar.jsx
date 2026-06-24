@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef } from 'react'
 import { SplineScene } from '../SplineScene.jsx'
 import { useTutor } from './useTutor.js'
 
@@ -10,35 +10,28 @@ export function TutorAvatar({ nickname, homeworkContext }) {
     error,
     greet,
     announceHomework,
-    chat,
     startAlwaysListen,
     stopAlwaysListen,
   } = useTutor({ nickname, homeworkContext })
 
-  const [textInput, setTextInput]   = useState('')
-  const [started, setStarted]       = useState(false)
-  const prevHomeworkRef             = useRef('')
+  const prevHomeworkRef = useRef('')
+  const greetedRef      = useRef(false)
 
-  // Cleanup on unmount
-  useEffect(() => () => stopAlwaysListen(), []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Announce when homework is first uploaded (only after session started)
+  // Wait for nickname before greeting, then start always-listen
   useEffect(() => {
-    if (!started) return
+    if (greetedRef.current || !nickname) return
+    greetedRef.current = true
+    greet().then(() => startAlwaysListen())
+    return () => stopAlwaysListen()
+  }, [nickname]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Announce when homework is first uploaded
+  useEffect(() => {
     if (homeworkContext && !prevHomeworkRef.current) {
       prevHomeworkRef.current = homeworkContext
       announceHomework()
     }
-  }, [homeworkContext, announceHomework, started])
-
-  // Called on the "Start" button click — inside a user gesture → autoplay allowed
-  const handleStart = useCallback(async () => {
-    setStarted(true)
-    await greet()
-    await startAlwaysListen()
-  }, [greet, startAlwaysListen])
-
-  const isBusy = isSpeaking || isThinking
+  }, [homeworkContext, announceHomework])
 
   function statusLabel() {
     if (isSpeaking)  return { text: 'ЯРЬЖ БАЙНА…',  cls: 'status-speaking' }
@@ -48,20 +41,6 @@ export function TutorAvatar({ nickname, homeworkContext }) {
   }
 
   const { text: statusText, cls: statusCls } = statusLabel()
-
-  const handleTextSend = useCallback(async () => {
-    const msg = textInput.trim()
-    if (!msg || isBusy) return
-    setTextInput('')
-    await chat(msg)
-  }, [textInput, isBusy, chat])
-
-  function handleKeyDown(e) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleTextSend()
-    }
-  }
 
   return (
     <div className="tutor-avatar">
@@ -80,49 +59,16 @@ export function TutorAvatar({ nickname, homeworkContext }) {
         <div className={`tutor-ring tutor-ring-3${isSpeaking ? ' ring-active' : ''}`} />
       </div>
 
-      {/* START overlay — shown before first interaction */}
-      {!started && (
-        <div className="tutor-start-overlay">
-          <button type="button" className="tutor-start-btn" onClick={handleStart}>
-            <span className="tutor-start-icon">🤖</span>
-            <span>Нарс багштай уулзах</span>
-          </button>
+      {/* Status */}
+      <div className="tutor-controls">
+        <div className="tutor-status-row">
+          {isListening && <span className="tutor-listen-dot" />}
+          <span className={`tutor-status${statusCls ? ` ${statusCls}` : ''}`}>
+            {statusText}
+          </span>
         </div>
-      )}
-
-      {/* Controls — shown after start */}
-      {started && (
-        <div className="tutor-controls">
-          <div className="tutor-status-row">
-            {isListening && <span className="tutor-listen-dot" />}
-            <span className={`tutor-status${statusCls ? ` ${statusCls}` : ''}`}>
-              {statusText}
-            </span>
-          </div>
-
-          <div className="tutor-text-row">
-            <input
-              className="tutor-text-input"
-              type="text"
-              placeholder="Бичиж асуух…"
-              value={textInput}
-              onChange={(e) => setTextInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={isBusy}
-            />
-            <button
-              type="button"
-              className="tutor-text-send"
-              onClick={handleTextSend}
-              disabled={isBusy || !textInput.trim()}
-            >
-              →
-            </button>
-          </div>
-
-          {error && <p className="tutor-error">{error}</p>}
-        </div>
-      )}
+        {error && <p className="tutor-error">{error}</p>}
+      </div>
     </div>
   )
 }
