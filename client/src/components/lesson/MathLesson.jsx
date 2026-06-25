@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import './lesson.css';
 import { DraggableTile } from './DraggableTile.jsx';
 import { DropZone } from './DropZone.jsx';
 import { Mascot } from './Mascot.jsx';
+import { api } from '../../lib/api.js';
 
 const COLORS = {
   1:  '#f2a36b',
@@ -72,9 +73,17 @@ function CountBubble({ num1, num2 }) {
   );
 }
 
-export function MathLesson({ onBack }) {
+export function MathLesson({ onBack, childId = "guest" }) {
   const [state, setState] = useState(() => buildRound(1, 0));
   const { round, score, num1, num2, choices, selected, phase, correct } = state;
+  const sessionIdRef = useRef(null);
+
+  // Сесс эхлүүлэх
+  useEffect(() => {
+    api.createSession({ childId, problem: "Нэмэх дасгал", skill: "addition", difficulty: "easy", correctAnswer: 0 })
+      .then((d) => { sessionIdRef.current = d.sessionId; })
+      .catch(() => {});
+  }, [childId]);
 
   // When both zones filled → generate choices from actual dragged values
   useEffect(() => {
@@ -114,10 +123,24 @@ export function MathLesson({ onBack }) {
 
   const handleChoice = useCallback((choice) => {
     if (phase !== 'choose') return;
-    setState(s => ({ ...s, selected: choice, correct: choice === s.num1 + s.num2, phase: 'result' }));
-  }, [phase]);
+    const isCorrect = choice === num1 + num2;
+    setState(s => ({ ...s, selected: choice, correct: isCorrect, phase: 'result' }));
+    // Оролдлого бүрийг хадгална
+    if (sessionIdRef.current) {
+      api.recordAttempt({ sessionId: sessionIdRef.current, childId, skill: "addition", answerGiven: String(choice), isCorrect }).catch(() => {});
+    }
+  }, [phase, num1, num2, childId]);
 
-  const restart = useCallback(() => setState(buildRound(1, 0)), []);
+  const restart = useCallback(() => {
+    // Дуусгасан сессийг хадгалж шинэ сесс эхлүүлнэ
+    if (sessionIdRef.current) {
+      api.completeSession(sessionIdRef.current, true).catch(() => {});
+    }
+    api.createSession({ childId, problem: "Нэмэх дасгал", skill: "addition", difficulty: "easy", correctAnswer: 0 })
+      .then((d) => { sessionIdRef.current = d.sessionId; })
+      .catch(() => {});
+    setState(buildRound(1, 0));
+  }, [childId]);
 
   // Mascot message + mood per phase
   let mascotContent, mascotMood;
