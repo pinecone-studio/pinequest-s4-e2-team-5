@@ -27,7 +27,8 @@
   flex: 7;
   display: flex;
   flex-direction: column;
-  padding: 18px;
+  /* Хөвөгч буцах товч (top:16, 44px) дээр давхцахгүйн тулд дээд зайг нэмэв */
+  padding: 68px 18px 18px;
   border-bottom: 1px solid rgba(22, 43, 42, 0.1);
   overflow: auto;
 }
