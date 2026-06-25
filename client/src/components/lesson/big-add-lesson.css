@@ -1,0 +1,101 @@
+/* Static (non-draggable) tile */
+.tile-static {
+  cursor: default !important;
+  pointer-events: none;
+}
+.tile-static:hover {
+  transform: none !important;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,.15)) !important;
+}
+
+/* Small tile for tens (cells 13px instead of 22px) */
+.tile-sm {
+  grid-template-columns: repeat(2, 13px);
+  gap: 2px;
+}
+.tile-sm .domino-cell {
+  width: 13px;
+  height: 13px;
+  border-radius: 4px;
+  box-shadow: 0 1px 0 rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.22);
+}
+.tile-sm .domino-cell.empty {
+  width: 13px;
+  height: 13px;
+}
+.tile-sm .domino-label {
+  font-size: 9px;
+  margin-top: 2px;
+}
+
+/* Number visual wrapper */
+.num-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.num-big-label {
+  font-size: 42px;
+  font-weight: 900;
+  color: var(--ink);
+  line-height: 1;
+  letter-spacing: -.04em;
+}
+
+.num-tiles {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Grid for ten-blocks: max 3 columns so 5 tens = 2 rows */
+.tens-wrap {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 5px;
+  justify-items: center;
+}
+
+/* Equation row: flex with wrap so large numbers don't overflow */
+.bal-eq-row {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Result slot override: sized for a 2-digit number, not a domino tower */
+.bal-result {
+  min-height: unset !important;
+  height: 76px !important;
+  width: 90px !important;
+  font-size: 40px !important;
+}
+
+/* Wider choice buttons for 2-digit answers */
+.bal-choices .choice-btn {
+  width: 120px;
+  height: 64px;
+  font-size: 28px;
+}
+
+/* Body: no right tile-tray column needed */
+.bal-body {
+  grid-template-columns: 250px 1fr 0px !important;
+}
+
+@media (max-width: 860px) {
+  .bal-body {
+    grid-template-columns: 1fr !important;
+  }
+  .bal-eq-row {
+    gap: 12px;
+  }
+  .num-big-label {
+    font-size: 34px;
+  }
+}

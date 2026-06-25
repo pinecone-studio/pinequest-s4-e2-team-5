@@ -691,28 +691,25 @@
   justify-content: center;
 }
 
-/* ── Number card (clean, no emoji grid) ── */
-.vm-num-card {
-  width: 110px;
-  height: 110px;
-  border-radius: 28px;
-  background: rgba(255,255,255,0.05);
-  border: 3px solid var(--card-clr, #65d99d);
+/* ── Domino tile number visual (дүрс) in dark avatar context ── */
+.vm-durs-wrap {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-size: 60px;
-  font-weight: 900;
-  color: var(--card-clr, #65d99d);
-  filter: drop-shadow(0 0 18px var(--card-clr, #65d99d));
-  animation: card-drop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
   flex-shrink: 0;
+  animation: card-drop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
 }
-.vm-num-card:nth-child(3) { animation-delay: 0.15s; }
+.vm-durs-wrap:nth-child(3) { animation-delay: 0.15s; }
 @keyframes card-drop {
   from { transform: translateY(-28px) scale(0.75); opacity: 0; }
   to   { transform: translateY(0) scale(1); opacity: 1; }
 }
+.vm-durs-wrap .num-big-label {
+  color: #fff;
+  text-shadow: 0 0 18px rgba(255,255,255,0.35);
+}
+.vm-durs-wrap .domino-label { color: rgba(255,255,255,0.55); }
+.vm-durs-wrap .domino-tile  { filter: drop-shadow(0 4px 10px rgba(0,0,0,0.45)); }
 
 /* ── Custom draggable number tile ── */
 .nt-tile {
