@@ -1,7 +1,12 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MascotScene } from '../KidMascotScene.jsx'
 import { useTutor } from './useTutor.js'
 import { NumberVisual } from '../lesson/NumberVisual.jsx'
+import { RobotInteractive } from './RobotInteractive.jsx'
+import { ComparisonInteractive } from './ComparisonInteractive.jsx'
+import { MissingAddendInteractive } from './MissingAddendInteractive.jsx'
+import { ProblemList } from './ProblemList.jsx'
+import { extractProblemNumber } from './extractProblemNumber.js'
 import { api } from '../../lib/api.js'
 import '../lesson/lesson.css'
 import '../lesson/big-add-lesson.css'
@@ -19,12 +24,13 @@ function makeChoices(answer) {
   const set = new Set([answer])
   for (const d of [-3, -2, -1, 1, 2, 3, 4, -4]) {
     const v = answer + d
-    if (v > 0) set.add(v)
+    if (v >= 0) set.add(v)
     if (set.size >= 3) break
   }
   return shuffle([...set].slice(0, 3))
 }
 
+/* ── parseMath: structured problems байхгүй үед (хуучин нэг текст) fallback ── */
 function parseMath(ctx) {
   if (!ctx) return null
   let m = ctx.match(/(\d+)\s*[+]\s*(\d+)/)
@@ -36,24 +42,40 @@ function parseMath(ctx) {
   return null
 }
 
-function inferSkillDifficulty({ a, b, op }) {
-  const skill = op === '+' ? 'addition' : 'subtraction'
-  const answer = op === '+' ? a + b : a - b
-  const difficulty = answer <= 10 ? 'easy' : answer <= 30 ? 'medium' : 'hard'
-  return { skill, difficulty }
+function fallbackProblem(ctx) {
+  const m = parseMath(ctx)
+  if (!m) return null
+  const type = m.op === '+' ? 'addition' : 'subtraction'
+  return {
+    index: 1, raw: ctx, type, operator: m.op, operands: [m.a, m.b],
+    missingPosition: null, knownResult: null,
+    answer: m.op === '+' ? m.a + m.b : m.a - m.b, promptMn: '',
+  }
 }
 
-/* ── Visual Math: domino tiles + 3-choice click ── */
+/* structured problem → RobotInteractive/VisualMath-д хэрэгтэй { a, b, op } */
+function toAB(p) {
+  const [a, b] = (p.operands ?? []).map(Number)
+  return { a: a ?? 0, b: b ?? 0, op: p.operator ?? '+' }
+}
+
+function problemKey(p) {
+  if (!p) return ''
+  return `${p.type}|${p.raw ?? ''}|${p.answer}|${(p.operands ?? []).join(',')}|${p.missingPosition}`
+}
+
+function problemToContext(p) {
+  if (!p) return ''
+  const raw = p.raw ?? ''
+  return p.promptMn ? `${raw}\n${p.promptMn}` : raw
+}
+
+/* ── Visual Math: domino tiles + 3-choice click (нэмэх/хасах) ── */
 function VisualMath({ problem, choices, onCorrect, onWrong }) {
   const { a, b, op } = problem
   const answer = op === '+' ? a + b : a - b
   const [selected, setSelected] = useState(null)
   const [phase, setPhase] = useState('choosing')
-
-  useEffect(() => {
-    setSelected(null)
-    setPhase('choosing')
-  }, [answer])
 
   const handleChoice = (n) => {
     if (phase !== 'choosing') return
@@ -125,6 +147,77 @@ function VisualMath({ problem, choices, onCorrect, onWrong }) {
   )
 }
 
+/* Нэмэх/хасахын choices-ийг идэвхтэй бодлогод нэг л удаа тооцно */
+function VisualMathAuto({ problem, onCorrect, onWrong }) {
+  const ab = useMemo(() => toAB(problem), [problem])
+  const answer = ab.op === '+' ? ab.a + ab.b : ab.a - ab.b
+  const choices = useMemo(() => makeChoices(answer), [answer])
+  return <VisualMath problem={ab} choices={choices} onCorrect={onCorrect} onWrong={onWrong} />
+}
+
+/* Үгэн бодлого (тодорхой үйлдэлгүй): зөвхөн хариуг сонгуулна */
+function AnswerChoice({ problem, onCorrect, onWrong }) {
+  const answer = Number(problem.answer) || 0
+  const choices = useMemo(() => makeChoices(answer), [answer])
+  const [selected, setSelected] = useState(null)
+  const [phase, setPhase] = useState('choosing')
+
+  const handle = (n) => {
+    if (phase !== 'choosing') return
+    setSelected(n)
+    if (n === answer) { setPhase('correct'); onCorrect?.() }
+    else { setPhase('wrong'); setTimeout(() => setPhase('choosing'), 900); onWrong?.() }
+  }
+  const state = (n) =>
+    phase === 'choosing' ? 'idle' : n === answer ? 'correct' : n === selected ? 'wrong' : 'idle'
+
+  return (
+    <div className="vm-root">
+      <div className="vm-word-prompt">{problem.promptMn || problem.raw}</div>
+      {phase === 'correct' ? (
+        <div className="vm-ans-slot vm-ans-correct">
+          <div className="vm-durs-wrap vm-ans-durs"><NumberVisual value={answer} /></div>
+          <div className="adz-burst">
+            {['⭐','✨','🎉','💫','🌟','✨'].map((s, i) => (
+              <span key={i} className="adz-burst-item" style={{ '--angle': `${i * 60}deg` }}>{s}</span>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="vm-choice-grid">
+          {choices.map(n => (
+            <button
+              key={n}
+              className={`vm-choice-btn vm-choice-${state(n)}`}
+              onClick={() => handle(n)}
+              disabled={phase !== 'choosing'}
+            >
+              <div className="vm-durs-wrap"><NumberVisual value={n} /></div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ── Төрлөөр нь тохирох интерактивийг сонгоно ── */
+function ProblemInteractive({ problem, isSpeaking, onCorrect, onWrong }) {
+  if (!problem) return null
+  if (problem.type === 'comparison')
+    return <ComparisonInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+  if (problem.type === 'missing_addend')
+    return <MissingAddendInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+
+  const op = problem.operator
+  if (op === '*' || op === '/')
+    return <RobotInteractive problem={toAB(problem)} isSpeaking={isSpeaking} onCorrect={onCorrect} onWrong={onWrong} />
+  if (op === '+' || op === '-')
+    return <VisualMathAuto problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+
+  return <AnswerChoice problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+}
+
 /* ── Speech bubble ── */
 function trimBubble(text) {
   if (!text) return ''
@@ -168,24 +261,65 @@ function SpeechBubble({ text, isThinking }) {
 }
 
 /* ── Main TutorAvatar ── */
-export function TutorAvatar({ nickname, homeworkContext, avatar = 'robot' }) {
+export function TutorAvatar({ nickname, homeworkContext, problems = [], avatar = 'robot' }) {
+  // interpretCommand-ийг тогтвортой реф-ээр useTutor руу дамжуулна (доор шинэчилнэ).
+  const cmdRef = useRef(() => false)
+  const interpretCommand = useCallback((text) => cmdRef.current(text), [])
+
   const {
     isSpeaking, isListening, isThinking, error,
-    lastText, greet, announceHomework, chat,
+    lastText, greet, chat, explainProblem, speak,
     startAlwaysListen, stopAlwaysListen,
-  } = useTutor({ nickname, homeworkContext })
+  } = useTutor({ nickname, homeworkContext, interpretCommand })
 
-  const prevHomeworkRef = useRef('')
-  const greetedRef      = useRef(false)
-  const [choices, setChoices]           = useState([])
-  const [activeContext, setActiveContext] = useState(homeworkContext)
+  const greetedRef = useRef(false)
+  const askedRef = useRef(false)
+  const lastExplainedRef = useRef('')
+  const [selectedIndex, setSelectedIndex] = useState(null)
+  const [practiceProblem, setPracticeProblem] = useState(null)
   const [isLoadingNext, setIsLoadingNext] = useState(false)
 
-  // Sync prop → local context when homework changes externally
-  useEffect(() => { setActiveContext(homeworkContext) }, [homeworkContext])
+  // structured problems, эс бол хуучин нэг текстээс fallback
+  const structuredProblems = useMemo(() => {
+    if (problems?.length) return problems
+    const fb = fallbackProblem(homeworkContext)
+    return fb ? [fb] : []
+  }, [problems, homeworkContext])
 
-  const problem = parseMath(activeContext)
+  // Шинэ даалгавар орж ирэхэд сонголтыг цэвэрлэнэ
+  useEffect(() => {
+    setSelectedIndex(null)
+    setPracticeProblem(null)
+    askedRef.current = false
+    lastExplainedRef.current = ''
+  }, [structuredProblems])
 
+  const effectiveIndex = selectedIndex != null
+    ? selectedIndex
+    : (structuredProblems.length === 1 ? 0 : null)
+  const baseProblem = effectiveIndex != null ? structuredProblems[effectiveIndex] : null
+  const activeProblem = practiceProblem ?? baseProblem
+
+  const showList = structuredProblems.length > 1 && selectedIndex == null && !practiceProblem
+
+  const selectProblem = useCallback((i) => {
+    setPracticeProblem(null)
+    setSelectedIndex(i)
+  }, [])
+
+  // interpretCommand логикийг рендер бүрийн дараа шинэчилнэ (сүүлийн state-ийг барина)
+  useEffect(() => {
+    cmdRef.current = (text) => {
+      if (!structuredProblems.length) return false
+      const selecting = selectedIndex == null && structuredProblems.length > 1
+      const idx = extractProblemNumber(text, { requireKeyword: !selecting })
+      if (idx == null || idx < 1 || idx > structuredProblems.length) return false
+      selectProblem(idx - 1)
+      return true
+    }
+  })
+
+  // greet (mount)
   useEffect(() => {
     if (greetedRef.current || !nickname) return
     greetedRef.current = true
@@ -193,34 +327,48 @@ export function TutorAvatar({ nickname, homeworkContext, avatar = 'robot' }) {
     return () => stopAlwaysListen()
   }, [nickname]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Олон бодлого орж ирэхэд "аль вэ?" гэж асууна
   useEffect(() => {
-    if (homeworkContext && !prevHomeworkRef.current) {
-      prevHomeworkRef.current = homeworkContext
-      announceHomework()
+    if (structuredProblems.length > 1 && selectedIndex == null && !askedRef.current && greetedRef.current) {
+      askedRef.current = true
+      speak(`${nickname}, аль бодлогыг хамт бодох вэ? Дугаарыг нь хэлээрэй.`)
     }
-  }, [homeworkContext, announceHomework])
+  }, [structuredProblems.length, selectedIndex, nickname, speak])
 
-  // Regenerate choices whenever active problem changes
+  // Идэвхтэй бодлого солигдох бүрт тухайн бодлогыг тайлбарлуулна
   useEffect(() => {
-    if (!problem) { setChoices([]); return }
-    const ans = problem.op === '+' ? problem.a + problem.b : problem.a - problem.b
-    setChoices(makeChoices(ans))
-  }, [activeContext]) // eslint-disable-line react-hooks/exhaustive-deps
+    if (!activeProblem) return
+    const key = problemKey(activeProblem)
+    if (lastExplainedRef.current === key) return
+    lastExplainedRef.current = key
+    explainProblem(problemToContext(activeProblem))
+  }, [activeProblem, explainProblem])
 
   const handleCorrect = useCallback(() => {
     chat('зөв хариулт')
-    if (!problem) return
-    const { skill, difficulty } = inferSkillDifficulty(problem)
+    const p = activeProblem
+    if (!p) return
+    // Зөвхөн энгийн арифметик дээр дараагийн дасгал бодлого ачаална
+    const op = p.operator
+    const skillMap = { '+': 'addition', '-': 'subtraction', '*': 'multiplication', '/': 'division' }
+    const skill = skillMap[op]
+    if (!skill) return
+    const answer = Number(p.answer) || 0
+    const difficulty = answer <= 10 ? 'easy' : answer <= 30 ? 'medium' : 'hard'
     setIsLoadingNext(true)
     setTimeout(() => {
       api.getPractice(skill, difficulty, 1)
-        .then(({ problems }) => {
-          if (problems?.length) setActiveContext(problems[0].problem)
+        .then(({ problems: next }) => {
+          if (next?.length) return api.analyzeProblem(next[0].problem)
+          return null
+        })
+        .then((structured) => {
+          if (structured) setPracticeProblem(structured)
         })
         .catch(() => {})
         .finally(() => setIsLoadingNext(false))
     }, 2500)
-  }, [chat, problem])
+  }, [chat, activeProblem])
 
   const handleWrong = useCallback(() => {
     chat('буруу хариулт өглөө')
@@ -235,13 +383,15 @@ export function TutorAvatar({ nickname, homeworkContext, avatar = 'robot' }) {
   const { text: statusText, cls: statusCls } = statusLabel()
   const mascotMood = isSpeaking ? 'speaking' : isListening ? 'listening' : isThinking ? 'thinking' : 'ready'
 
+  const showInteractive = !showList && (activeProblem || isLoadingNext)
+
   return (
     <div className="ta-root">
       <div className="ta-blob ta-blob-1" />
       <div className="ta-blob ta-blob-2" />
       <div className="ta-blob ta-blob-3" />
 
-      {!problem && !isLoadingNext ? (
+      {!showInteractive && !showList ? (
         <div className="ta-center">
           <div className="tutor-spline-wrap tutor-spline-big">
             <MascotScene avatar={avatar} className="tutor-mascot" mood={mascotMood} />
@@ -255,14 +405,14 @@ export function TutorAvatar({ nickname, homeworkContext, avatar = 'robot' }) {
         </div>
       ) : (
         <>
-          {/* Layer 1 — robot: large, centered, behind everything */}
+          {/* Layer 1 — robot */}
           <div className="ta-robot-bg">
             <div className="tutor-spline-wrap tutor-spline-big">
               <MascotScene avatar={avatar} className="tutor-mascot" mood={mascotMood} />
             </div>
           </div>
 
-          {/* Layer 2 — speech bubble + status: top-left overlay */}
+          {/* Layer 2 — speech bubble + status */}
           <div className="ta-hud">
             <SpeechBubble text={lastText} isThinking={isThinking} />
             <div className="ta-status-row">
@@ -272,17 +422,31 @@ export function TutorAvatar({ nickname, homeworkContext, avatar = 'robot' }) {
             {error && <p className="tutor-error">{error}</p>}
           </div>
 
-          {/* Layer 3 — interactive math: centered, in front */}
+          {/* Layer 3 — interactive / problem list */}
           <div className="ta-interactive">
-            {isLoadingNext ? (
-              <div className="vm-loading">Дараагийн бодлого бэлтгэж байна…</div>
-            ) : problem ? (
-              <VisualMath
-                problem={problem}
-                choices={choices}
-                onCorrect={handleCorrect}
-                onWrong={handleWrong}
+            {showList ? (
+              <ProblemList
+                problems={structuredProblems}
+                selectedIndex={selectedIndex}
+                onSelect={selectProblem}
               />
+            ) : isLoadingNext ? (
+              <div className="vm-loading">Дараагийн бодлого бэлтгэж байна…</div>
+            ) : activeProblem ? (
+              <>
+                {structuredProblems.length > 1 && (
+                  <button className="ta-back-btn" onClick={() => setSelectedIndex(null)}>
+                    ← Бодлогууд
+                  </button>
+                )}
+                <ProblemInteractive
+                  key={problemKey(activeProblem)}
+                  problem={activeProblem}
+                  isSpeaking={isSpeaking}
+                  onCorrect={handleCorrect}
+                  onWrong={handleWrong}
+                />
+              </>
             ) : null}
           </div>
         </>

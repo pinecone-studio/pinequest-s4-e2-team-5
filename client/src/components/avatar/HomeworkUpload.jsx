@@ -29,12 +29,12 @@ export function HomeworkUpload({ onHomeworkLoaded }) {
           body: JSON.stringify({ imageBase64: base64, mimeType }),
         })
         if (!res.ok) throw new Error('analyze failed')
-        const { context } = await res.json()
-        onHomeworkLoaded(context)
+        const { context, problems = [] } = await res.json()
+        onHomeworkLoaded(context, problems)
         setDone(true)
       } catch {
         setError('Зурагыг шинжлэхэд алдаа гарлаа.')
-        onHomeworkLoaded('')
+        onHomeworkLoaded('', [])
       } finally {
         setAnalyzing(false)
       }
@@ -59,7 +59,7 @@ export function HomeworkUpload({ onHomeworkLoaded }) {
     setPreview(null)
     setDone(false)
     setError(null)
-    onHomeworkLoaded('')
+    onHomeworkLoaded('', [])
     if (inputRef.current) inputRef.current.value = ''
   }
 
