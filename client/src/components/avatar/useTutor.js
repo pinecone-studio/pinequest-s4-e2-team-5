@@ -3,7 +3,7 @@ import { api } from "../../lib/api.js";
 import { API_BASE } from "../../lib/config.js";
 import { VAD, blobToBase64 } from "./voice.js";
 
-export function useTutor({ nickname, homeworkContext }) {
+export function useTutor({ nickname, homeworkContext, interpretCommand }) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
@@ -16,6 +16,7 @@ export function useTutor({ nickname, homeworkContext }) {
   const isBusyRef = useRef(false);
   const sessionIdRef = useRef(null);
   const analysisRef = useRef(null);
+  const interpretCommandRef = useRef(interpretCommand);
 
   const streamRef = useRef(null);
   const vadRef = useRef(null);
@@ -55,6 +56,9 @@ export function useTutor({ nickname, homeworkContext }) {
   useEffect(() => {
     nicknameRef.current = nickname;
   }, [nickname]);
+  useEffect(() => {
+    interpretCommandRef.current = interpretCommand;
+  }, [interpretCommand]);
   useEffect(() => {
     homeworkRef.current = homeworkContext;
     // Homework орж ирэхэд analyze хийж session үүсгэнэ
@@ -183,7 +187,12 @@ export function useTutor({ nickname, homeworkContext }) {
         if (!res.ok) throw new Error("STT алдаа");
         const { text } = await res.json();
         setIsThinking(false);
-        if (text?.trim()) await chat(text);
+        const cleaned = text?.trim();
+        // Эхлээд команд (ж: "хоёр дахь бодлого") эсэхийг шалгана. Хэрэв команд
+        // боловсруулагдвал TutorAvatar тухайн бодлогыг өөрөө тайлбарлаж эхэлнэ
+        // (ярих/busy-г өөрөө удирдана), тиймээс энд chat руу дамжуулахгүй.
+        if (cleaned && interpretCommandRef.current?.(cleaned)) return;
+        if (cleaned) await chat(cleaned);
         else isBusyRef.current = false;
       } catch (e) {
         console.error(e);
@@ -294,6 +303,14 @@ export function useTutor({ nickname, homeworkContext }) {
     await chat(null);
   }, [chat]);
 
+  // ── сонгосон тодорхой бодлогыг тайлбарлах ────────────────
+  // Контекстийг тухайн бодлого руу шилжүүлж, яриаг шинээр эхлүүлнэ.
+  const explainProblem = useCallback(async (contextText) => {
+    homeworkRef.current = contextText ?? "";
+    messagesRef.current = [];
+    await chat(null);
+  }, [chat]);
+
   // ── hint: хүүхэд гацсан үед зөвлөгөө авах ───────────────
   const getHint = useCallback(async (wrongAnswer) => {
     const analysis = analysisRef.current;
@@ -320,6 +337,8 @@ export function useTutor({ nickname, homeworkContext }) {
     lastText,
     greet,
     announceHomework,
+    explainProblem,
+    speak,
     chat,
     getHint,
     startAlwaysListen,

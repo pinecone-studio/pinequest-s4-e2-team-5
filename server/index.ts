@@ -54,6 +54,12 @@ app.post("/api/chat", async (req: any, res: any) => {
 2. Хүүхдийн ярьсан эсвэл бичсэн үгийг анхааралтай ойлго. Хэрэв сонсголт бүрхэг, үг дутуу, эсвэл ойлгомжгүй бол өөрийн дураар бүү тайлбарла — "${nickname}, чи дахиад нэг хэлээч?" гэж эелдэг асуу. Хүүхдийн ЯГ хэлсэн зүйлд тохирсон хариу өг.
 3. Зөвхөн ОДООГИЙН гэрийн даалгавартай холбоотой л ярь. Хүүхэд даалгавартай холбоогүй өөр зүйл асуувал (тоглоом, кино, хувийн асуудал, аюултай зүйл г.м.) маш эелдэгээр ингэж хариул: "Уучлаарай ${nickname}, би энэ асуултад хариулж чадахгүй нь. Хоёулаа даалгавартаа эргэж орцгооё." Тэгээд бодлого руугаа эргэн ор.
 4. Зургаар өгсөн даалгаврыг (дээрх "бодлого") тодорхой, алхам алхмаар тайлбарла. Юуны тухай бодлого болохыг хүүхдэд эхлээд энгийнээр танилцуул.
+4a. Бодлогыг ДОТРОО АНГЛИАР бодож гүн ойлгосны дараа, маш энгийн монголоор хүүхдэд тайлбарла (англиар бүү бич). Бодлогын төрлийг таньж тохирох логикоор заа:
+   - Нэмэх/хасах: тоонуудыг нийлүүлэх эсвэл хасах.
+   - Үгэн бодлого: эхлээд ямар тоонууд байгаа, юу хийхийг (нэмэх үү, хасах уу) ялгаж ойлгуул.
+   - Харьцуулах: аль тоо нь их/бага/тэнцүү болохыг асуу.
+   - Нөхөх (жишээ: тав нэмэх хэд нь найм бэ): нэг тоо ба хариу нь өгөгдсөн үед хэдийг нэмэх/хасвал тэр хариу гарахыг олуулна.
+4b. Хэрэв олон бодлого байгаа бөгөөд хүүхэд аль нэгийг сонгоогүй бол эхлээд "Аль бодлогыг хамт бодох вэ?" гэж эелдэг асуу. Хүүхэд бодлогын дугаар хэлвэл ЗӨВХӨН тэр бодлогыг авч үзэж, бусдыг нь бүү дурд.
 5. Шууд хариуг ХЭЗЭЭ Ч битгий хэл. Алхам алхмаар, нэг удаад НЭГ жижиг асуултаар чиглүүл.
 6. Бодлогыг тайлбарласны дараа ЗААВАЛ асуу: "${nickname}, чи энэ хэсгээс аль нь ойлгомжтой, аль нь ойлгомжгүй байна?" Хүүхэд ойлгомжгүй хэсгээ хэлвэл ЯГ ТЭР хэсгийг өөр үгээр, өөр энгийн жишээгээр (алим, бөмбөг, амттан г.м.) ДАХИН тайлбарла.
 7. Хүүхэд буруу хариулбал хэзээ ч битгий загна. "Ойролцоо боллоо, дахиад нэг хамт харъя" гэх мэт зөөлөн дэмжиж зас.
@@ -219,6 +225,53 @@ app.post("/api/stt", async (req: any, res: any) => {
   }
 });
 
+// Зургийн бодлогуудыг бүтэцтэй болгох нийтлэг JSON схемийн заавар.
+// /api/analyze-homework болон /api/ai/analyze хоёул энэ форматыг ашиглана.
+const PROBLEM_SCHEMA_INSTRUCTION = `Бодлого бүрийг доорх схемээр дүрсэл. Дотроо англиар бод (reason in English) — гэхдээ зөвхөн JSON-г л буцаа.
+
+Төрлүүд (type):
+- "addition": a + b
+- "subtraction": a - b
+- "multiplication": a * b
+- "division": a / b
+- "comparison": хоёр тоог харьцуул (a ? b). operands=[a,b], answer: a<b бол -1, a=b бол 0, a>b бол 1.
+- "missing_addend": хоосон нүдтэй (ж: 5 + _ = 8, эсвэл _ - 3 = 4). operator-ийг тавь; мэдэгдэж буй тоонуудыг operands-д (зүүнээс баруун дараалал); хоосон нүдний байрлалыг missingPosition (0=эхний тоо, 1=хоёр дахь тоо, 2=хариу); "=" дараах тоог knownResult-д (мэдэгдэж байвал); answer-т хайж буй хоосон утгыг тавь.
+- "word": үгэн бодлого. operands-д тоонуудыг, operator-ийг (боломжтой бол), answer-т эцсийн хариуг.
+
+Талбарууд:
+- index: бодлогын дугаар (1-ээс эхэлнэ)
+- raw: эх бичвэрийг яг хуулсан текст
+- type: дээрх төрлийн нэг
+- operator: "+" | "-" | "*" | "/" | null
+- operands: мэдэгдэж буй тоонуудын массив
+- missingPosition: null | 0 | 1 | 2
+- knownResult: null | тоо
+- answer: зөв хариу (хайж буй утга), тоо
+- promptMn: 6-9 насны хүүхдэд харагдах богино монгол асуулт
+- explainMn: 2-4 богино монгол алхмын массив (хүүхдэд ойлгомжтой, шууд хариуг бүү хэл)`;
+
+// Тоон бодлогын answer-ийг operands-аас дахин тооцож баталгаажуулна (model алдааг засна).
+function normalizeProblems(problems: any[]): any[] {
+  if (!Array.isArray(problems)) return [];
+  return problems.map((p, i) => {
+    const out: any = { ...p, index: p.index ?? i + 1 };
+    const ops = Array.isArray(out.operands) ? out.operands.map(Number) : [];
+    if (ops.length === 2) {
+      const [a, b] = ops;
+      if (out.type === "addition") out.answer = a + b;
+      else if (out.type === "subtraction") out.answer = a - b;
+      else if (out.type === "multiplication") out.answer = a * b;
+      else if (out.type === "division" && b !== 0) out.answer = a / b;
+      else if (out.type === "comparison") out.answer = a < b ? -1 : a > b ? 1 : 0;
+    }
+    return out;
+  });
+}
+
+function buildContextFromProblems(problems: any[]): string {
+  return problems.map((p) => `${p.index}. ${p.raw ?? p.promptMn ?? ""}`).join("\n");
+}
+
 app.post("/api/analyze-homework", async (req: any, res: any) => {
   const { imageBase64, mimeType = "image/jpeg" } = req.body;
   if (!imageBase64)
@@ -237,15 +290,26 @@ app.post("/api/analyze-homework", async (req: any, res: any) => {
             },
             {
               type: "text",
-              text: "Энэ зураг дээрх 1-3 ангийн математикийн бодлогыг шинжил. Бүх тоо, үйлдэл (нэмэх, хасах, үржих, хуваах), дүрс, нөхцөлийг монгол хэлээр нарийн, тодорхой бич. Хэд хэдэн бодлого байвал тус бүрийг дугаарла. Зөвхөн бодлогын агуулгыг бич, бодлогын хариуг бүү бод, өөр юу ч бүү нэм.",
+              text: `Чи бол 1-3 ангийн математикийн багш. Энэ зураг дээрх БҮХ бодлогыг алгасалгүй, дээрээс доош, зүүнээс баруун тийш дугаарласан дарааллаар нь нягт уншиж шинжил.
+
+${PROBLEM_SCHEMA_INSTRUCTION}
+
+Зөвхөн дараах JSON-г буцаа, өөр юу ч бүү нэм:
+{ "problems": [ { "index": 1, "raw": "...", "type": "...", "operator": "+", "operands": [5,3], "missingPosition": null, "knownResult": null, "answer": 8, "promptMn": "...", "explainMn": ["...","..."] } ] }
+
+Зураг дээр бодлого огт байхгүй бол { "problems": [] } буцаа.`,
             },
           ],
         },
       ],
-      maxTokens: 2000,
-      reasoningEffort: "low",
+      jsonMode: true,
+      maxTokens: 4000,
+      reasoningEffort: "medium",
     });
-    res.json({ context: response.choices[0]?.message.content ?? "" });
+
+    const parsed = JSON.parse(response.choices[0]?.message?.content ?? "{}");
+    const problems = normalizeProblems(parsed.problems ?? []);
+    res.json({ problems, context: buildContextFromProblems(problems) });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
@@ -265,14 +329,26 @@ app.post("/api/ai/analyze", async (req: any, res: any) => {
           content: `Та бага ангийн математикийн мэргэжилтэн. Энэ бодлогыг 6-9 насны хүүхдэд зориулан шинжил.
 Бодлого: "${problem}"
 
-Зөвхөн JSON буцаа, тайлбар бүү нэм:
+${PROBLEM_SCHEMA_INSTRUCTION}
+
+Зөвхөн дараах JSON-г буцаа, тайлбар бүү нэм:
 {
+  "index": 1,
+  "raw": "${problem}",
   "grade": анги (1-3 тоо),
   "skill": "addition" | "subtraction" | "multiplication" | "division" | "comparison",
+  "type": "addition" | "subtraction" | "multiplication" | "division" | "comparison" | "missing_addend" | "word",
+  "operator": "+" | "-" | "*" | "/" | null,
+  "operands": [мэдэгдэж буй тоонууд],
+  "missingPosition": null | 0 | 1 | 2,
+  "knownResult": null | тоо,
   "strategy": бодох арга (жишээ: "make_ten", "count_on", "doubles", "split"),
   "difficulty": "easy" | "medium" | "hard",
   "commonMistake": хамгийн түгээмэл буруу хариулт (тоо),
   "correctAnswer": зөв хариулт (тоо),
+  "answer": зөв хариулт (тоо),
+  "promptMn": хүүхдэд харагдах богино монгол асуулт,
+  "explainMn": [монголоор, хүүхдэд ойлгомжтой алхмуудыг богино өгүүлбэрээр],
   "steps": [монголоор, хүүхдэд ойлгомжтой алхмуудыг богино өгүүлбэрээр]
 }`,
         },
@@ -283,9 +359,14 @@ app.post("/api/ai/analyze", async (req: any, res: any) => {
       reasoningEffort: "low",
     });
 
-    const analysis = JSON.parse(
-      response.choices[0]?.message?.content ?? "{}"
-    );
+    const raw = JSON.parse(response.choices[0]?.message?.content ?? "{}");
+    const [analysis] = normalizeProblems([raw]);
+    // skill талбарыг type-аас нөхөж, хариуг correctAnswer/answer хоёуланд нийцүүлнэ.
+    if (!analysis.skill && analysis.type) analysis.skill = analysis.type;
+    if (analysis.answer == null && analysis.correctAnswer != null)
+      analysis.answer = analysis.correctAnswer;
+    if (analysis.correctAnswer == null && analysis.answer != null)
+      analysis.correctAnswer = analysis.answer;
     res.json(analysis);
   } catch (e: any) {
     res.status(500).json({ error: e.message });
