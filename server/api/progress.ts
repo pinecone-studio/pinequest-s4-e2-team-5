@@ -1,9 +1,8 @@
 import { Router } from "express";
-import OpenAI from "openai";
+import { MODELS, chatComplete } from "../lib/ai";
 import { supabase } from "../lib/supabase";
 
 const router = Router();
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // POST /api/progress/session
 // Хүүхэд бодлого эхлүүлэхэд дуудна — шинэ сесс үүсгэнэ
@@ -152,8 +151,8 @@ router.get("/:childId/analysis", async (req, res) => {
     .sort((a, b) => b.accuracy - a.accuracy);
 
   // AI-аар дүн шинжилгээ хийлгэнэ
-  const aiResponse = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+  const aiResponse = await chatComplete({
+    model: MODELS.chat,
     messages: [
       {
         role: "user",
@@ -170,8 +169,9 @@ ${skillSummary.map((s) => `- ${s.skill}: ${s.total} оролдлогоос ${s.c
 Зөвхөн энгийн текст, emoji хэрэглэж болно.`,
       },
     ],
-    max_tokens: 300,
+    maxTokens: 1200,
     temperature: 0.7,
+    reasoningEffort: "low",
   });
 
   const aiInsight =
