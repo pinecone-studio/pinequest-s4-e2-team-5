@@ -70,7 +70,7 @@ export default function AvatarPicker({
         </h2>
         <p className="mx-auto mt-2 mb-7 max-w-xs text-center text-sm leading-relaxed text-neutral-400">
           Одоогоор{" "}
-          <span className="font-semibold text-[#8b3dff]">Нарс багш</span> бэлэн.
+          <span className="font-semibold text-[#8b3dff]">Нархан найз</span> бэлэн.
           Бусад найзууд тун удахгүй!
         </p>
 

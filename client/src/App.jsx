@@ -30,7 +30,7 @@ function App() {
       <AvatarIntro
         onBack={() => navigate("/")}
         onContinue={(nickname) =>
-          navigate("/learn", { nickname, avatar: "narsbagsh" })
+          navigate("/learn", { nickname, avatar: "sun-buddy" })
         }
       />
     );
@@ -64,7 +64,7 @@ function App() {
               navigate("/");
             }}
           ></a>
-          <div className="step">Нарс багштай суралц</div>
+          <div className="step">Нархан найзтай суралц</div>
         </nav>
 
         <AvatarSession nickname={name} />

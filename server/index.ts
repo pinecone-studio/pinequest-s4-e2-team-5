@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import OpenAI from "openai";
 import progressRouter from "./api/progress";
+import hintsRouter from "./api/hints";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -10,6 +11,7 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 app.use(cors());
 app.use(express.json({ limit: "12mb" }));
 app.use("/api/progress", progressRouter);
+app.use("/api/hints", hintsRouter);
 
 app.get("/", (_req, res) => {
   res.json({ message: "PineQuest server ажиллаж байна! 🌲" });
@@ -34,10 +36,15 @@ app.post("/api/chat", async (req: any, res: any) => {
 8. Чиний хариу ДУУ хоолойгоор уншигдана. Тиймээс байгалийн, дулаахан, ярианы хэлээр бич. Emoji, тусгай тэмдэгт, markdown, дугаарлал БҮҮ хэрэглэ — зөвхөн хүн ярьдаг шиг цэвэр өгүүлбэр. ТООГ ХЭЗЭЭ Ч ЦИФРЭЭР бичихгүй — заавал үгэнд хөрвүүлж бич. Жишээ нь: 315 → "гурван зуун арван тав", 114 → "нэг зуун арван дөрөв".
 9. +18, хүчирхийлэл, айдас төрүүлэх, аюултай ямар ч агуулга огт бүү дурд. Үргэлж эерэг, найрсаг, аюулгүй бай.`;
 
+  // messages хоосон үед анхны тайлбарыг эхлүүлэх trigger
+  const allMessages = messages.length === 0
+    ? [{ role: "user" as const, content: "Даалгаврыг тайлбарлаад эхэл." }]
+    : messages;
+
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4.1-mini",
-      messages: [{ role: "system", content: systemPrompt }, ...messages],
+      model: "gpt-4o-mini",
+      messages: [{ role: "system", content: systemPrompt }, ...allMessages],
       temperature: 0.75,
       max_tokens: 200,
     });
@@ -47,28 +54,15 @@ app.post("/api/chat", async (req: any, res: any) => {
   }
 });
 
-function sanitizeForChimege(text: string): string {
-  return text
-    .replace(/[^Ѐ-ӿ\s?!.\-'":,]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 function splitIntoChunks(text: string, maxLen = 280): string[] {
   if (text.length <= maxLen) return [text];
   const chunks: string[] = [];
   let remaining = text;
   while (remaining.length > 0) {
-    if (remaining.length <= maxLen) {
-      chunks.push(remaining);
-      break;
-    }
+    if (remaining.length <= maxLen) { chunks.push(remaining); break; }
     let cut = maxLen;
     for (let i = maxLen - 1; i > 0; i--) {
-      if (".!?,".includes(remaining[i] ?? "")) {
-        cut = i + 1;
-        break;
-      }
+      if (".!?,".includes(remaining[i] ?? "")) { cut = i + 1; break; }
     }
     chunks.push(remaining.slice(0, cut).trim());
     remaining = remaining.slice(cut).trim();
@@ -76,64 +70,43 @@ function splitIntoChunks(text: string, maxLen = 280): string[] {
   return chunks.filter((c) => c.length > 0);
 }
 
-function concatWavBuffers(buffers: Buffer[]): Buffer {
-  const first = buffers[0];
-  if (buffers.length === 1 || !first) return first ?? Buffer.alloc(0);
-  const findData = (buf: Buffer): { offset: number; size: number } | null => {
-    for (let i = 12; i < buf.length - 8; i++) {
-      if (buf.readUInt32BE(i) === 0x64617461) {
-        return { offset: i + 8, size: buf.readUInt32LE(i + 4) };
-      }
-    }
-    return null;
-  };
-  const firstChunk = findData(first);
-  if (!firstChunk) return first;
-  const pcm = buffers.map((b) => {
-    const d = findData(b);
-    return d ? b.subarray(d.offset, d.offset + d.size) : Buffer.alloc(0);
-  });
-  const totalPcm = pcm.reduce((s, c) => s + c.length, 0);
-  const header = Buffer.from(first.subarray(0, firstChunk.offset));
-  header.writeUInt32LE(totalPcm, firstChunk.offset - 4);
-  header.writeUInt32LE(header.length - 8 + totalPcm, 4);
-  return Buffer.concat([header, ...pcm]);
-}
-
 app.post("/api/tts", async (req: any, res: any) => {
   const { text } = req.body;
   if (!text) return res.status(400).json({ error: "text required" });
 
-  const clean = sanitizeForChimege(text);
-  if (!clean)
-    return res.status(400).json({ error: "empty text after sanitize" });
-
   try {
-    const chunks = splitIntoChunks(clean);
+    const chunks = splitIntoChunks(text);
     const audioBuffers: Buffer[] = [];
+
+    let chimegeOk = true;
     for (const chunk of chunks) {
-      const chimegeRes = await fetch(
-        "https://api.chimege.com/v1.2/synthesize",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "text/plain",
-            Token: process.env.CHIMEGE_API_TTS ?? "",
-          },
-          body: chunk,
+      const chimegeRes = await fetch("https://api.chimege.com/v1.2/synthesize", {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/plain",
+          Token: process.env.NEXT_PUBLIC_CHIMEGE_API_KEY ?? "",
         },
-      );
+        body: chunk,
+      });
       if (!chimegeRes.ok) {
-        const detail = await chimegeRes.text();
-        return res
-          .status(chimegeRes.status)
-          .json({ error: "Chimege API failed", detail });
+        chimegeOk = false;
+        console.warn("Chimege unavailable, falling back to OpenAI TTS");
+        break;
       }
       audioBuffers.push(Buffer.from(await chimegeRes.arrayBuffer()));
     }
-    const combined = concatWavBuffers(audioBuffers);
-    res.set("Content-Type", "audio/wav");
-    res.send(combined);
+
+    if (chimegeOk && audioBuffers.length > 0) {
+      const combined = audioBuffers.length === 1 ? audioBuffers[0]! : Buffer.concat(audioBuffers);
+      res.set("Content-Type", "audio/wav");
+      return res.send(combined);
+    }
+
+    // Chimege ажиллахгүй бол OpenAI TTS fallback
+    const mp3 = await openai.audio.speech.create({ model: "tts-1", voice: "nova", input: text });
+    const buffer = Buffer.from(await mp3.arrayBuffer());
+    res.set("Content-Type", "audio/mpeg");
+    res.send(buffer);
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
