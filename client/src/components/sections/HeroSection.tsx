@@ -20,11 +20,11 @@ export default function HeroSection() {
   const [flowers, setFlowers] = useState<FlowerConfig[]>([]);
   const [ready, setReady] = useState(false);
 
-  // Generate flowers once on mount
+  
   useEffect(() => {
     const generated = generateFlowers();
     setFlowers(generated);
-    // tiny delay to allow CSS fade-in
+    
     const timer = setTimeout(() => setReady(true), 100);
     return () => clearTimeout(timer);
   }, []);

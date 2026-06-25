@@ -39,11 +39,10 @@ export default function ContactsSection({
 
   const circles = getCirclesConfig(leftCircleRef, rightCircleRef);
 
-  // Avatar selection gate for the start CTA.
+  
   const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [showError, setShowError] = useState(false);
-  // bumped on each failed start so the toast re-plays its entrance animation
   const [errorTick, setErrorTick] = useState(0);
 
   const selectedName =
