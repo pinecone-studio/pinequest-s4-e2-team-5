@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react'
-
-const API = 'http://localhost:3000'
+import { API_BASE } from '../../lib/config.js'
 
 export function HomeworkUpload({ onHomeworkLoaded }) {
   const [preview, setPreview]     = useState(null)
@@ -24,7 +23,7 @@ export function HomeworkUpload({ onHomeworkLoaded }) {
         const base64    = dataUrl.split(',')[1]
         const mimeType  = file.type
 
-        const res = await fetch(`${API}/api/analyze-homework`, {
+        const res = await fetch(`${API_BASE}/api/analyze-homework`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ imageBase64: base64, mimeType }),

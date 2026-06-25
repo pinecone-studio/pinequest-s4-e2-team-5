@@ -9,13 +9,13 @@ export default function Header() {
   const footerRef = useRef<HTMLParagraphElement>(null);
   const arrowRef = useRef<SVGPathElement>(null);
 
-  // Trigger animations
+ 
   useHeaderAnimation(nameRef, roleRef, footerRef, arrowRef);
 
   return (
     <div className="flex items-center justify-center z-20 pointer-events-none">
       <div className="relative pointer-events-auto min-[320px]:-mt-40 sm:mt-0">
-        {/* Role (animated char-by-char) */}
+       
         <p
           ref={roleRef}
           className="absolute left-1/2 min-w-[264px] -top-7 text-neutral-900 min-[320px]:text-lg sm:text-xl md:text-2xl font-holtwood -translate-x-1/2 z-25"
@@ -39,9 +39,9 @@ export default function Header() {
           <span className="text-[#FACF71]">Learn</span>
         </h1>
 
-        {/* Footer note (fade-in) */}
+     
 
-        {/* Scroll-down arrow (draw + hover) */}
+        
         <svg
           className="absolute left-1/2 -bottom-35 -translate-x-1/2  hover:scale-110 transition-transform duration-300 z-10"
           width="30"

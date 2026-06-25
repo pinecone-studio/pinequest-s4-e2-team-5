@@ -1,7 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { api } from "../../lib/api.js";
-
-const API = "http://localhost:3000";
+import { API_BASE } from "../../lib/config.js";
 
 class VAD {
   constructor(
@@ -117,7 +116,7 @@ export function useTutor({ nickname, homeworkContext }) {
     setLastText(text);
     setError(null);
     try {
-      const res = await fetch(`${API}/api/tts`, {
+      const res = await fetch(`${API_BASE}/api/tts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
@@ -157,7 +156,7 @@ export function useTutor({ nickname, homeworkContext }) {
       setIsThinking(true);
       setError(null);
       try {
-        const res = await fetch(`${API}/api/chat`, {
+        const res = await fetch(`${API_BASE}/api/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -194,7 +193,7 @@ export function useTutor({ nickname, homeworkContext }) {
       isBusyRef.current = true;
       setIsThinking(true);
       try {
-        const res = await fetch(`${API}/api/stt`, {
+        const res = await fetch(`${API_BASE}/api/stt`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ audio: base64, mimeType }),
