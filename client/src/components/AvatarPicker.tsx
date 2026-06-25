@@ -9,10 +9,9 @@ export type AvatarOption = {
   available: boolean;
 };
 
-// Only the sunny tutor is wired up for now; the rest are teasers.
-// A playful mix of warm, toy-like characters for young kids.
+
 export const AVATARS: AvatarOption[] = [
-  { id: "sun-buddy", name: "Нархан найз", emoji: "☀️", available: true },
+  { id: "robot", name: "Робот", emoji: "🤖", available: true },
   { id: "hero", name: "Баатар", emoji: "🦸", available: false },
   { id: "rocket", name: "Пуужин", emoji: "🚀", available: false },
   { id: "dino", name: "Дино", emoji: "🦖", available: false },
@@ -27,7 +26,7 @@ export default function AvatarPicker({
   onSelect: (id: string) => void;
   onClose: () => void;
 }) {
-  // Close on Escape
+  
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();

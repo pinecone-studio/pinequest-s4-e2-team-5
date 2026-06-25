@@ -15,24 +15,25 @@ export default function AboutSection() {
   const circleRef = useRef<HTMLDivElement>(null);
   const textLeftRef = useRef<HTMLHeadingElement>(null);
   const textRightRef = useRef<HTMLHeadingElement>(null);
+
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // State to track when section is mounted
+  
   const [triggerEl, setTriggerEl] = useState<HTMLElement | null>(null);
 
-  // Set trigger after mount
+  
   useEffect(() => {
     if (aboutSectionRef.current) {
       setTriggerEl(aboutSectionRef.current);
     }
   }, [aboutSectionRef]);
 
-  // run animations only when trigger is ready
+ 
   useCircleTextAnimation(circleRef, textLeftRef, textRightRef, triggerEl);
   useWrapperParallax(wrapperRef, triggerEl);
 
-  // content
-  const texts = getTexts(textLeftRef, textRightRef);
+
+  const texts = getTexts(textLeftRef, textRightRef, );
 
   return (
     <div
@@ -55,7 +56,7 @@ export default function AboutSection() {
           <h1
             key={i}
             ref={ref}
-            className={`absolute ${top} z-10 min-[320px]:text-3xl sm:text-5xl md:text-7xl font-bold uppercase tracking-widest font-holtwood mix-blend-difference`}
+            className={`absolute  ${top} z-10 text-center w-full px-4 text-neutral-100  min-[320px]:text-3xl sm:text-5xl md:text-7xl font-bold uppercase tracking-widest font-holtwood mix-blend-difference`}
           >
             {text}
           </h1>
