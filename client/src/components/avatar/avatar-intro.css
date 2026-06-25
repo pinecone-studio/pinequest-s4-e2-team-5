@@ -75,6 +75,27 @@
   color: #3a4a49;
 }
 
+.avatar-intro__listening {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f7a5c;
+}
+.avatar-intro__listening-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #1f7a5c;
+  animation: avatar-intro-pulse 1s ease-in-out infinite;
+}
+@keyframes avatar-intro-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.5; }
+}
+
 .avatar-intro__input {
   width: 100%;
   padding: 14px 18px;
