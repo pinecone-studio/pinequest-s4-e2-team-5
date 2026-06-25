@@ -15,7 +15,7 @@ export function useHeaderAnimation(
     const footer = footerRef.current;
     const arrow = arrowRef.current;
  
-    if (!name || !role || !footer || !arrow) return;
+    if (!name || !role || !arrow) return;
  
     // 1. Name: slide up from bottom
     gsap.fromTo(
@@ -40,12 +40,14 @@ export function useHeaderAnimation(
       }
     );
  
-    // 3. Footer note: fade in from below
-    gsap.fromTo(
-      footer,
-      { y: 20, opacity: 0 },
-      { y: 0, opacity: 1, duration: 1, ease: 'power3.out', delay: 3.5 }
-    );
+    // 3. Footer note: fade in from below (optional — only if present)
+    if (footer) {
+      gsap.fromTo(
+        footer,
+        { y: 20, opacity: 0 },
+        { y: 0, opacity: 1, duration: 1, ease: 'power3.out', delay: 3.5 }
+      );
+    }
  
     // 4. Arrow: draw SVG stroke
     gsap.fromTo(
