@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import OpenAI from "openai";
+import progressRouter from "./api/progress";
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -8,6 +9,7 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 app.use(cors());
 app.use(express.json({ limit: "12mb" }));
+app.use("/api/progress", progressRouter);
 
 app.get("/", (_req, res) => {
   res.json({ message: "PineQuest server ажиллаж байна! 🌲" });
@@ -182,6 +184,103 @@ app.post("/api/analyze-homework", async (req: any, res: any) => {
       max_tokens: 600,
     });
     res.json({ context: response.choices[0]?.message.content ?? "" });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// POST /api/ai/analyze — бодлогыг шинжилж бүтэцтэй мэдээлэл гаргах
+app.post("/api/ai/analyze", async (req: any, res: any) => {
+  const { problem } = req.body;
+  if (!problem) return res.status(400).json({ error: "problem шаардлагатай" });
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "user",
+          content: `Та бага ангийн математикийн мэргэжилтэн. Энэ бодлогыг 6-9 насны хүүхдэд зориулан шинжил.
+Бодлого: "${problem}"
+
+Зөвхөн JSON буцаа, тайлбар бүү нэм:
+{
+  "grade": анги (1-3 тоо),
+  "skill": "addition" | "subtraction" | "multiplication" | "division" | "comparison",
+  "strategy": бодох арга (жишээ: "make_ten", "count_on", "doubles", "split"),
+  "difficulty": "easy" | "medium" | "hard",
+  "commonMistake": хамгийн түгээмэл буруу хариулт (тоо),
+  "correctAnswer": зөв хариулт (тоо),
+  "steps": [монголоор, хүүхдэд ойлгомжтой алхмуудыг богино өгүүлбэрээр]
+}`,
+        },
+      ],
+      response_format: { type: "json_object" },
+      max_tokens: 400,
+      temperature: 0.3,
+    });
+
+    const analysis = JSON.parse(
+      response.choices[0]?.message?.content ?? "{}"
+    );
+    res.json(analysis);
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// POST /api/ai/generate-game — шинжилгээнд үндэслэн тоглоом үүсгэх
+app.post("/api/ai/generate-game", async (req: any, res: any) => {
+  const { problem, analysis } = req.body;
+  if (!problem || !analysis)
+    return res.status(400).json({ error: "problem болон analysis шаардлагатай" });
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "user",
+          content: `Та 6-9 насны хүүхдэд зориулсан интерактив математикийн тоглоом зохиодог.
+Бодлого: "${problem}"
+Шинжилгээ: ${JSON.stringify(analysis)}
+
+Дараах scene-үүдээс хамгийн тохирохыг сонго:
+- "battery_charge": тоо нэмэх → зай цэнэглэх (нэмэх бодлогод сайн)
+- "space_collect": сансраас одон цуглуулах (нэмэх, хасах)
+- "treasure_fill": эрдэнэсийн сав дүүргэх (нэмэх)
+- "train_cars": галт тэргэнд вагон нэмэх (нэмэх, тоолох)
+- "cookie_jar": жигнэмэг сав (хасах, хуваах)
+
+Зөвхөн JSON буцаа:
+{
+  "scene": scene нэр,
+  "goal": зорилго тайлбар (жишээ: "reach_13"),
+  "targetNumber": эцсийн хариулт (тоо),
+  "startNumber": эхний тоо,
+  "addNumber": нэмэх/хасах тоо,
+  "objects": [scene-д харагдах зүйлсийн нэрс],
+  "voiceCharacter": "robot",
+  "narration": {
+    "intro": монголоор — робот тоглоомыг танилцуулна (1-2 өгүүлбэр, хөгжилтэй),
+    "hint": монголоор — хүүхэд гацвал зөвлөгөө (1 өгүүлбэр),
+    "success": монголоор — зөв хариулсан үед магтаал (1 өгүүлбэр)
+  },
+  "animationSteps": [
+    { "action": "set" | "add" | "complete", "value": тоо, "label": монголоор тайлбар }
+  ]
+}`,
+        },
+      ],
+      response_format: { type: "json_object" },
+      max_tokens: 600,
+      temperature: 0.7,
+    });
+
+    const game = JSON.parse(
+      response.choices[0]?.message?.content ?? "{}"
+    );
+    res.json(game);
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }

@@ -16,6 +16,7 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.108.2",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "openai": "^6.44.0"
