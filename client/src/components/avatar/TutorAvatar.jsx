@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { MascotScene } from '../KidMascotScene.jsx'
 import { useTutor } from './useTutor.js'
 import { DraggableTile } from '../lesson/DraggableTile.jsx'
@@ -268,8 +268,6 @@ export function TutorAvatar({ nickname, homeworkContext, avatar = 'sun-buddy' })
       : isThinking
         ? 'thinking'
         : 'ready'
-  const isRobotAvatar = avatar === 'robot'
-
   return (
     <div className="ta-root">
       <div className="ta-blob ta-blob-1" />
@@ -281,18 +279,8 @@ export function TutorAvatar({ nickname, homeworkContext, avatar = 'sun-buddy' })
         <MascotScene avatar={avatar} className="tutor-mascot" mood={mascotMood} />
       </div>
 
-      {/* LEFT COLUMN: robot + bubble */}
+      {/* LEFT COLUMN: bubble + controls */}
       <div className="ta-left">
-        <div className="ta-robot-wrap">
-          <div className={`ta-robot-inner ${isSpeaking ? 'robot-bounce' : ''}`}>
-            <MascotScene avatar={avatar} className="robot-spline" mood={mascotMood} />
-          </div>
-          <div className="ta-rings">
-            <div className={`ta-ring ta-ring-1 ${isSpeaking ? 'ring-active' : ''}`} />
-            <div className={`ta-ring ta-ring-2 ${isSpeaking ? 'ring-active' : ''}`} />
-          </div>
-        </div>
-
         <SpeechBubble text={lastText} isThinking={isThinking} />
 
         {/* Drag tiles below bubble */}
@@ -304,15 +292,11 @@ export function TutorAvatar({ nickname, homeworkContext, avatar = 'sun-buddy' })
           </div>
         )}
 
-        {!isRobotAvatar && (
-          <>
-            <div className="ta-status-row">
-              {isListening && <span className="tutor-listen-dot" />}
-              <span className={`tutor-status${statusCls ? ` ${statusCls}` : ''}`}>{statusText}</span>
-            </div>
-            {error && <p className="tutor-error">{error}</p>}
-          </>
-        )}
+        <div className="ta-status-row">
+          {isListening && <span className="tutor-listen-dot" />}
+          <span className={`tutor-status${statusCls ? ` ${statusCls}` : ''}`}>{statusText}</span>
+        </div>
+        {error && <p className="tutor-error">{error}</p>}
       </div>
 
       {/* RIGHT COLUMN: interactive board */}
