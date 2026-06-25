@@ -50,7 +50,7 @@ router.post("/chat", async (req, res) => {
     temperature: 0.8,
   });
 
-  const reply = completion.choices[0].message.content ?? "";
+  const reply = completion.choices[0]?.message.content ?? "";
 
   res.json({ reply });
 });
