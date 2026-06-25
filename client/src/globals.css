@@ -1,0 +1,87 @@
+/* Fonts — replaces Next.js `next/font` (Holtwood One SC + Roboto).
+   Must come before any other rule per the CSS @import spec. */
+@import url("https://fonts.googleapis.com/css2?family=Holtwood+One+SC&family=Roboto:ital,wght@0,400;0,500;0,700;1,400&display=swap");
+@import "tailwindcss";
+
+:root {
+  --font-holtwood: "Holtwood One SC", serif;
+  --font-roboto: "Roboto", sans-serif;
+}
+
+/* Expose the font variables as Tailwind utilities (font-holtwood / font-roboto)
+   so the landing components that use `font-holtwood` keep working. */
+@theme inline {
+  --font-holtwood: var(--font-holtwood);
+  --font-roboto: var(--font-roboto);
+}
+
+html,
+body {
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+}
+
+/* ---- Avatar picker + error toast animations ---- */
+@keyframes ap-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes ap-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes ap-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes ap-toast-in {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.85);
+  }
+  55% {
+    transform: translateY(0) scale(1.06);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.ap-overlay {
+  animation: ap-overlay-in 0.25s ease both;
+}
+.ap-modal {
+  animation: ap-modal-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.ap-card {
+  animation: ap-card-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.ap-toast {
+  animation: ap-toast-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ap-overlay,
+  .ap-modal,
+  .ap-card,
+  .ap-toast {
+    animation-duration: 0.01ms;
+  }
+}

@@ -1,5 +1,5 @@
 // clicks on AnimatedButton
-import { AppRouterInstance } from "next/dist/shared/lib/app-router-context.shared-runtime";
+import type { AppRouterInstance } from "@/shims/next-navigation";
 
 const scrollTo = (y: number) => {
   if (typeof window !== "undefined") {

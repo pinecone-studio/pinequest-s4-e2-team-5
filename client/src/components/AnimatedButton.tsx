@@ -5,7 +5,13 @@ import { useRouter } from "next/navigation";
 import { useButtonHover } from "@/hooks/useButtonHover";
 import { handleButtonClick } from "@/helpers/handleButtonClick";
 
-const AnimatedButton = ({ text }: { text: string }) => {
+const AnimatedButton = ({
+  text,
+  onClick,
+}: {
+  text: string;
+  onClick?: () => void;
+}) => {
   const bgRef = useRef<HTMLDivElement>(null);
   const topTextRef = useRef<HTMLSpanElement>(null);
   const bottomTextRef = useRef<HTMLSpanElement>(null);
@@ -34,7 +40,7 @@ const AnimatedButton = ({ text }: { text: string }) => {
       `}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onClick={() => handleButtonClick(text, router)}
+      onClick={() => (onClick ? onClick() : handleButtonClick(text, router))}
     >
       {/* Background fill on hover */}
       <div
