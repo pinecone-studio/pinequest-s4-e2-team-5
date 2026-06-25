@@ -5,8 +5,20 @@ import progressRouter from "./api/progress";
 import hintsRouter from "./api/hints";
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3010;
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const chimegeTtsEndpoint =
+  process.env.CHIMEGE_TTS_ENDPOINT ?? "https://api.chimege.com/v1.2/synthesize";
+
+function getChimegeTtsToken() {
+  return (
+    process.env.CHIMEGE_TTS_API_KEY ??
+    process.env.CHIMEGE_API_KEY ??
+    process.env.CHIMEGE_STT_API_KEY ??
+    process.env.NEXT_PUBLIC_CHIMEGE_API_KEY ??
+    ""
+  );
+}
 
 app.use(cors());
 app.use(express.json({ limit: "12mb" }));
@@ -77,29 +89,35 @@ app.post("/api/tts", async (req: any, res: any) => {
   try {
     const chunks = splitIntoChunks(text);
     const audioBuffers: Buffer[] = [];
+    const chimegeToken = getChimegeTtsToken();
 
-    let chimegeOk = true;
-    for (const chunk of chunks) {
-      const chimegeRes = await fetch("https://api.chimege.com/v1.2/synthesize", {
-        method: "POST",
-        headers: {
-          "Content-Type": "text/plain",
-          Token: process.env.NEXT_PUBLIC_CHIMEGE_API_KEY ?? "",
-        },
-        body: chunk,
-      });
-      if (!chimegeRes.ok) {
-        chimegeOk = false;
-        console.warn("Chimege unavailable, falling back to OpenAI TTS");
-        break;
+    if (chimegeToken) {
+      let chimegeOk = true;
+      let contentType = "audio/wav";
+
+      for (const chunk of chunks) {
+        const chimegeRes = await fetch(chimegeTtsEndpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "text/plain",
+            Token: chimegeToken,
+          },
+          body: chunk,
+        });
+        if (!chimegeRes.ok) {
+          chimegeOk = false;
+          console.warn("Chimege TTS unavailable, falling back to OpenAI TTS");
+          break;
+        }
+        contentType = chimegeRes.headers.get("content-type") ?? contentType;
+        audioBuffers.push(Buffer.from(await chimegeRes.arrayBuffer()));
       }
-      audioBuffers.push(Buffer.from(await chimegeRes.arrayBuffer()));
-    }
 
-    if (chimegeOk && audioBuffers.length > 0) {
-      const combined = audioBuffers.length === 1 ? audioBuffers[0]! : Buffer.concat(audioBuffers);
-      res.set("Content-Type", "audio/wav");
-      return res.send(combined);
+      if (chimegeOk && audioBuffers.length > 0) {
+        const combined = audioBuffers.length === 1 ? audioBuffers[0]! : Buffer.concat(audioBuffers);
+        res.set("Content-Type", contentType);
+        return res.send(combined);
+      }
     }
 
     // Chimege ажиллахгүй бол OpenAI TTS fallback
@@ -259,6 +277,6 @@ app.post("/api/ai/generate-game", async (req: any, res: any) => {
   }
 });
 
-app.listen(port, () => {
+app.listen(port, "127.0.0.1", () => {
   console.log(`Server ${port} порт дээр ажиллаж байна`);
 });
