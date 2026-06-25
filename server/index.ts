@@ -3,18 +3,31 @@ import cors from "cors";
 import OpenAI from "openai";
 import progressRouter from "./api/progress";
 import hintsRouter from "./api/hints";
+import { normalizeForSpeech } from "./lib/mn-speech";
 
 const app = express();
 const port = process.env.PORT || 3010;
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const chimegeTtsEndpoint =
   process.env.CHIMEGE_TTS_ENDPOINT ?? "https://api.chimege.com/v1.2/synthesize";
+const chimegeSttEndpoint =
+  process.env.CHIMEGE_STT_ENDPOINT ?? "https://api.chimege.com/v1.2/transcribe";
 
+// TTS (synthesize) нь ТУСДАА токен шаарддаг. STT-only токеныг энд хэрэглэвэл
+// хүсэлт бүрд 403 буцааж дэмий саатал үүсгэдэг тул зөвхөн TTS-д зориулсан түлхүүр авна.
+// Chimege дуу хоолой идэвхжүүлэхийн тулд .env-д CHIMEGE_TTS_API_KEY=... нэмнэ.
 function getChimegeTtsToken() {
   return (
     process.env.CHIMEGE_TTS_API_KEY ??
     process.env.CHIMEGE_API_KEY ??
+    ""
+  );
+}
+
+function getChimegeSttToken() {
+  return (
     process.env.CHIMEGE_STT_API_KEY ??
+    process.env.CHIMEGE_API_KEY ??
     process.env.NEXT_PUBLIC_CHIMEGE_API_KEY ??
     ""
   );
@@ -32,7 +45,7 @@ app.get("/", (_req, res) => {
 app.post("/api/chat", async (req: any, res: any) => {
   const { nickname = "хүүхэд", homeworkContext = "", messages = [] } = req.body;
 
-  const systemPrompt = `Чи бол "Нарс багш" — бага ангийн хүүхэдтэй ярьдаг найрсаг, тэвчээртэй математикийн AI багш. Чи хүүхэдтэй яг л дотны найз, хайрладаг багш шигээ дулаахан ярина.
+  const systemPrompt = `Чи бол "Жой багш" — бага ангийн хүүхэдтэй ярьдаг найрсаг, тэвчээртэй математикийн AI багш. Чи хүүхэдтэй яг л дотны найз, хайрладаг багш шигээ дулаахан ярина.
 
 Хүүхдийн нэр (nickname): ${nickname}
 Одоогийн гэрийн даалгавар / бодлого: ${homeworkContext || "Одоогоор даалгавар оруулаагүй байна."}
@@ -87,7 +100,10 @@ app.post("/api/tts", async (req: any, res: any) => {
   if (!text) return res.status(400).json({ error: "text required" });
 
   try {
-    const chunks = splitIntoChunks(text);
+    // Дижит ба математик тэмдгийг монгол үгэнд хөрвүүлж байж л дуу болгоно.
+    // (ж: "31+3=" → "гучин нэг нэмэх гурав тэнцүү"). Чанк хуваахаас ӨМНӨ хийнэ.
+    const speech = normalizeForSpeech(text);
+    const chunks = splitIntoChunks(speech);
     const audioBuffers: Buffer[] = [];
     const chimegeToken = getChimegeTtsToken();
 
@@ -121,7 +137,7 @@ app.post("/api/tts", async (req: any, res: any) => {
     }
 
     // Chimege ажиллахгүй бол OpenAI TTS fallback
-    const mp3 = await openai.audio.speech.create({ model: "tts-1", voice: "nova", input: text });
+    const mp3 = await openai.audio.speech.create({ model: "tts-1", voice: "nova", input: speech });
     const buffer = Buffer.from(await mp3.arrayBuffer());
     res.set("Content-Type", "audio/mpeg");
     res.send(buffer);
@@ -136,6 +152,48 @@ app.post("/api/stt", async (req: any, res: any) => {
 
   try {
     const buf = Buffer.from(audio, "base64");
+
+    // 1) Эхлээд Chimege STT (монгол хэлэнд илүү тохиромжтой) оролдоно.
+    const chimegeToken = getChimegeSttToken();
+    if (chimegeToken) {
+      try {
+        const chimegeRes = await fetch(chimegeSttEndpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": mimeType,
+            Token: chimegeToken,
+          },
+          body: buf,
+        });
+        if (chimegeRes.ok) {
+          const ct = chimegeRes.headers.get("content-type") ?? "";
+          const raw = await chimegeRes.text();
+          // Chimege нь JSON эсвэл цэвэр текст буцааж болно.
+          let text = "";
+          if (ct.includes("application/json")) {
+            try {
+              const j = JSON.parse(raw);
+              text = j.text ?? j.result ?? j.transcript ?? "";
+            } catch {
+              text = raw;
+            }
+          } else {
+            text = raw;
+          }
+          text = (text ?? "").trim();
+          if (text) return res.json({ text });
+          console.warn("Chimege STT хоосон хариу, Whisper руу шилжиж байна");
+        } else {
+          console.warn(
+            `Chimege STT боломжгүй (${chimegeRes.status}), Whisper руу шилжиж байна`,
+          );
+        }
+      } catch (chimegeErr) {
+        console.warn("Chimege STT алдаа, Whisper руу шилжиж байна:", chimegeErr);
+      }
+    }
+
+    // 2) Chimege амжилтгүй / токенгүй бол OpenAI Whisper fallback.
     const ext = mimeType.includes("mp4") ? "mp4" : "webm";
     const file = new File([buf], `recording.${ext}`, { type: mimeType });
     const transcription = await openai.audio.transcriptions.create({
