@@ -18,22 +18,25 @@ export default function Header() {
        
         <p
           ref={roleRef}
-          className="absolute left-1/2 min-w-[264px] -top-7 text-white min-[320px]:text-lg sm:text-xl md:text-2xl font-holtwood -translate-x-1/2 z-25"
+          className="absolute left-1/2 min-w-[264px] -top-7 text-neutral-900 min-[320px]:text-lg sm:text-xl md:text-2xl font-holtwood -translate-x-1/2 z-25"
         >
           MATH AI
         </p>
 
-        
+        <br />
+
+        {/* Name (slide-up) */}
         <h1
           ref={nameRef}
-          className="min-[320px]:text-4xl sm:text-5xl font-holtwood font-bold text-white drop-shadow-2xl bg-neutral-900 hover:text-[#ffe066] transition-colors duration-600 px-6 py-3 rounded-lg text-center z-10 will-change-transform"
+          className="min-[320px]:text-6xl sm:text-7xl md:text-8xl font-holtwood font-bold drop-shadow-2xl bg-neutral-900 px-8 py-4 rounded-lg text-center z-10 will-change-transform"
           style={{
             opacity: 0,
             transform: "translateY(60px)",
             willChange: "transform, opacity",
           }}
         >
-          DAALGAVAR
+          <span className="text-white">Joy</span>
+          <span className="text-[#FACF71]">Learn</span>
         </h1>
 
      
