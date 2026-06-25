@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { KidMascotScene } from '../KidMascotScene.jsx'
+import { MascotScene } from '../KidMascotScene.jsx'
 import { useTutor } from './useTutor.js'
 import { DraggableTile } from '../lesson/DraggableTile.jsx'
 
@@ -208,7 +208,7 @@ function SpeechBubble({ text, isThinking }) {
   )
 }
 
-export function TutorAvatar({ nickname, homeworkContext }) {
+export function TutorAvatar({ nickname, homeworkContext, avatar = 'sun-buddy' }) {
   const {
     isSpeaking, isListening, isThinking, error,
     lastText, greet, announceHomework, chat,
@@ -273,14 +273,14 @@ export function TutorAvatar({ nickname, homeworkContext }) {
     <div className="tutor-avatar">
       {/* 3D kid-friendly tutor */}
       <div className="tutor-spline-wrap">
-        <KidMascotScene className="tutor-mascot" mood={mascotMood} />
+        <MascotScene avatar={avatar} className="tutor-mascot" mood={mascotMood} />
       </div>
 
       {/* LEFT COLUMN: robot + bubble */}
       <div className="ta-left">
         <div className="ta-robot-wrap">
           <div className={`ta-robot-inner ${isSpeaking ? 'robot-bounce' : ''}`}>
-            <SplineScene className="robot-spline" />
+            <MascotScene avatar={avatar} className="robot-spline" mood={mascotMood} />
           </div>
           <div className="ta-rings">
             <div className={`ta-ring ta-ring-1 ${isSpeaking ? 'ring-active' : ''}`} />
