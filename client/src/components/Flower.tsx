@@ -1,11 +1,13 @@
 "use client";
 import { useRef } from "react";
-import { FLOWER_SHAPES } from "@/lib/flowerShapes";
 import { useRandomFlowerColors } from "@/hooks/useRandomFlowerColors";
-import { useFlowerEntranceAnimation } from "@/hooks/useFlowerEntranceAnimation";
+import { useRandomMathSymbol } from "@/hooks/useRandomMathSymbol";
+import { useMathSymbolEntranceAnimation } from "@/hooks/useMathSymbolEntranceAnimation";
 import { useFlowerHoverScale } from "@/hooks/useFlowerHoverScale";
 import { useDraggable } from "@/hooks/useDraggable";
 
+// Kept for backwards compatibility with callers (HeroSection / Footer) that
+// still pass a `variant`. The visual is now a math symbol rather than a flower.
 export type FlowerVariant = "one" | "two" | "three" | "four" | "five";
 
 interface FlowerProps {
@@ -17,51 +19,52 @@ interface FlowerProps {
 }
 
 export default function Flower({
-  variant = "one",
   size = 100,
   delay = 0,
   draggable = true,
   opacity = false,
 }: FlowerProps) {
-  const flowerRef = useRef<HTMLDivElement | null>(null);
-  const pathRef = useRef<SVGPathElement | null>(null);
-  const circleRef = useRef<SVGCircleElement | null>(null);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const symbolRef = useRef<SVGTextElement | null>(null);
 
   const colors = useRandomFlowerColors();
-  const shape = FLOWER_SHAPES[variant];
+  const symbol = useRandomMathSymbol();
 
-  useFlowerEntranceAnimation(flowerRef, pathRef, circleRef, delay);
-  useFlowerHoverScale(flowerRef);
-  useDraggable(flowerRef, draggable);
+  useMathSymbolEntranceAnimation(wrapperRef, symbolRef, delay);
+  useFlowerHoverScale(wrapperRef);
+  useDraggable(wrapperRef, draggable);
 
   return (
     <div
-      ref={flowerRef}
+      ref={wrapperRef}
       className={draggable ? "grabme" : ""}
       style={{ display: "inline-block" }}
     >
       <svg
         width={size}
         height={size}
-        viewBox={shape.viewBox}
+        viewBox="0 0 100 100"
         className={opacity ? "opacity-50" : ""}
         xmlns="http://www.w3.org/2000/svg"
       >
-        <path
-          ref={pathRef}
-          d={shape.path}
-          stroke="#000000"
-          strokeWidth="1.2"
+        <text
+          ref={symbolRef}
+          x="50"
+          y="54"
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize="68"
+          fontWeight={900}
+          fontFamily="'Manrope', system-ui, sans-serif"
           fill={colors?.petalColor ?? "transparent"}
-        />
-        <circle
-          ref={circleRef}
-          cx={shape.center.cx}
-          cy={shape.center.cy}
-          r={shape.center.r}
-          fill={colors?.centerColor ?? "transparent"}
           stroke="#000000"
-        />
+          strokeWidth={3}
+          strokeLinejoin="round"
+          paintOrder="stroke"
+          style={{ userSelect: "none" }}
+        >
+          {symbol ?? ""}
+        </text>
       </svg>
     </div>
   );

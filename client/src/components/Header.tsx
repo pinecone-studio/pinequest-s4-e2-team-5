@@ -37,12 +37,6 @@ export default function Header() {
         </h1>
 
         {/* Footer note (fade-in) */}
-        <p
-          ref={footerRef}
-          className="absolute min-[320px]:right-5 opacity-0 lg:right-0 -bottom-4 text-white text-sm z-15"
-        >
-          (цэцгүүдийг хүрч үзээрэй)
-        </p>
 
         {/* Scroll-down arrow (draw + hover) */}
         <svg
