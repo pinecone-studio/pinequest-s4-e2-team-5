@@ -87,7 +87,8 @@ export function useTutor({ nickname, homeworkContext, interpretCommand }) {
     stopCurrentAudio();
     isBusyRef.current = true;
     setIsSpeaking(true);
-    setLastText(text);
+    // Текстийг энд БИШ, аудио жинхэнэ тоглож эхлэх үед тавина (доор onplay) —
+    // ингэснээр speech bubble-ийн бичиг дуу хоолойтойгоо синкждэнэ.
     setError(null);
     try {
       const res = await fetch(`${API_BASE}/api/tts`, {
@@ -109,6 +110,8 @@ export function useTutor({ nickname, homeworkContext, interpretCommand }) {
         const audio = new Audio(url);
         currentAudioRef.current = audio;
         audioResolveRef.current = resolve;
+        // Дуу хоолой жинхэнэ эхлэх агшинд текстийг гаргаж синкжүүлнэ.
+        audio.onplay = () => { if (seq === speakSeqRef.current) setLastText(text); };
         audio.onended = () => resolve();
         audio.onerror = (e) => reject(e);
         audio.play().catch(reject);

@@ -6,6 +6,7 @@ import { RobotInteractive } from './RobotInteractive.jsx'
 import { ComparisonInteractive } from './ComparisonInteractive.jsx'
 import { MissingAddendInteractive } from './MissingAddendInteractive.jsx'
 import { ProblemList } from './ProblemList.jsx'
+import { CelebrationBurst } from './CelebrationBurst.jsx'
 import { extractProblemNumber } from './extractProblemNumber.js'
 import '../lesson/lesson.css'
 import '../lesson/big-add-lesson.css'
@@ -118,11 +119,7 @@ function VisualMath({ problem, choices, onCorrect, onWrong }) {
               <div className="vm-durs-wrap vm-ans-durs">
                 <NumberVisual value={answer} />
               </div>
-              <div className="adz-burst">
-                {['⭐','✨','🎉','💫','🌟','✨'].map((s, i) => (
-                  <span key={i} className="adz-burst-item" style={{ '--angle': `${i * 60}deg` }}>{s}</span>
-                ))}
-              </div>
+              <CelebrationBurst />
             </>
           ) : (
             <span className="adz-q">?</span>
@@ -180,11 +177,7 @@ function AnswerChoice({ problem, onCorrect, onWrong }) {
       {phase === 'correct' ? (
         <div className="vm-ans-slot vm-ans-correct">
           <div className="vm-durs-wrap vm-ans-durs"><NumberVisual value={answer} /></div>
-          <div className="adz-burst">
-            {['⭐','✨','🎉','💫','🌟','✨'].map((s, i) => (
-              <span key={i} className="adz-burst-item" style={{ '--angle': `${i * 60}deg` }}>{s}</span>
-            ))}
-          </div>
+          <CelebrationBurst />
         </div>
       ) : (
         <div className="vm-choice-grid">
