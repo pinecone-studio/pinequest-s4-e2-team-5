@@ -268,9 +268,14 @@ export function TutorAvatar({ nickname, homeworkContext, avatar = 'sun-buddy' })
       : isThinking
         ? 'thinking'
         : 'ready'
+  const isRobotAvatar = avatar === 'robot'
 
   return (
-    <div className="tutor-avatar">
+    <div className="ta-root">
+      <div className="ta-blob ta-blob-1" />
+      <div className="ta-blob ta-blob-2" />
+      <div className="ta-blob ta-blob-3" />
+
       {/* 3D kid-friendly tutor */}
       <div className="tutor-spline-wrap">
         <MascotScene avatar={avatar} className="tutor-mascot" mood={mascotMood} />
@@ -299,11 +304,15 @@ export function TutorAvatar({ nickname, homeworkContext, avatar = 'sun-buddy' })
           </div>
         )}
 
-        <div className="ta-status-row">
-          {isListening && <span className="tutor-listen-dot" />}
-          <span className={`tutor-status${statusCls ? ` ${statusCls}` : ''}`}>{statusText}</span>
-        </div>
-        {error && <p className="tutor-error">{error}</p>}
+        {!isRobotAvatar && (
+          <>
+            <div className="ta-status-row">
+              {isListening && <span className="tutor-listen-dot" />}
+              <span className={`tutor-status${statusCls ? ` ${statusCls}` : ''}`}>{statusText}</span>
+            </div>
+            {error && <p className="tutor-error">{error}</p>}
+          </>
+        )}
       </div>
 
       {/* RIGHT COLUMN: interactive board */}
@@ -312,10 +321,7 @@ export function TutorAvatar({ nickname, homeworkContext, avatar = 'sun-buddy' })
           <VisualMath problem={problem} onCorrect={handleCorrect} onWrong={handleWrong} />
         ) : (
           <div className="ta-idle">
-            {homeworkContext
-              ? <p className="ta-hw-txt">{homeworkContext.slice(0, 120)}</p>
-              : <p className="ta-idle-msg">Даалгаврын зургаа оруул 📄</p>
-            }
+            {homeworkContext && <p className="ta-hw-txt">{homeworkContext.slice(0, 120)}</p>}
           </div>
         )}
       </div>
