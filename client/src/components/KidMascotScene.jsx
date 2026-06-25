@@ -1,9 +1,11 @@
+import { SplineScene } from './SplineScene.jsx'
+
 export function KidMascotScene({ className = '', mood = 'ready' }) {
   return (
     <div
       className={`kid-mascot-scene kid-mascot-scene--${mood}${className ? ` ${className}` : ''}`}
       role="img"
-      aria-label="Инээмсэглэсэн 3D Нархан найз"
+      aria-label="Инээмсэглэсэн 3D Нархан"
     >
       <div className="kid-mascot-orbit kid-mascot-orbit--one">
         <span>1</span>
@@ -43,4 +45,12 @@ export function KidMascotScene({ className = '', mood = 'ready' }) {
       </div>
     </div>
   )
+}
+
+export function MascotScene({ avatar = 'sun-buddy', className = '', mood = 'ready' }) {
+  if (avatar === 'robot') {
+    return <SplineScene className={className} />
+  }
+
+  return <KidMascotScene className={className} mood={mood} />
 }
