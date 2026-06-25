@@ -5,7 +5,7 @@ import { API_BASE } from "../../lib/config.js";
 import "./avatar-intro.css";
 
 const ROBOT_INTRO_TEXT =
-  "Сайн байна уу? Таны нэрийг хэн гэдэг вэ? Намайг JoyLearn AI гэдэг.";
+  "Сайн байна уу? Таны нэрийг хэн гэдэг вэ? Намайг Жой гэдэг.";
 
 // Full-screen intro: the 3D tutor greets the child and asks for a name.
 // After the name is submitted we continue to the real lesson page (/learn).
@@ -15,7 +15,7 @@ export function AvatarIntro({ onContinue, onBack, avatar = DEFAULT_MASCOT.id }) 
   const introPlayingRef = useRef(false);
   const introAudioRef = useRef(null);
   const introAudioUrlRef = useRef("");
-  const mascotName = avatar === "robot" ? "Робот" : DEFAULT_MASCOT.name;
+  const mascotName = avatar === "robot" ? "Жой" : DEFAULT_MASCOT.name;
 
   const cleanupIntroAudio = useCallback(() => {
     introAudioRef.current?.pause();

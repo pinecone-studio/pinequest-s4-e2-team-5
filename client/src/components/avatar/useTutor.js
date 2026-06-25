@@ -85,6 +85,35 @@ export function useTutor({ nickname, homeworkContext }) {
   const chunksRef = useRef([]);
   const mimeTypeRef = useRef("audio/webm");
 
+  // Яриа давхцахаас сэргийлэх: нэг л аудио тоглоно, шинэ яриа хуучныг таслана.
+  const currentAudioRef = useRef(null);
+  const currentUrlRef = useRef("");
+  const audioResolveRef = useRef(null);
+  const speakSeqRef = useRef(0);
+
+  const stopCurrentAudio = useCallback(() => {
+    if (currentAudioRef.current) {
+      try {
+        currentAudioRef.current.pause();
+      } catch {
+        /* аль хэдийн зогссон бол алгасна */
+      }
+      currentAudioRef.current.onended = null;
+      currentAudioRef.current.onerror = null;
+      currentAudioRef.current = null;
+    }
+    if (currentUrlRef.current) {
+      URL.revokeObjectURL(currentUrlRef.current);
+      currentUrlRef.current = "";
+    }
+    // Хуучин speak-ийн await-ийг гацалгүй чөлөөлнө
+    if (audioResolveRef.current) {
+      const resolve = audioResolveRef.current;
+      audioResolveRef.current = null;
+      resolve();
+    }
+  }, []);
+
   useEffect(() => {
     nicknameRef.current = nickname;
   }, [nickname]);
@@ -111,6 +140,9 @@ export function useTutor({ nickname, homeworkContext }) {
 
   const speak = useCallback(async (text) => {
     if (!text) return;
+    // Шинэ яриа эхэллээ — өмнөх тоглож буй аудиог таслаж, өөрийгөө "эзэн" болгоно.
+    const seq = ++speakSeqRef.current;
+    stopCurrentAudio();
     isBusyRef.current = true;
     setIsSpeaking(true);
     setLastText(text);
@@ -121,28 +153,40 @@ export function useTutor({ nickname, homeworkContext }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
+      // Энэ хооронд илүү шинэ speak эхэлсэн бол энэ хариуг хаяна (давхцахгүй).
+      if (seq !== speakSeqRef.current) return;
       if (!res.ok) {
         const errText = await res.text();
         throw new Error(`TTS алдаа: ${res.status} ${errText}`);
       }
       const blob = await res.blob();
+      if (seq !== speakSeqRef.current) return;
       const url = URL.createObjectURL(blob);
+      currentUrlRef.current = url;
       await new Promise((resolve, reject) => {
         const audio = new Audio(url);
-        audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
-        audio.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+        currentAudioRef.current = audio;
+        audioResolveRef.current = resolve;
+        audio.onended = () => resolve();
+        audio.onerror = (e) => reject(e);
         audio.play().catch(reject);
       });
     } catch (e) {
-      console.error(e);
-      setError("Дуу тоглуулахад алдаа гарлаа.");
+      if (seq === speakSeqRef.current) {
+        console.error(e);
+        setError("Дуу тоглуулахад алдаа гарлаа.");
+      }
     } finally {
-      setIsSpeaking(false);
-      // TTS дуусаад echo намжих хүртэл хүлээнэ
-      await new Promise(r => setTimeout(r, 600));
-      isBusyRef.current = false;
+      // Зөвхөн ХАМГИЙН СҮҮЛИЙН speak л төлвийг цэвэрлэнэ (хуучин нь алгасна).
+      if (seq === speakSeqRef.current) {
+        stopCurrentAudio();
+        setIsSpeaking(false);
+        // TTS дуусаад echo намжих хүртэл хүлээнэ
+        await new Promise((r) => setTimeout(r, 600));
+        if (seq === speakSeqRef.current) isBusyRef.current = false;
+      }
     }
-  }, []);
+  }, [stopCurrentAudio]);
 
   const chat = useCallback(
     async (userText) => {
@@ -283,7 +327,9 @@ export function useTutor({ nickname, homeworkContext }) {
     if (recorderRef.current) {
       try {
         recorderRef.current.stop();
-      } catch (_) {}
+      } catch {
+        /* аль хэдийн зогссон бол алгасна */
+      }
       recorderRef.current = null;
     }
     streamRef.current?.getTracks().forEach((t) => t.stop());
