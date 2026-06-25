@@ -6,7 +6,7 @@ import { normalizeForSpeech } from "./lib/mn-speech";
 import { openai, MODELS, chatComplete } from "./lib/ai";
 
 const app = express();
-const port = process.env.PORT || 3010;
+const port = Number(process.env.PORT) || 3010;
 const chimegeTtsEndpoint =
   process.env.CHIMEGE_TTS_ENDPOINT ?? "https://api.chimege.com/v1.2/synthesize";
 const chimegeSttEndpoint =
@@ -350,6 +350,6 @@ app.post("/api/ai/generate-game", async (req: any, res: any) => {
   }
 });
 
-app.listen(port, "127.0.0.1", () => {
+app.listen(port, "0.0.0.0", () => {
   console.log(`Server ${port} порт дээр ажиллаж байна`);
 });
