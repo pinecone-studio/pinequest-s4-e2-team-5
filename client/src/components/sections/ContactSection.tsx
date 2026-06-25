@@ -48,21 +48,21 @@ export default function ContactsSection({
   const selectedName =
     AVATARS.find((a) => a.id === selectedAvatar)?.name ?? null;
 
-  const handleSelectAvatar = (id: string) => {
-    setSelectedAvatar(id);
-    setPickerOpen(false);
-    setShowError(false);
-  };
-
-  const handleStart = () => {
-    if (!selectedAvatar) {
-      setShowError(true);
-      setErrorTick((t) => t + 1);
-      return;
-    }
+  const goToStart = () => {
     const animate = window.pageTransition;
     if (animate) animate("/start");
     else window.location.assign("/start");
+  };
+
+  const handleSelectAvatar = (id: string) => {
+    setSelectedAvatar(id);
+    window.sessionStorage.setItem("selectedAvatar", id);
+    setPickerOpen(false);
+    goToStart();
+  };
+
+  const handleStart = () => {
+    setPickerOpen(true);
   };
 
   return (
@@ -159,21 +159,6 @@ export default function ContactsSection({
               </span>
               Сонгосон: <span className="text-[#8b3dff]">{selectedName}</span>
             </p>
-          )}
-
-          {/* Gentle inline toast when starting without an avatar */}
-          {showError && !selectedAvatar && (
-            <div
-              key={errorTick}
-              className="ap-toast flex items-center gap-2.5 rounded-2xl border border-[#b778ff]/40 bg-white px-4 py-2.5 shadow-[0_10px_30px_-8px_rgba(139,61,255,0.45)]"
-            >
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#b778ff] text-sm font-bold text-white">
-                !
-              </span>
-              <span className="font-rubik text-sm font-semibold text-neutral-800">
-                Эхлэхийн тулд эхлээд аватараа сонгоорой
-              </span>
-            </div>
           )}
         </div>
       </div>

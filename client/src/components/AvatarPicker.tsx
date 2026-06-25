@@ -11,8 +11,8 @@ export type AvatarOption = {
 
 
 export const AVATARS: AvatarOption[] = [
+  { id: "sun-buddy", name: "Нархан", emoji: "☀️", available: true },
   { id: "robot", name: "Робот", emoji: "🤖", available: true },
-  { id: "hero", name: "Баатар", emoji: "🦸", available: false },
   { id: "rocket", name: "Пуужин", emoji: "🚀", available: false },
   { id: "dino", name: "Дино", emoji: "🦖", available: false },
 ];
@@ -70,7 +70,7 @@ export default function AvatarPicker({
         </h2>
         <p className="mx-auto mt-2 mb-7 max-w-xs text-center text-sm leading-relaxed text-neutral-400">
           Одоогоор{" "}
-          <span className="font-semibold text-[#8b3dff]">Нархан найз</span> бэлэн.
+          <span className="font-semibold text-[#8b3dff]">Нархан</span> бэлэн.
           Бусад найзууд тун удахгүй!
         </p>
 

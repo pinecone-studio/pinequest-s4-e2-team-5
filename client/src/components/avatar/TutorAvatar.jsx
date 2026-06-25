@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react'
-import { KidMascotScene } from '../KidMascotScene.jsx'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { MascotScene } from '../KidMascotScene.jsx'
 import { useTutor } from './useTutor.js'
 import { DraggableTile } from '../lesson/DraggableTile.jsx'
 
@@ -208,7 +208,7 @@ function SpeechBubble({ text, isThinking }) {
   )
 }
 
-export function TutorAvatar({ nickname, homeworkContext }) {
+export function TutorAvatar({ nickname, homeworkContext, avatar = 'sun-buddy' }) {
   const {
     isSpeaking, isListening, isThinking, error,
     lastText, greet, announceHomework, chat,
@@ -268,26 +268,19 @@ export function TutorAvatar({ nickname, homeworkContext }) {
       : isThinking
         ? 'thinking'
         : 'ready'
-
   return (
-    <div className="tutor-avatar">
+    <div className="ta-root">
+      <div className="ta-blob ta-blob-1" />
+      <div className="ta-blob ta-blob-2" />
+      <div className="ta-blob ta-blob-3" />
+
       {/* 3D kid-friendly tutor */}
       <div className="tutor-spline-wrap">
-        <KidMascotScene className="tutor-mascot" mood={mascotMood} />
+        <MascotScene avatar={avatar} className="tutor-mascot" mood={mascotMood} />
       </div>
 
-      {/* LEFT COLUMN: robot + bubble */}
+      {/* LEFT COLUMN: bubble + controls */}
       <div className="ta-left">
-        <div className="ta-robot-wrap">
-          <div className={`ta-robot-inner ${isSpeaking ? 'robot-bounce' : ''}`}>
-            <SplineScene className="robot-spline" />
-          </div>
-          <div className="ta-rings">
-            <div className={`ta-ring ta-ring-1 ${isSpeaking ? 'ring-active' : ''}`} />
-            <div className={`ta-ring ta-ring-2 ${isSpeaking ? 'ring-active' : ''}`} />
-          </div>
-        </div>
-
         <SpeechBubble text={lastText} isThinking={isThinking} />
 
         {/* Drag tiles below bubble */}
@@ -312,10 +305,7 @@ export function TutorAvatar({ nickname, homeworkContext }) {
           <VisualMath problem={problem} onCorrect={handleCorrect} onWrong={handleWrong} />
         ) : (
           <div className="ta-idle">
-            {homeworkContext
-              ? <p className="ta-hw-txt">{homeworkContext.slice(0, 120)}</p>
-              : <p className="ta-idle-msg">Даалгаврын зургаа оруул 📄</p>
-            }
+            {homeworkContext && <p className="ta-hw-txt">{homeworkContext.slice(0, 120)}</p>}
           </div>
         )}
       </div>
