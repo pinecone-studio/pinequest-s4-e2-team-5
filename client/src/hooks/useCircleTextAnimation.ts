@@ -41,13 +41,13 @@ export function useCircleTextAnimation(
     tl.fromTo(
       textLeftRef.current,
       { x: "-100vw" },
-      { x: "-10vw", ease: "power2.out" },
+      { x: "0vw", ease: "power2.out" },
       0,
     );
     tl.fromTo(
       textRightRef.current,
       { x: "100vw" },
-      { x: "10vw", ease: "power2.out" },
+      { x: "0vw", ease: "power2.out" },
       0,
     );
 

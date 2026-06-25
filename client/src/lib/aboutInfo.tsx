@@ -6,11 +6,11 @@ export const getTexts = (
   textRightRef: React.RefObject<HTMLHeadingElement | null>,
 
 ) => [
-  { ref: textLeftRef, text: "Хамтдаа тоглоё", top: "min-[320px]:top-50 md:top-15" },
+  { ref: textLeftRef, text: "Хамтдаа тоглоё", top: "top-[40%]" },
   {
     ref: textRightRef,
     text: "Хамтдаа суралцъя",
-    top: "min-[320px]:top-12 sm:top-20 md:top-35",
+    top: "top-[54%]",
   },
 ];
  

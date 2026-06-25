@@ -31,7 +31,7 @@ export default function HeroSection() {
 
   return (
     <div
-      className="relative flex items-center justify-center w-full h-screen overflow-hidden transition-opacity duration-500"
+      className="relative flex items-center justify-center w-full h-screen overflow-hidden transition-opacity duration-500 bg-neutral-100"
       style={{ opacity: ready ? 1 : 0 }}
     >
       {flowers.map((f) => (

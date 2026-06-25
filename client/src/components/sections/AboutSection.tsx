@@ -42,12 +42,12 @@ export default function AboutSection() {
     >
       <div
         ref={wrapperRef}
-        className="wrapper will-change-transform relative h-screen max-h-screen flex min-[320px]:flex-col md:flex-row items-center min-[320px]:justify-center md:justify-around overflow-hidden gap-10 bg-neutral-900 text-white"
+        className="wrapper will-change-transform relative h-screen max-h-screen flex min-[320px]:flex-col md:flex-row items-center min-[320px]:justify-center md:justify-around overflow-hidden gap-10 bg-neutral-100 text-neutral-900"
       >
         {/* Expanding Circle */}
         <div
           ref={circleRef}
-          className="circle bg-neutral-100 rounded-full absolute left-1/2 top-[5%] -translate-x-1/2 z-0"
+          className="circle bg-neutral-900 rounded-full absolute left-1/2 top-[5%] -translate-x-1/2 z-0"
           style={{ width: 40, height: 40 }}
         />
 
@@ -56,7 +56,7 @@ export default function AboutSection() {
           <h1
             key={i}
             ref={ref}
-            className={`absolute  ${top} z-10 text-center w-full px-4 text-neutral-100  min-[320px]:text-3xl sm:text-5xl md:text-7xl font-bold uppercase tracking-widest font-holtwood mix-blend-difference`}
+            className={`absolute  ${top} z-10 text-center w-full px-4 text-[#FACF71]  min-[320px]:text-3xl sm:text-5xl md:text-7xl font-black uppercase tracking-widest font-rubik`}
           >
             {text}
           </h1>
