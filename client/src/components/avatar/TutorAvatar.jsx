@@ -10,6 +10,10 @@ import { extractProblemNumber } from './extractProblemNumber.js'
 import '../lesson/lesson.css'
 import '../lesson/big-add-lesson.css'
 
+// Хүүхдийн дуут асуулт/тусламжийн хүсэлт — эдгээрийг бодлого сонголт гэж үзэхгүй,
+// шууд chat руу дамжуулж AI дахин тайлбарлана.
+const HELP_RE = /ойлгох|ойлгом|мэдэхг|яагаад|яаж|юу гэс|юу вэ|юу гэ|дахиад|дахин|хэлээ|хэлэхг|туслаач|ойлгуул|алхам|болохг|бодож өг/
+
 function shuffle(arr) {
   const a = [...arr]
   for (let i = a.length - 1; i > 0; i--) {
@@ -306,9 +310,14 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
   useEffect(() => {
     cmdRef.current = (text) => {
       if (!structuredProblems.length) return false
+      // Тусламж/асуулт бол сонголт БИШ — chat руу дамжуулж AI дахин тайлбарлана.
+      if (HELP_RE.test(text.toLowerCase())) return false
       const selecting = selectedIndex == null && structuredProblems.length > 1
       const idx = extractProblemNumber(text, { requireKeyword: !selecting })
       if (idx == null || idx < 1 || idx > structuredProblems.length) return false
+      // Одоогийн бодлогоо дахин нэрлэвэл шилжихгүй — chat-аар дахин тайлбарлуулна.
+      const current = (effectiveIndex ?? -1) + 1
+      if (idx === current) return false
       selectProblem(idx - 1)
       return true
     }
