@@ -2,16 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { MascotScene } from '../KidMascotScene.jsx'
 import { useTutor } from './useTutor.js'
 import { NumberVisual } from '../lesson/NumberVisual.jsx'
+import { api } from '../../lib/api.js'
 import '../lesson/lesson.css'
 import '../lesson/big-add-lesson.css'
-
-const TILE_COLORS = {
-  1:'#f2a36b', 2:'#f6cf69', 3:'#80b7c7', 4:'#6abf8e',
-  5:'#f48fb1', 6:'#ce93d8', 7:'#ff8a65', 8:'#4db6ac',
-  9:'#7986cb', 10:'#a5d6a7', 11:'#ef9a9a', 12:'#80cbc4',
-  13:'#ffcc80', 14:'#bcaaa4', 15:'#b0bec5',
-}
-function tileColor(n) { return TILE_COLORS[n] ?? '#65d99d' }
 
 function shuffle(arr) {
   const a = [...arr]
@@ -24,12 +17,12 @@ function shuffle(arr) {
 
 function makeChoices(answer) {
   const set = new Set([answer])
-  for (const d of [-3,-2,-1,1,2,3,4,-4]) {
+  for (const d of [-3, -2, -1, 1, 2, 3, 4, -4]) {
     const v = answer + d
-    if (v > 0 && v <= 15) set.add(v)
-    if (set.size >= 4) break
+    if (v > 0) set.add(v)
+    if (set.size >= 3) break
   }
-  return shuffle([...set].slice(0, 4))
+  return shuffle([...set].slice(0, 3))
 }
 
 function parseMath(ctx) {
@@ -43,82 +36,44 @@ function parseMath(ctx) {
   return null
 }
 
-/* ── Custom draggable number tile ── */
-function NumberTile({ value }) {
-  const color = tileColor(value)
-  return (
-    <div
-      className="nt-tile"
-      style={{ '--tile-clr': color }}
-      draggable
-      onDragStart={(e) => {
-        e.dataTransfer.setData('text/plain', String(value))
-        e.dataTransfer.effectAllowed = 'move'
-      }}
-    >
-      {value}
-    </div>
-  )
+function inferSkillDifficulty({ a, b, op }) {
+  const skill = op === '+' ? 'addition' : 'subtraction'
+  const answer = op === '+' ? a + b : a - b
+  const difficulty = answer <= 10 ? 'easy' : answer <= 30 ? 'medium' : 'hard'
+  return { skill, difficulty }
 }
 
-/* ── Answer drop zone ── */
-function AnswerDropZone({ answer, onCorrect, onWrong }) {
-  const ref = useRef()
-  const [state, setState] = useState('empty')
+/* ── Visual Math: domino tiles + 3-choice click ── */
+function VisualMath({ problem, choices, onCorrect, onWrong }) {
+  const { a, b, op } = problem
+  const answer = op === '+' ? a + b : a - b
+  const [selected, setSelected] = useState(null)
+  const [phase, setPhase] = useState('choosing')
 
-  useEffect(() => { setState('empty') }, [answer])
+  useEffect(() => {
+    setSelected(null)
+    setPhase('choosing')
+  }, [answer])
 
-  const handleDragOver = (e) => {
-    e.preventDefault()
-    if (state === 'empty') ref.current?.classList.add('adz-hover')
-  }
-  const handleDragLeave = (e) => {
-    if (!ref.current?.contains(e.relatedTarget))
-      ref.current?.classList.remove('adz-hover')
-  }
-  const handleDrop = (e) => {
-    e.preventDefault()
-    ref.current?.classList.remove('adz-hover')
-    const num = parseInt(e.dataTransfer.getData('text/plain'), 10)
-    if (isNaN(num) || state !== 'empty') return
-    if (num === answer) {
-      setState('correct')
+  const handleChoice = (n) => {
+    if (phase !== 'choosing') return
+    setSelected(n)
+    if (n === answer) {
+      setPhase('correct')
       onCorrect?.()
     } else {
-      setState('wrong')
-      setTimeout(() => setState('empty'), 900)
+      setPhase('wrong')
+      setTimeout(() => setPhase('choosing'), 900)
       onWrong?.()
     }
   }
 
-  return (
-    <div
-      ref={ref}
-      className={`adz adz-${state}`}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
-      {state === 'correct' && (
-        <>
-          <span className="adz-num">{answer}</span>
-          <div className="adz-burst">
-            {['⭐','✨','🎉','💫','🌟','✨'].map((s, i) => (
-              <span key={i} className="adz-burst-item" style={{ '--angle': `${i * 60}deg` }}>{s}</span>
-            ))}
-          </div>
-        </>
-      )}
-      {state === 'wrong' && <span className="adz-wrong-x">✗</span>}
-      {state === 'empty' && <span className="adz-q">?</span>}
-    </div>
-  )
-}
-
-/* ── Visual Math: clean number cards + tiles ── */
-function VisualMath({ problem, choices, droppedCorrect, onCorrect, onWrong }) {
-  const { a, b, op } = problem
-  const answer = op === '+' ? a + b : a - b
+  const choiceState = (n) => {
+    if (phase === 'choosing') return 'idle'
+    if (n === answer)         return 'correct'
+    if (n === selected)       return 'wrong'
+    return 'idle'
+  }
 
   return (
     <div className="vm-root">
@@ -131,17 +86,39 @@ function VisualMath({ problem, choices, droppedCorrect, onCorrect, onWrong }) {
           <NumberVisual value={b} />
         </div>
         <span className="vm-op">=</span>
-        <AnswerDropZone answer={answer} onCorrect={onCorrect} onWrong={onWrong} />
+
+        <div className={`vm-ans-slot${phase === 'correct' ? ' vm-ans-correct' : ''}`}>
+          {phase === 'correct' ? (
+            <>
+              <div className="vm-durs-wrap vm-ans-durs">
+                <NumberVisual value={answer} />
+              </div>
+              <div className="adz-burst">
+                {['⭐','✨','🎉','💫','🌟','✨'].map((s, i) => (
+                  <span key={i} className="adz-burst-item" style={{ '--angle': `${i * 60}deg` }}>{s}</span>
+                ))}
+              </div>
+            </>
+          ) : (
+            <span className="adz-q">?</span>
+          )}
+        </div>
       </div>
 
-      {choices.length > 0 && !droppedCorrect && (
-        <div className="vm-tiles">
-          <p className="vm-tiles-label">Зөв хариугаа чирж оруул 👇</p>
-          <div className="vm-tiles-row">
-            {choices.map((n) => (
-              <NumberTile key={n} value={n} />
-            ))}
-          </div>
+      {phase !== 'correct' && (
+        <div className="vm-choice-grid">
+          {choices.map(n => (
+            <button
+              key={n}
+              className={`vm-choice-btn vm-choice-${choiceState(n)}`}
+              onClick={() => handleChoice(n)}
+              disabled={phase !== 'choosing'}
+            >
+              <div className="vm-durs-wrap">
+                <NumberVisual value={n} />
+              </div>
+            </button>
+          ))}
         </div>
       )}
     </div>
@@ -200,10 +177,14 @@ export function TutorAvatar({ nickname, homeworkContext, avatar = 'robot' }) {
 
   const prevHomeworkRef = useRef('')
   const greetedRef      = useRef(false)
-  const [choices, setChoices] = useState([])
-  const [droppedCorrect, setDroppedCorrect] = useState(false)
+  const [choices, setChoices]           = useState([])
+  const [activeContext, setActiveContext] = useState(homeworkContext)
+  const [isLoadingNext, setIsLoadingNext] = useState(false)
 
-  const problem = parseMath(homeworkContext)
+  // Sync prop → local context when homework changes externally
+  useEffect(() => { setActiveContext(homeworkContext) }, [homeworkContext])
+
+  const problem = parseMath(activeContext)
 
   useEffect(() => {
     if (greetedRef.current || !nickname) return
@@ -215,22 +196,31 @@ export function TutorAvatar({ nickname, homeworkContext, avatar = 'robot' }) {
   useEffect(() => {
     if (homeworkContext && !prevHomeworkRef.current) {
       prevHomeworkRef.current = homeworkContext
-      setDroppedCorrect(false)
       announceHomework()
     }
   }, [homeworkContext, announceHomework])
 
+  // Regenerate choices whenever active problem changes
   useEffect(() => {
     if (!problem) { setChoices([]); return }
     const ans = problem.op === '+' ? problem.a + problem.b : problem.a - problem.b
     setChoices(makeChoices(ans))
-    setDroppedCorrect(false)
-  }, [homeworkContext]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeContext]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleCorrect = useCallback(() => {
-    setDroppedCorrect(true)
     chat('зөв хариулт')
-  }, [chat])
+    if (!problem) return
+    const { skill, difficulty } = inferSkillDifficulty(problem)
+    setIsLoadingNext(true)
+    setTimeout(() => {
+      api.getPractice(skill, difficulty, 1)
+        .then(({ problems }) => {
+          if (problems?.length) setActiveContext(problems[0].problem)
+        })
+        .catch(() => {})
+        .finally(() => setIsLoadingNext(false))
+    }, 2500)
+  }, [chat, problem])
 
   const handleWrong = useCallback(() => {
     chat('буруу хариулт өглөө')
@@ -251,8 +241,7 @@ export function TutorAvatar({ nickname, homeworkContext, avatar = 'robot' }) {
       <div className="ta-blob ta-blob-2" />
       <div className="ta-blob ta-blob-3" />
 
-      {!problem ? (
-        /* No homework: big robot centered */
+      {!problem && !isLoadingNext ? (
         <div className="ta-center">
           <div className="tutor-spline-wrap tutor-spline-big">
             <MascotScene avatar={avatar} className="tutor-mascot" mood={mascotMood} />
@@ -265,12 +254,16 @@ export function TutorAvatar({ nickname, homeworkContext, avatar = 'robot' }) {
           {error && <p className="tutor-error">{error}</p>}
         </div>
       ) : (
-        /* Has homework: small robot top-left + big interactive right */
         <>
-          <div className="ta-left">
-            <div className="tutor-spline-wrap">
+          {/* Layer 1 — robot: large, centered, behind everything */}
+          <div className="ta-robot-bg">
+            <div className="tutor-spline-wrap tutor-spline-big">
               <MascotScene avatar={avatar} className="tutor-mascot" mood={mascotMood} />
             </div>
+          </div>
+
+          {/* Layer 2 — speech bubble + status: top-left overlay */}
+          <div className="ta-hud">
             <SpeechBubble text={lastText} isThinking={isThinking} />
             <div className="ta-status-row">
               {isListening && <span className="tutor-listen-dot" />}
@@ -279,14 +272,18 @@ export function TutorAvatar({ nickname, homeworkContext, avatar = 'robot' }) {
             {error && <p className="tutor-error">{error}</p>}
           </div>
 
-          <div className="ta-right">
-            <VisualMath
-              problem={problem}
-              choices={choices}
-              droppedCorrect={droppedCorrect}
-              onCorrect={handleCorrect}
-              onWrong={handleWrong}
-            />
+          {/* Layer 3 — interactive math: centered, in front */}
+          <div className="ta-interactive">
+            {isLoadingNext ? (
+              <div className="vm-loading">Дараагийн бодлого бэлтгэж байна…</div>
+            ) : problem ? (
+              <VisualMath
+                problem={problem}
+                choices={choices}
+                onCorrect={handleCorrect}
+                onWrong={handleWrong}
+              />
+            ) : null}
           </div>
         </>
       )}
