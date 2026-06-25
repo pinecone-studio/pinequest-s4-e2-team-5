@@ -39,9 +39,11 @@ export default function ContactsSection({
 
   const circles = getCirclesConfig(leftCircleRef, rightCircleRef);
 
-  // Avatar selection for the start CTA.
+  
   const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [showError, setShowError] = useState(false);
+  const [errorTick, setErrorTick] = useState(0);
 
   const selectedName =
     AVATARS.find((a) => a.id === selectedAvatar)?.name ?? null;

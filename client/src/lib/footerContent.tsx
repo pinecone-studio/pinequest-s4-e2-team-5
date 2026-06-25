@@ -24,8 +24,8 @@ export const footerItems = {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   },
-  siteName: "DAALGAVAR",
-  linkedIn: <span className="underline">DAALGAVAR team</span>,
+  siteName: "JOY-LEARN",
+  linkedIn: <span className="underline">TEAM FIVE</span>,
 };
  
  

@@ -11,7 +11,7 @@ import {
 import { useFooterAnimation } from "@/hooks/useFooterAnimation";
 
 export default function Footer({
-  mainColor = "#171717",
+  mainColor = "#FACF71",
 }: {
   mainColor?: string;
 }) {
@@ -23,7 +23,7 @@ export default function Footer({
   const [width, setWidth] = useState(0);
   const isMobile = width < 640;
 
-  // responsive logic
+  
   useEffect(() => {
     const updateWidth = () => {
       if (containerRef.current) {
@@ -56,7 +56,7 @@ export default function Footer({
       ref={containerRef}
       className="absolute bottom-0 left-0 w-full h-[20vh] z-10 overflow-visible"
     >
-      {/* Responsive SVG background */}
+  
       <svg
         ref={svgRef}
         viewBox={viewBox}
@@ -88,12 +88,12 @@ export default function Footer({
         </div>
       ))}
 
-      {/* Footer text & links */}
+     
       <div
         ref={textRef}
         className={`absolute bottom-0 left-0 w-full flex flex-col lg:flex-row items-center justify-between px-4 lg:px-10 pb-4  tracking-wide font-holtwood z-20 gap-2   ${textColor}`}
       >
-        {/* Desktop: Left-aligned pills */}
+     
         <span
           className={`px-3 py-1 rounded-2xl cursor-pointer text-sm lg:text-base min-[320px]:hidden lg:block ${pillBg}`}
           onClick={footerItems.clickFunc}
@@ -106,7 +106,7 @@ export default function Footer({
           by {footerItems.linkedIn}
         </span>
 
-        {/* Mobile: Full-width justified */}
+  
         <div className="lg:hidden min-[320px]:flex flex-row w-screen justify-between">
           <span
             className={`px-3 py-1 rounded-2xl w-min cursor-pointer min-[320px]:text-xs sm:text-lg md:text-base  ${pillBg}`}
@@ -121,11 +121,11 @@ export default function Footer({
           </span>
         </div>
 
-        {/* Copyright */}
+      
         <span
           className={`px-3 py-1 rounded-2xl min-[320px]:text-xs sm:text-lg md:text-base ${pillBg}`}
         >
-          © {currentYear} all rights reserved
+          © {currentYear} 
         </span>
       </div>
     </div>
