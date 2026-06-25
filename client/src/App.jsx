@@ -79,7 +79,6 @@ function App() {
               navigate("/");
             }}
           ></a>
-          <div className="step">Нархантай суралц</div>
         </nav>
 
         <AvatarSession nickname={name} avatar={avatar} />
