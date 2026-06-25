@@ -7,7 +7,6 @@ import { ComparisonInteractive } from './ComparisonInteractive.jsx'
 import { MissingAddendInteractive } from './MissingAddendInteractive.jsx'
 import { ProblemList } from './ProblemList.jsx'
 import { extractProblemNumber } from './extractProblemNumber.js'
-import { api } from '../../lib/api.js'
 import '../lesson/lesson.css'
 import '../lesson/big-add-lesson.css'
 
@@ -276,8 +275,6 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
   const analyzingSaidRef = useRef(false)
   const lastExplainedRef = useRef('')
   const [selectedIndex, setSelectedIndex] = useState(null)
-  const [practiceProblem, setPracticeProblem] = useState(null)
-  const [isLoadingNext, setIsLoadingNext] = useState(false)
 
   // structured problems, эс бол хуучин нэг текстээс fallback
   const structuredProblems = useMemo(() => {
@@ -289,7 +286,6 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
   // Шинэ даалгавар орж ирэхэд сонголтыг цэвэрлэнэ
   useEffect(() => {
     setSelectedIndex(null)
-    setPracticeProblem(null)
     askedRef.current = false
     lastExplainedRef.current = ''
   }, [structuredProblems])
@@ -297,13 +293,12 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
   const effectiveIndex = selectedIndex != null
     ? selectedIndex
     : (structuredProblems.length === 1 ? 0 : null)
-  const baseProblem = effectiveIndex != null ? structuredProblems[effectiveIndex] : null
-  const activeProblem = practiceProblem ?? baseProblem
+  // Зөвхөн зураг дээрх бодлогыг ашиглана (AI шинэ бодлого зохиохгүй)
+  const activeProblem = effectiveIndex != null ? structuredProblems[effectiveIndex] : null
 
-  const showList = structuredProblems.length > 1 && selectedIndex == null && !practiceProblem
+  const showList = structuredProblems.length > 1 && selectedIndex == null
 
   const selectProblem = useCallback((i) => {
-    setPracticeProblem(null)
     setSelectedIndex(i)
   }, [])
 
@@ -355,29 +350,23 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
 
   const handleCorrect = useCallback(() => {
     chat('зөв хариулт')
-    const p = activeProblem
-    if (!p) return
-    // Зөвхөн энгийн арифметик дээр дараагийн дасгал бодлого ачаална
-    const op = p.operator
-    const skillMap = { '+': 'addition', '-': 'subtraction', '*': 'multiplication', '/': 'division' }
-    const skill = skillMap[op]
-    if (!skill) return
-    const answer = Number(p.answer) || 0
-    const difficulty = answer <= 10 ? 'easy' : answer <= 30 ? 'medium' : 'hard'
-    setIsLoadingNext(true)
+    // Магтаалыг тоглуулах зуур түр зогсоод ЗУРАГ ДЭЭРХ дараагийн бодлого руу шилжинэ.
+    // AI шинэ бодлого зохиохгүй — зөвхөн оруулсан зураг дээрх бодлогуудыг дараалуулна.
+    const total = structuredProblems.length
+    const cur = effectiveIndex ?? 0
+    const next = cur + 1
     setTimeout(() => {
-      api.getPractice(skill, difficulty, 1)
-        .then(({ problems: next }) => {
-          if (next?.length) return api.analyzeProblem(next[0].problem)
-          return null
-        })
-        .then((structured) => {
-          if (structured) setPracticeProblem(structured)
-        })
-        .catch(() => {})
-        .finally(() => setIsLoadingNext(false))
+      if (next < total) {
+        setSelectedIndex(next)
+      } else if (total > 1) {
+        // Бүх бодлого дууссан — жагсаалт руу буцна
+        setSelectedIndex(null)
+        speak(`Сайн байна ${nickname}! Бүх бодлогоо дууслаа.`)
+      } else {
+        speak(`Гайхалтай ${nickname}! Бодлогоо зөв бодлоо.`)
+      }
     }, 2500)
-  }, [chat, activeProblem])
+  }, [chat, effectiveIndex, structuredProblems.length, nickname, speak])
 
   const handleWrong = useCallback(() => {
     chat('буруу хариулт өглөө')
@@ -392,7 +381,7 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
   const { text: statusText, cls: statusCls } = statusLabel()
   const mascotMood = isSpeaking ? 'speaking' : isListening ? 'listening' : isThinking ? 'thinking' : 'ready'
 
-  const showInteractive = !showList && (activeProblem || isLoadingNext)
+  const showInteractive = !showList && activeProblem
   const showProblemPane = showList || showInteractive
 
   return (
@@ -410,8 +399,6 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
               selectedIndex={selectedIndex}
               onSelect={selectProblem}
             />
-          ) : isLoadingNext ? (
-            <div className="vm-loading">Дараагийн бодлого бэлтгэж байна…</div>
           ) : activeProblem ? (
             <>
               {structuredProblems.length > 1 && (
