@@ -7,6 +7,7 @@ import './avatar.css'
 export function AvatarSession({ nickname = 'хүүхэд', avatar = 'sun-buddy' }) {
   const [homeworkContext, setHomeworkContext] = useState('')
   const [problems, setProblems] = useState([])
+  const [analyzing, setAnalyzing] = useState(false)
 
   const handleHomeworkLoaded = (context, problemList = []) => {
     setHomeworkContext(context)
@@ -18,7 +19,7 @@ export function AvatarSession({ nickname = 'хүүхэд', avatar = 'sun-buddy' 
       {/* LEFT 30% */}
       <div className="session-left">
         <div className="session-homework">
-          <HomeworkUpload onHomeworkLoaded={handleHomeworkLoaded} />
+          <HomeworkUpload onHomeworkLoaded={handleHomeworkLoaded} onAnalyzingChange={setAnalyzing} />
         </div>
         <div className="session-camera">
           <StudentCamera />
@@ -27,7 +28,7 @@ export function AvatarSession({ nickname = 'хүүхэд', avatar = 'sun-buddy' 
 
       {/* RIGHT 70% */}
       <div className="session-right">
-        <TutorAvatar nickname={nickname} homeworkContext={homeworkContext} problems={problems} avatar={avatar} />
+        <TutorAvatar nickname={nickname} homeworkContext={homeworkContext} problems={problems} analyzing={analyzing} avatar={avatar} />
       </div>
     </div>
   )

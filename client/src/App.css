@@ -1,6 +1,29 @@
 :root { --green: #185d56; --green-dark: #123f3b; --cream: #f7f5ee; --orange: #f2a36b; --yellow: #f6cf69; --blue: #80b7c7; --ink: #162b2a; }
 
-.home-page, .learn-page { min-height: 100vh; background: var(--cream); }
+.home-page { min-height: 100vh; background: var(--cream); }
+
+/* Learn page: full-viewport session, no white topbar. Floating back button + smooth entrance. */
+.learn-page { height: 100dvh; background: var(--cream); position: relative; overflow: hidden; animation: learn-fade-in 0.45s ease-out; }
+@keyframes learn-fade-in { from { opacity: 0; } to { opacity: 1; } }
+.learn-back {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 20;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid rgba(22, 43, 42, 0.14);
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--green);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 14px rgba(8, 20, 19, 0.12);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.learn-back:hover { background: #fff; transform: translateX(-2px); }
 .home-nav, .topbar { height: 90px; max-width: 1180px; margin: 0 auto; padding: 0 28px; display: flex; align-items: center; justify-content: space-between; }
 .brand { color: var(--ink); text-decoration: none; font-size: 18px; font-weight: 800; display: inline-flex; align-items: center; gap: 10px; }
 .brand span { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 13px; background: var(--green); color: white; font-size: 20px; }

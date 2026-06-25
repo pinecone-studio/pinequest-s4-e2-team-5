@@ -1,7 +1,7 @@
 /* ===== Session Layout ===== */
 .session-layout {
   display: flex;
-  height: calc(100vh - 90px);
+  height: 100dvh;
   background: var(--cream);
   overflow: hidden;
 }
@@ -16,6 +16,11 @@
   z-index: 3;
   background: var(--cream);
   min-height: 0;
+  animation: session-left-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes session-left-in {
+  from { opacity: 0; transform: translateX(-24px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
 .session-homework {
@@ -225,6 +230,50 @@
   position: relative;
   overflow: hidden;
 }
+/* No problem → robot centered big. Problem active → interactive left, robot right. */
+.ta-root-center { align-items: center; justify-content: center; }
+.ta-root-split  { flex-direction: row; align-items: stretch; }
+
+/* Robot column (right in split, centered when alone) + speech bubble + status */
+.ta-robot-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  z-index: 2;
+  padding: 24px 16px;
+  min-width: 0;
+  animation: robot-enter 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.ta-root-center .ta-robot-col { flex: 1; }
+.ta-root-split .ta-robot-col {
+  width: 42%;
+  flex-shrink: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+}
+@keyframes robot-enter {
+  from { opacity: 0; transform: scale(0.94); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Interactive board / problem list — left side when a problem is active */
+.ta-problem-pane {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 30px 22px;
+  z-index: 3;
+  animation: fade-up 0.32s ease;
+}
+
+/* Robot never clipped inside its own box */
+.ta-robot-col .tutor-spline-wrap { overflow: visible; }
+.ta-root-center .tutor-spline-big { height: min(58vh, 460px); max-width: 560px; width: 100%; }
+.tutor-spline-side { height: min(64vh, 560px) !important; max-width: none !important; width: 100%; }
 
 /* ── Animated blobs ── */
 .ta-blob {
@@ -575,35 +624,31 @@
   100% { transform: scale(1.3); opacity: 0; }
 }
 
-/* ── Speech bubble (left column, below robot) ── */
+/* ── Speech bubble — centered under robot, dark to match robot bg, no tail ── */
 .sb-wrap {
-  width: 88%;
+  width: min(90%, 440px);
   z-index: 3;
   margin-top: 4px;
 }
 .sb-box {
-  background: white;
-  border-radius: 18px 18px 18px 4px;
-  padding: 10px 14px;
-  box-shadow: 0 6px 28px rgba(0,0,0,0.3);
-  min-height: 40px;
+  background: rgba(10, 21, 18, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  padding: 12px 18px;
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+  min-height: 42px;
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 .sb-text {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  color: #162b2a;
+  color: #eaf3f1;
   line-height: 1.5;
-}
-.sb-tail {
-  width: 0; height: 0;
-  border-left: 0;
-  border-right: 14px solid transparent;
-  border-bottom: 10px solid white;
-  margin-left: 22px;
-  filter: drop-shadow(0 -2px 3px rgba(0,0,0,0.08));
+  text-align: center;
 }
 /* Thinking dots */
 .sb-dots {
@@ -702,11 +747,11 @@
 }
 
 /* Larger tiles and spacing in avatar context */
-.ta-interactive .vm-equation { gap: 20px; }
-.ta-interactive .vm-durs-wrap .num-big-label { font-size: 52px; }
-.ta-interactive .vm-choice-btn { padding: 18px 24px; border-radius: 22px; }
-.ta-interactive .vm-choice-grid { gap: 20px; margin-top: 36px; }
-.ta-interactive .vm-ans-slot { min-width: 100px; min-height: 110px; }
+.ta-problem-pane .vm-equation { gap: 20px; }
+.ta-problem-pane .vm-durs-wrap .num-big-label { font-size: 52px; }
+.ta-problem-pane .vm-choice-btn { padding: 18px 24px; border-radius: 22px; }
+.ta-problem-pane .vm-choice-grid { gap: 20px; margin-top: 36px; }
+.ta-problem-pane .vm-ans-slot { min-width: 100px; min-height: 110px; }
 
 /* ── Visual Math — big, game-like ── */
 .vm-root {
@@ -1321,4 +1366,55 @@
 .ta-back-btn:hover {
   border-color: #65d99d;
   background: rgba(101,217,157,0.1);
+}
+
+/* ─────────────────────────────────────────────
+   Зураг хасах X товч (upload preview дээр)
+   ───────────────────────────────────────────── */
+.hw-remove-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 0.15s, transform 0.15s;
+}
+.hw-remove-btn:hover {
+  background: rgba(220, 38, 38, 0.9);
+  transform: scale(1.08);
+}
+
+/* ─────────────────────────────────────────────
+   Зүүн panel-уудын дизайн зөөллөлт + орох анимэйшн
+   ───────────────────────────────────────────── */
+.session-homework,
+.session-camera {
+  animation: session-left-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.session-camera { animation-delay: 0.06s; }
+
+.hw-drop-area {
+  background: rgba(24, 93, 86, 0.025);
+}
+.hw-drop-area:hover {
+  background: rgba(24, 93, 86, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(24, 93, 86, 0.12);
+}
+.hw-drop-btn {
+  box-shadow: 0 6px 16px rgba(24, 93, 86, 0.22);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.hw-drop-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 9px 20px rgba(24, 93, 86, 0.28);
 }
