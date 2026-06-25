@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
-import { SplineScene } from '../SplineScene.jsx'
+import { useEffect, useRef } from 'react'
+import { KidMascotScene } from '../KidMascotScene.jsx'
 import { useTutor } from './useTutor.js'
 import { DraggableTile } from '../lesson/DraggableTile.jsx'
 
@@ -261,13 +261,20 @@ export function TutorAvatar({ nickname, homeworkContext }) {
     return { text: 'БЭЛЭН', cls: '' }
   }
   const { text: statusText, cls: statusCls } = statusLabel()
+  const mascotMood = isSpeaking
+    ? 'speaking'
+    : isListening
+      ? 'listening'
+      : isThinking
+        ? 'thinking'
+        : 'ready'
 
   return (
-    <div className="ta-root">
-      {/* Animated blobs */}
-      <div className="ta-blob ta-blob-1" />
-      <div className="ta-blob ta-blob-2" />
-      <div className="ta-blob ta-blob-3" />
+    <div className="tutor-avatar">
+      {/* 3D kid-friendly tutor */}
+      <div className="tutor-spline-wrap">
+        <KidMascotScene className="tutor-mascot" mood={mascotMood} />
+      </div>
 
       {/* LEFT COLUMN: robot + bubble */}
       <div className="ta-left">

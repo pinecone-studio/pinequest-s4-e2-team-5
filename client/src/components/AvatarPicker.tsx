@@ -9,10 +9,10 @@ export type AvatarOption = {
   available: boolean;
 };
 
-// Only the robot is wired up for now; the rest are teasers.
-// A playful mix of a hero, toys and characters for young kids.
+// Only the sunny tutor is wired up for now; the rest are teasers.
+// A playful mix of warm, toy-like characters for young kids.
 export const AVATARS: AvatarOption[] = [
-  { id: "robot", name: "Нарс багш", emoji: "🤖", available: true },
+  { id: "sun-buddy", name: "Нархан найз", emoji: "☀️", available: true },
   { id: "hero", name: "Баатар", emoji: "🦸", available: false },
   { id: "rocket", name: "Пуужин", emoji: "🚀", available: false },
   { id: "dino", name: "Дино", emoji: "🦖", available: false },
@@ -71,7 +71,7 @@ export default function AvatarPicker({
         </h2>
         <p className="mx-auto mt-2 mb-7 max-w-xs text-center text-sm leading-relaxed text-neutral-400">
           Одоогоор{" "}
-          <span className="font-semibold text-[#8b3dff]">Нарс багш</span> бэлэн.
+          <span className="font-semibold text-[#8b3dff]">Нархан найз</span> бэлэн.
           Бусад найзууд тун удахгүй!
         </p>
 

@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { SplineScene } from "../SplineScene.jsx";
+import { KidMascotScene } from "../KidMascotScene.jsx";
+import { DEFAULT_MASCOT } from "../mascotConfig.js";
 import "./avatar-intro.css";
 
-// Full-screen intro: the Spline robot greets the child and asks for a name.
+// Full-screen intro: the 3D tutor greets the child and asks for a name.
 // After the name is submitted we continue to the real lesson page (/learn).
 export function AvatarIntro({ onContinue, onBack }) {
   const [name, setName] = useState("");
@@ -23,13 +24,13 @@ export function AvatarIntro({ onContinue, onBack }) {
       </button>
 
       <div className="avatar-intro__scene">
-        <SplineScene className="avatar-intro__robot" />
+        <KidMascotScene className="avatar-intro__mascot" mood="speaking" />
       </div>
 
       <form className="avatar-intro__panel" onSubmit={handleSubmit}>
         <h1 className="avatar-intro__title">Сайн уу! 👋</h1>
         <p className="avatar-intro__subtitle">
-          Намайг <strong>Нарс багш</strong> гэдэг. Чиний нэр хэн бэ?
+          Намайг <strong>{DEFAULT_MASCOT.name}</strong> гэдэг. Чиний нэр хэн бэ?
         </p>
         <input
           className="avatar-intro__input"
