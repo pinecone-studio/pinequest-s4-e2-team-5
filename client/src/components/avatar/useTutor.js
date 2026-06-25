@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
+import { api } from "../../lib/api.js";
 
 const API = "http://localhost:3000";
 
@@ -70,11 +71,14 @@ export function useTutor({ nickname, homeworkContext }) {
   const [isListening, setIsListening] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
   const [error, setError] = useState(null);
+  const [lastText, setLastText] = useState("");
 
   const messagesRef = useRef([]);
   const nicknameRef = useRef(nickname);
   const homeworkRef = useRef(homeworkContext);
   const isBusyRef = useRef(false);
+  const sessionIdRef = useRef(null);
+  const analysisRef = useRef(null);
 
   const streamRef = useRef(null);
   const vadRef = useRef(null);
@@ -87,12 +91,30 @@ export function useTutor({ nickname, homeworkContext }) {
   }, [nickname]);
   useEffect(() => {
     homeworkRef.current = homeworkContext;
+    // Homework орж ирэхэд analyze хийж session үүсгэнэ
+    if (homeworkContext && !sessionIdRef.current) {
+      api.analyzeProblem(homeworkContext)
+        .then((analysis) => {
+          analysisRef.current = analysis;
+          return api.createSession({
+            childId: nickname || "guest",
+            problem: homeworkContext,
+            skill: analysis.skill ?? "general",
+            difficulty: analysis.difficulty ?? "easy",
+            correctAnswer: analysis.correctAnswer ?? 0,
+          });
+        })
+        .then((d) => { sessionIdRef.current = d.sessionId; })
+        .catch(() => {});
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [homeworkContext]);
 
   const speak = useCallback(async (text) => {
     if (!text) return;
     isBusyRef.current = true;
     setIsSpeaking(true);
+    setLastText(text);
     setError(null);
     try {
       const res = await fetch(`${API}/api/tts`, {
@@ -104,29 +126,21 @@ export function useTutor({ nickname, homeworkContext }) {
         const errText = await res.text();
         throw new Error(`TTS алдаа: ${res.status} ${errText}`);
       }
-      const arrayBuffer = await res.arrayBuffer();
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
       await new Promise((resolve, reject) => {
-        const ctx = new AudioContext();
-        const decode = () => {
-          ctx.decodeAudioData(arrayBuffer.slice(0), (decoded) => {
-            const src = ctx.createBufferSource();
-            src.buffer = decoded;
-            src.connect(ctx.destination);
-            src.onended = () => { ctx.close().catch(() => {}); resolve(); };
-            src.start(0);
-          }, (e) => { ctx.close().catch(() => {}); reject(e); });
-        };
-        if (ctx.state === "suspended") {
-          ctx.resume().then(decode).catch(reject);
-        } else {
-          decode();
-        }
+        const audio = new Audio(url);
+        audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
+        audio.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+        audio.play().catch(reject);
       });
     } catch (e) {
       console.error(e);
       setError("Дуу тоглуулахад алдаа гарлаа.");
     } finally {
       setIsSpeaking(false);
+      // TTS дуусаад echo намжих хүртэл хүлээнэ
+      await new Promise(r => setTimeout(r, 600));
       isBusyRef.current = false;
     }
   }, []);
@@ -173,6 +187,8 @@ export function useTutor({ nickname, homeworkContext }) {
   const processAudio = useCallback(
     async (chunks, mimeType) => {
       if (!chunks.length) return;
+      // Аль хэдийн боловсруулж байвал алгасна
+      if (isBusyRef.current) return;
       const blob = new Blob(chunks, { type: mimeType });
       const base64 = await blobToBase64(blob);
       isBusyRef.current = true;
@@ -247,9 +263,7 @@ export function useTutor({ nickname, homeworkContext }) {
           const captured = [...chunksRef.current];
           const mime = mimeTypeRef.current;
           recorder.onstop = () => {
-            if (captured.length && !isBusyRef.current) {
-              processAudio(captured, mime);
-            }
+            if (captured.length) processAudio(captured, mime);
           };
           try {
             recorder.stop();
@@ -297,14 +311,34 @@ export function useTutor({ nickname, homeworkContext }) {
     await chat(null);
   }, [chat]);
 
+  // ── hint: хүүхэд гацсан үед зөвлөгөө авах ───────────────
+  const getHint = useCallback(async (wrongAnswer) => {
+    const analysis = analysisRef.current;
+    if (!analysis) return;
+    try {
+      const { hint } = await api.getHint({
+        skill: analysis.skill,
+        difficulty: analysis.difficulty,
+        strategy: analysis.strategy,
+        wrongAnswer,
+        problem: homeworkRef.current,
+      });
+      if (hint) await speak(hint);
+    } catch (e) {
+      console.error(e);
+    }
+  }, [speak]);
+
   return {
     isSpeaking,
     isListening,
     isThinking,
     error,
+    lastText,
     greet,
     announceHomework,
     chat,
+    getHint,
     startAlwaysListen,
     stopAlwaysListen,
   };
