@@ -3,20 +3,20 @@
   inset: 0;
   width: 100vw;
   height: 100dvh;
-  background: radial-gradient(circle at 50% 35%, #1f2937 0%, #0c1220 70%);
+  background: radial-gradient(circle at 50% 35%, #173331 0%, #0c1220 70%);
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
-/* Robot fills the whole screen as the background actor */
+/* Mascot fills the whole screen as the background actor */
 .avatar-intro__scene {
   position: absolute;
   inset: 0;
   z-index: 1;
 }
 
-.avatar-intro__robot {
+.avatar-intro__mascot {
   width: 100% !important;
   height: 100% !important;
 }
@@ -44,7 +44,7 @@
   transform: translateX(-2px);
 }
 
-/* Name panel, anchored to the bottom-center, overlaid on the robot */
+/* Name panel, anchored to the bottom-center, overlaid on the mascot */
 .avatar-intro__panel {
   position: relative;
   z-index: 2;
@@ -87,8 +87,8 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 .avatar-intro__input:focus {
-  border-color: #b778ff;
-  box-shadow: 0 0 0 4px rgba(183, 120, 255, 0.25);
+  border-color: #ffbd4a;
+  box-shadow: 0 0 0 4px rgba(255, 189, 74, 0.25);
 }
 
 .avatar-intro__submit {
@@ -96,7 +96,7 @@
   padding: 14px 18px;
   border-radius: 16px;
   border: none;
-  background: #b778ff;
+  background: #185d56;
   color: #fff;
   font-size: 18px;
   font-weight: 700;
@@ -104,14 +104,14 @@
   transition: background 0.2s ease, transform 0.1s ease;
 }
 .avatar-intro__submit:hover {
-  background: #a35ff5;
+  background: #134c47;
 }
 .avatar-intro__submit:active {
   transform: scale(0.98);
 }
 
 @media (min-width: 768px) {
-  /* On wide screens float the panel to the bottom-left so the robot stays visible */
+  /* On wide screens float the panel to the bottom-left so the mascot stays visible */
   .avatar-intro__panel {
     margin: auto 0 6vh 6vw;
   }

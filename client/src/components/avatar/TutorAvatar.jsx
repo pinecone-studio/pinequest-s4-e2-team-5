@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { SplineScene } from '../SplineScene.jsx'
+import { KidMascotScene } from '../KidMascotScene.jsx'
 import { useTutor } from './useTutor.js'
 
 export function TutorAvatar({ nickname, homeworkContext }) {
@@ -41,12 +41,19 @@ export function TutorAvatar({ nickname, homeworkContext }) {
   }
 
   const { text: statusText, cls: statusCls } = statusLabel()
+  const mascotMood = isSpeaking
+    ? 'speaking'
+    : isListening
+      ? 'listening'
+      : isThinking
+        ? 'thinking'
+        : 'ready'
 
   return (
     <div className="tutor-avatar">
-      {/* 3D robot */}
+      {/* 3D kid-friendly tutor */}
       <div className="tutor-spline-wrap">
-        <SplineScene className="robot-spline" />
+        <KidMascotScene className="tutor-mascot" mood={mascotMood} />
       </div>
 
       {/* Glow when speaking */}
