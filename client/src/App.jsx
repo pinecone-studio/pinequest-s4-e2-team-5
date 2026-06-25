@@ -63,23 +63,13 @@ function App() {
     const avatar = normalizeAvatar(window.history.state?.avatar || selectedAvatar);
     return (
       <main className="learn-page">
-        <nav className="topbar">
-          <button
-            className="back-button"
-            onClick={() => navigate("/")}
-            aria-label="Нүүр хуудас руу буцах"
-          >
-            ←
-          </button>
-          <a
-            className="brand"
-            href="/"
-            onClick={(e) => {
-              e.preventDefault();
-              navigate("/");
-            }}
-          ></a>
-        </nav>
+        <button
+          className="learn-back"
+          onClick={() => navigate("/")}
+          aria-label="Нүүр хуудас руу буцах"
+        >
+          ←
+        </button>
 
         <AvatarSession nickname={name} avatar={avatar} />
       </main>

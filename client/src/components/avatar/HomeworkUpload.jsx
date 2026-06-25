@@ -1,12 +1,17 @@
 import { useState, useRef } from 'react'
 import { API_BASE } from '../../lib/config.js'
 
-export function HomeworkUpload({ onHomeworkLoaded }) {
+export function HomeworkUpload({ onHomeworkLoaded, onAnalyzingChange }) {
   const [preview, setPreview]     = useState(null)
   const [analyzing, setAnalyzing] = useState(false)
   const [done, setDone]           = useState(false)
   const [error, setError]         = useState(null)
   const inputRef                  = useRef(null)
+
+  function setAnalyzingState(v) {
+    setAnalyzing(v)
+    onAnalyzingChange?.(v)
+  }
 
   async function handleFile(file) {
     if (!file || !file.type.startsWith('image/')) return
@@ -17,7 +22,7 @@ export function HomeworkUpload({ onHomeworkLoaded }) {
     reader.onload = async (e) => {
       const dataUrl = e.target.result
       setPreview(dataUrl)
-      setAnalyzing(true)
+      setAnalyzingState(true)
 
       try {
         const base64    = dataUrl.split(',')[1]
@@ -36,7 +41,7 @@ export function HomeworkUpload({ onHomeworkLoaded }) {
         setError('Зурагыг шинжлэхэд алдаа гарлаа.')
         onHomeworkLoaded('', [])
       } finally {
-        setAnalyzing(false)
+        setAnalyzingState(false)
       }
     }
     reader.readAsDataURL(file)
@@ -59,6 +64,7 @@ export function HomeworkUpload({ onHomeworkLoaded }) {
     setPreview(null)
     setDone(false)
     setError(null)
+    setAnalyzingState(false)
     onHomeworkLoaded('', [])
     if (inputRef.current) inputRef.current.value = ''
   }
@@ -74,7 +80,17 @@ export function HomeworkUpload({ onHomeworkLoaded }) {
         onClick={() => !preview && inputRef.current?.click()}
       >
         {preview ? (
-          <img src={preview} alt="Даалгавар" className="hw-image-preview" />
+          <>
+            <img src={preview} alt="Даалгавар" className="hw-image-preview" />
+            <button
+              type="button"
+              className="hw-remove-btn"
+              onClick={(e) => { e.stopPropagation(); handleReset() }}
+              aria-label="Зургийг хасах"
+            >
+              ✕
+            </button>
+          </>
         ) : (
           <>
             <span className="hw-drop-icon">📄</span>

@@ -248,7 +248,6 @@ function SpeechBubble({ text, isThinking }) {
 
   return (
     <div className="sb-wrap">
-      <div className="sb-tail" />
       <div className="sb-box">
         {isThinking && !shortText ? (
           <span className="sb-dots"><span /><span /><span /></span>
@@ -261,7 +260,7 @@ function SpeechBubble({ text, isThinking }) {
 }
 
 /* ── Main TutorAvatar ── */
-export function TutorAvatar({ nickname, homeworkContext, problems = [], avatar = 'robot' }) {
+export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzing = false, avatar = 'robot' }) {
   // interpretCommand-ийг тогтвортой реф-ээр useTutor руу дамжуулна (доор шинэчилнэ).
   const cmdRef = useRef(() => false)
   const interpretCommand = useCallback((text) => cmdRef.current(text), [])
@@ -274,6 +273,7 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], avatar =
 
   const greetedRef = useRef(false)
   const askedRef = useRef(false)
+  const analyzingSaidRef = useRef(false)
   const lastExplainedRef = useRef('')
   const [selectedIndex, setSelectedIndex] = useState(null)
   const [practiceProblem, setPracticeProblem] = useState(null)
@@ -335,6 +335,15 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], avatar =
     }
   }, [structuredProblems.length, selectedIndex, nickname, speak])
 
+  // Зураг шинжиж байх үед зааварчилгааны оронд "түр хүлээ" гэж хэлнэ
+  useEffect(() => {
+    if (analyzing && !analyzingSaidRef.current && greetedRef.current) {
+      analyzingSaidRef.current = true
+      speak('Зургийг чинь шинжилж байна, түр хүлээгээрэй.')
+    }
+    if (!analyzing) analyzingSaidRef.current = false
+  }, [analyzing, speak])
+
   // Идэвхтэй бодлого солигдох бүрт тухайн бодлогыг тайлбарлуулна
   useEffect(() => {
     if (!activeProblem) return
@@ -384,73 +393,56 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], avatar =
   const mascotMood = isSpeaking ? 'speaking' : isListening ? 'listening' : isThinking ? 'thinking' : 'ready'
 
   const showInteractive = !showList && (activeProblem || isLoadingNext)
+  const showProblemPane = showList || showInteractive
 
   return (
-    <div className="ta-root">
+    <div className={`ta-root${showProblemPane ? ' ta-root-split' : ' ta-root-center'}`}>
       <div className="ta-blob ta-blob-1" />
       <div className="ta-blob ta-blob-2" />
       <div className="ta-blob ta-blob-3" />
 
-      {!showInteractive && !showList ? (
-        <div className="ta-center">
-          <div className="tutor-spline-wrap tutor-spline-big">
-            <MascotScene avatar={avatar} className="tutor-mascot" mood={mascotMood} />
-          </div>
-          <SpeechBubble text={lastText} isThinking={isThinking} />
-          <div className="ta-status-row">
-            {isListening && <span className="tutor-listen-dot" />}
-            <span className={`tutor-status${statusCls ? ` ${statusCls}` : ''}`}>{statusText}</span>
-          </div>
-          {error && <p className="tutor-error">{error}</p>}
-        </div>
-      ) : (
-        <>
-          {/* Layer 1 — robot */}
-          <div className="ta-robot-bg">
-            <div className="tutor-spline-wrap tutor-spline-big">
-              <MascotScene avatar={avatar} className="tutor-mascot" mood={mascotMood} />
-            </div>
-          </div>
-
-          {/* Layer 2 — speech bubble + status */}
-          <div className="ta-hud">
-            <SpeechBubble text={lastText} isThinking={isThinking} />
-            <div className="ta-status-row">
-              {isListening && <span className="tutor-listen-dot" />}
-              <span className={`tutor-status${statusCls ? ` ${statusCls}` : ''}`}>{statusText}</span>
-            </div>
-            {error && <p className="tutor-error">{error}</p>}
-          </div>
-
-          {/* Layer 3 — interactive / problem list */}
-          <div className="ta-interactive">
-            {showList ? (
-              <ProblemList
-                problems={structuredProblems}
-                selectedIndex={selectedIndex}
-                onSelect={selectProblem}
+      {/* LEFT — interactive board / problem list (only when a problem is active) */}
+      {showProblemPane && (
+        <div className="ta-problem-pane">
+          {showList ? (
+            <ProblemList
+              problems={structuredProblems}
+              selectedIndex={selectedIndex}
+              onSelect={selectProblem}
+            />
+          ) : isLoadingNext ? (
+            <div className="vm-loading">Дараагийн бодлого бэлтгэж байна…</div>
+          ) : activeProblem ? (
+            <>
+              {structuredProblems.length > 1 && (
+                <button className="ta-back-btn" onClick={() => setSelectedIndex(null)}>
+                  ← Бодлогууд
+                </button>
+              )}
+              <ProblemInteractive
+                key={problemKey(activeProblem)}
+                problem={activeProblem}
+                isSpeaking={isSpeaking}
+                onCorrect={handleCorrect}
+                onWrong={handleWrong}
               />
-            ) : isLoadingNext ? (
-              <div className="vm-loading">Дараагийн бодлого бэлтгэж байна…</div>
-            ) : activeProblem ? (
-              <>
-                {structuredProblems.length > 1 && (
-                  <button className="ta-back-btn" onClick={() => setSelectedIndex(null)}>
-                    ← Бодлогууд
-                  </button>
-                )}
-                <ProblemInteractive
-                  key={problemKey(activeProblem)}
-                  problem={activeProblem}
-                  isSpeaking={isSpeaking}
-                  onCorrect={handleCorrect}
-                  onWrong={handleWrong}
-                />
-              </>
-            ) : null}
-          </div>
-        </>
+            </>
+          ) : null}
+        </div>
       )}
+
+      {/* RIGHT (or centered) — robot + speech bubble + status */}
+      <div className="ta-robot-col">
+        <div className={`tutor-spline-wrap tutor-spline-big${showProblemPane ? ' tutor-spline-side' : ''}`}>
+          <MascotScene avatar={avatar} className="tutor-mascot" mood={mascotMood} />
+        </div>
+        <SpeechBubble text={lastText} isThinking={isThinking} />
+        <div className="ta-status-row">
+          {isListening && <span className="tutor-listen-dot" />}
+          <span className={`tutor-status${statusCls ? ` ${statusCls}` : ''}`}>{statusText}</span>
+        </div>
+        {error && <p className="tutor-error">{error}</p>}
+      </div>
     </div>
   )
 }
