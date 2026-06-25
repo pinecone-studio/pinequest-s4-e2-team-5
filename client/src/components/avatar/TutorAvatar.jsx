@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { KidMascotScene } from '../KidMascotScene.jsx'
-import { SplineScene } from '../SplineScene.jsx'
+import { useEffect, useRef } from 'react'
+import { MascotScene } from '../KidMascotScene.jsx'
 import { useTutor } from './useTutor.js'
 import { DraggableTile } from '../lesson/DraggableTile.jsx'
 
@@ -279,30 +278,22 @@ export function TutorAvatar({ nickname, homeworkContext, avatar = 'sun-buddy' })
 
       {/* 3D kid-friendly tutor */}
       <div className="tutor-spline-wrap">
-        {avatar === 'robot' ? (
-          <SplineScene className="tutor-mascot" />
-        ) : (
-          <KidMascotScene className="tutor-mascot" mood={mascotMood} />
-        )}
+        <MascotScene avatar={avatar} className="tutor-mascot" mood={mascotMood} />
       </div>
 
       {/* LEFT COLUMN: robot + bubble */}
       <div className="ta-left">
-        {!isRobotAvatar && (
-          <>
-            <div className="ta-robot-wrap">
-              <div className={`ta-robot-inner ${isSpeaking ? 'robot-bounce' : ''}`}>
-                <KidMascotScene className="robot-spline" mood={mascotMood} />
-              </div>
-              <div className="ta-rings">
-                <div className={`ta-ring ta-ring-1 ${isSpeaking ? 'ring-active' : ''}`} />
-                <div className={`ta-ring ta-ring-2 ${isSpeaking ? 'ring-active' : ''}`} />
-              </div>
-            </div>
+        <div className="ta-robot-wrap">
+          <div className={`ta-robot-inner ${isSpeaking ? 'robot-bounce' : ''}`}>
+            <MascotScene avatar={avatar} className="robot-spline" mood={mascotMood} />
+          </div>
+          <div className="ta-rings">
+            <div className={`ta-ring ta-ring-1 ${isSpeaking ? 'ring-active' : ''}`} />
+            <div className={`ta-ring ta-ring-2 ${isSpeaking ? 'ring-active' : ''}`} />
+          </div>
+        </div>
 
-            <SpeechBubble text={lastText} isThinking={isThinking} />
-          </>
-        )}
+        <SpeechBubble text={lastText} isThinking={isThinking} />
 
         {/* Drag tiles below bubble */}
         {choices.length > 0 && !droppedCorrect && (
