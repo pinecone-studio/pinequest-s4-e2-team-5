@@ -6,6 +6,7 @@ import { AvatarSession } from "./components/avatar/AvatarSession.jsx";
 import { AvatarIntro } from "./components/avatar/AvatarIntro.jsx";
 import { MathLesson } from "./components/lesson/MathLesson.jsx";
 import { TypingLesson } from "./components/lesson/TypingLesson.jsx";
+import { BigAddLesson } from "./components/lesson/BigAddLesson.jsx";
 import Landing from "./components/Landing.jsx";
 
 function normalizeAvatar(avatar) {
@@ -51,6 +52,10 @@ function App() {
 
   if (page === "typing-lesson") {
     return <TypingLesson onBack={() => navigate("/")} />;
+  }
+
+  if (page === "big-add-lesson") {
+    return <BigAddLesson onBack={() => navigate("/")} />;
   }
 
   if (page === "learn") {

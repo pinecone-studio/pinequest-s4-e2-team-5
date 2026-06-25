@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { MascotScene } from '../KidMascotScene.jsx'
 import { useTutor } from './useTutor.js'
+import { NumberVisual } from '../lesson/NumberVisual.jsx'
+import '../lesson/lesson.css'
+import '../lesson/big-add-lesson.css'
 
 const TILE_COLORS = {
   1:'#f2a36b', 2:'#f6cf69', 3:'#80b7c7', 4:'#6abf8e',
@@ -9,12 +12,6 @@ const TILE_COLORS = {
   13:'#ffcc80', 14:'#bcaaa4', 15:'#b0bec5',
 }
 function tileColor(n) { return TILE_COLORS[n] ?? '#65d99d' }
-
-const NUM_COLORS = [
-  '#ff6b6b','#ffa94d','#ffd43b','#69db7c','#4dabf7',
-  '#da77f2','#f783ac','#63e6be','#74c0fc','#ffe066',
-]
-function numColor(n) { return NUM_COLORS[n % NUM_COLORS.length] }
 
 function shuffle(arr) {
   const a = [...arr]
@@ -126,12 +123,12 @@ function VisualMath({ problem, choices, droppedCorrect, onCorrect, onWrong }) {
   return (
     <div className="vm-root">
       <div className="vm-equation">
-        <div className="vm-num-card" style={{ '--card-clr': numColor(a) }}>
-          {a}
+        <div className="vm-durs-wrap">
+          <NumberVisual value={a} />
         </div>
         <span className="vm-op">{op}</span>
-        <div className="vm-num-card" style={{ '--card-clr': numColor(b + 5) }}>
-          {b}
+        <div className="vm-durs-wrap">
+          <NumberVisual value={b} />
         </div>
         <span className="vm-op">=</span>
         <AnswerDropZone answer={answer} onCorrect={onCorrect} onWrong={onWrong} />
