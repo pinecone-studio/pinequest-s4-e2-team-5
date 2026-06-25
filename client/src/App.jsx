@@ -12,6 +12,10 @@ function App() {
   const [page, setPage] = useState(() =>
     getPageFromPath(window.location.pathname),
   );
+  const selectedAvatar =
+    window.history.state?.avatar ||
+    window.sessionStorage.getItem("selectedAvatar") ||
+    "sun-buddy";
 
   useEffect(() => {
     const handlePopState = () =>
@@ -28,9 +32,10 @@ function App() {
   if (page === "start") {
     return (
       <AvatarIntro
+        avatar={selectedAvatar}
         onBack={() => navigate("/")}
         onContinue={(nickname) =>
-          navigate("/learn", { nickname, avatar: "sun-buddy" })
+          navigate("/learn", { nickname, avatar: selectedAvatar })
         }
       />
     );
@@ -46,6 +51,7 @@ function App() {
 
   if (page === "learn") {
     const name = window.history.state?.nickname || "хүүхэд";
+    const avatar = window.history.state?.avatar || selectedAvatar;
     return (
       <main className="learn-page">
         <nav className="topbar">
@@ -67,7 +73,7 @@ function App() {
           <div className="step">Нархан найзтай суралц</div>
         </nav>
 
-        <AvatarSession nickname={name} />
+        <AvatarSession nickname={name} avatar={avatar} />
       </main>
     );
   }

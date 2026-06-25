@@ -4,7 +4,7 @@ import { StudentCamera } from './StudentCamera.jsx'
 import { TutorAvatar } from './TutorAvatar.jsx'
 import './avatar.css'
 
-export function AvatarSession({ nickname = 'хүүхэд' }) {
+export function AvatarSession({ nickname = 'хүүхэд', avatar = 'sun-buddy' }) {
   const [homeworkContext, setHomeworkContext] = useState('')
 
   return (
@@ -21,7 +21,7 @@ export function AvatarSession({ nickname = 'хүүхэд' }) {
 
       {/* RIGHT 70% */}
       <div className="session-right">
-        <TutorAvatar nickname={nickname} homeworkContext={homeworkContext} />
+        <TutorAvatar nickname={nickname} homeworkContext={homeworkContext} avatar={avatar} />
       </div>
     </div>
   )

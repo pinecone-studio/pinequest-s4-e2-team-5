@@ -12,6 +12,10 @@
   display: flex;
   flex-direction: column;
   border-right: 1px solid rgba(22, 43, 42, 0.1);
+  position: relative;
+  z-index: 3;
+  background: var(--cream);
+  min-height: 0;
 }
 
 .session-homework {
@@ -38,6 +42,8 @@
   background: #0d1a18;
   overflow: hidden;
   border-radius: 0 20px 20px 0;
+  z-index: 1;
+  min-width: 0;
 }
 
 /* ===== Homework Upload ===== */

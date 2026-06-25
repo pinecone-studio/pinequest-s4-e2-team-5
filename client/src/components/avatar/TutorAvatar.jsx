@@ -1,5 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { KidMascotScene } from '../KidMascotScene.jsx'
+import { SplineScene } from '../SplineScene.jsx'
 import { useTutor } from './useTutor.js'
 import { DraggableTile } from '../lesson/DraggableTile.jsx'
 
@@ -208,7 +209,7 @@ function SpeechBubble({ text, isThinking }) {
   )
 }
 
-export function TutorAvatar({ nickname, homeworkContext }) {
+export function TutorAvatar({ nickname, homeworkContext, avatar = 'sun-buddy' }) {
   const {
     isSpeaking, isListening, isThinking, error,
     lastText, greet, announceHomework, chat,
@@ -268,27 +269,40 @@ export function TutorAvatar({ nickname, homeworkContext }) {
       : isThinking
         ? 'thinking'
         : 'ready'
+  const isRobotAvatar = avatar === 'robot'
 
   return (
-    <div className="tutor-avatar">
+    <div className="ta-root">
+      <div className="ta-blob ta-blob-1" />
+      <div className="ta-blob ta-blob-2" />
+      <div className="ta-blob ta-blob-3" />
+
       {/* 3D kid-friendly tutor */}
       <div className="tutor-spline-wrap">
-        <KidMascotScene className="tutor-mascot" mood={mascotMood} />
+        {avatar === 'robot' ? (
+          <SplineScene className="tutor-mascot" />
+        ) : (
+          <KidMascotScene className="tutor-mascot" mood={mascotMood} />
+        )}
       </div>
 
       {/* LEFT COLUMN: robot + bubble */}
       <div className="ta-left">
-        <div className="ta-robot-wrap">
-          <div className={`ta-robot-inner ${isSpeaking ? 'robot-bounce' : ''}`}>
-            <SplineScene className="robot-spline" />
-          </div>
-          <div className="ta-rings">
-            <div className={`ta-ring ta-ring-1 ${isSpeaking ? 'ring-active' : ''}`} />
-            <div className={`ta-ring ta-ring-2 ${isSpeaking ? 'ring-active' : ''}`} />
-          </div>
-        </div>
+        {!isRobotAvatar && (
+          <>
+            <div className="ta-robot-wrap">
+              <div className={`ta-robot-inner ${isSpeaking ? 'robot-bounce' : ''}`}>
+                <KidMascotScene className="robot-spline" mood={mascotMood} />
+              </div>
+              <div className="ta-rings">
+                <div className={`ta-ring ta-ring-1 ${isSpeaking ? 'ring-active' : ''}`} />
+                <div className={`ta-ring ta-ring-2 ${isSpeaking ? 'ring-active' : ''}`} />
+              </div>
+            </div>
 
-        <SpeechBubble text={lastText} isThinking={isThinking} />
+            <SpeechBubble text={lastText} isThinking={isThinking} />
+          </>
+        )}
 
         {/* Drag tiles below bubble */}
         {choices.length > 0 && !droppedCorrect && (
@@ -299,11 +313,15 @@ export function TutorAvatar({ nickname, homeworkContext }) {
           </div>
         )}
 
-        <div className="ta-status-row">
-          {isListening && <span className="tutor-listen-dot" />}
-          <span className={`tutor-status${statusCls ? ` ${statusCls}` : ''}`}>{statusText}</span>
-        </div>
-        {error && <p className="tutor-error">{error}</p>}
+        {!isRobotAvatar && (
+          <>
+            <div className="ta-status-row">
+              {isListening && <span className="tutor-listen-dot" />}
+              <span className={`tutor-status${statusCls ? ` ${statusCls}` : ''}`}>{statusText}</span>
+            </div>
+            {error && <p className="tutor-error">{error}</p>}
+          </>
+        )}
       </div>
 
       {/* RIGHT COLUMN: interactive board */}
@@ -312,10 +330,7 @@ export function TutorAvatar({ nickname, homeworkContext }) {
           <VisualMath problem={problem} onCorrect={handleCorrect} onWrong={handleWrong} />
         ) : (
           <div className="ta-idle">
-            {homeworkContext
-              ? <p className="ta-hw-txt">{homeworkContext.slice(0, 120)}</p>
-              : <p className="ta-idle-msg">Даалгаврын зургаа оруул 📄</p>
-            }
+            {homeworkContext && <p className="ta-hw-txt">{homeworkContext.slice(0, 120)}</p>}
           </div>
         )}
       </div>
