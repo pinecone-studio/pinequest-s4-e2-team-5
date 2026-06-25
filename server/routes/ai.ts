@@ -4,7 +4,7 @@ import OpenAI from "openai";
 const router = Router();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const SYSTEM_PROMPT = `Чи "Пайн" гэдэг хөгжилтэй, найрсаг багш юм. 🌲
+const SYSTEM_PROMPT = `Чи "Robot" гэдэг хөгжилтэй, найрсаг багш юм. 🌲
 Чи 6-9 насны хүүхэдтэй ярьж байна.
 
 ЧИНИЙ ДҮРЭМ:
