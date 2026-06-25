@@ -1,9 +1,8 @@
 import { Router } from "express";
-import OpenAI from "openai";
+import { MODELS, chatComplete } from "../lib/ai";
 import { supabase } from "../lib/supabase";
 
 const router = Router();
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // POST /api/hints/hint
 // DB-д байвал тэндээс авна, байхгүй бол AI-аар үүсгэж хадгална
@@ -36,8 +35,8 @@ router.post("/hint", async (req, res) => {
   }
 
   // 2. DB-д байхгүй бол AI-аар үүсгэнэ
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+  const completion = await chatComplete({
+    model: MODELS.chat,
     messages: [
       {
         role: "user",
@@ -53,8 +52,9 @@ ${wrongAnswer ? `Хүүхдийн буруу хариулт: ${wrongAnswer}` : "
 - Дуугаар унших тул emoji, тэмдэгт хэрэглэхгүй`,
       },
     ],
-    max_tokens: 150,
+    maxTokens: 800,
     temperature: 0.7,
+    reasoningEffort: "low",
   });
 
   const hintText = completion.choices[0]?.message?.content ?? "";
@@ -99,8 +99,8 @@ router.post("/practice", async (req, res) => {
   }
 
   // 2. AI-аар шинэ дасгалууд үүсгэнэ
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+  const completion = await chatComplete({
+    model: MODELS.chat,
     messages: [
       {
         role: "user",
@@ -117,9 +117,10 @@ router.post("/practice", async (req, res) => {
 }`,
       },
     ],
-    response_format: { type: "json_object" },
-    max_tokens: 300,
+    jsonMode: true,
+    maxTokens: 1500,
     temperature: 0.9,
+    reasoningEffort: "low",
   });
 
   const parsed = JSON.parse(

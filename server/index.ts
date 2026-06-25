@@ -1,13 +1,12 @@
 import express from "express";
 import cors from "cors";
-import OpenAI from "openai";
 import progressRouter from "./api/progress";
 import hintsRouter from "./api/hints";
 import { normalizeForSpeech } from "./lib/mn-speech";
+import { openai, MODELS, chatComplete } from "./lib/ai";
 
 const app = express();
 const port = process.env.PORT || 3010;
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const chimegeTtsEndpoint =
   process.env.CHIMEGE_TTS_ENDPOINT ?? "https://api.chimege.com/v1.2/synthesize";
 const chimegeSttEndpoint =
@@ -45,21 +44,23 @@ app.get("/", (_req, res) => {
 app.post("/api/chat", async (req: any, res: any) => {
   const { nickname = "хүүхэд", homeworkContext = "", messages = [] } = req.body;
 
-  const systemPrompt = `Чи бол "Жой багш" — бага ангийн хүүхэдтэй ярьдаг найрсаг, тэвчээртэй математикийн AI багш. Чи хүүхэдтэй яг л дотны найз, хайрладаг багш шигээ дулаахан ярина.
+  const systemPrompt = `Чи бол "Жой багш" — 1-3 ангийн (6-9 настай) хүүхэдтэй ярьдаг найрсаг, тэвчээртэй математикийн AI багш. Чи хүүхэдтэй яг л дотны найз, хайрладаг багш шигээ дулаахан, тайван ярина.
 
 Хүүхдийн нэр (nickname): ${nickname}
 Одоогийн гэрийн даалгавар / бодлого: ${homeworkContext || "Одоогоор даалгавар оруулаагүй байна."}
 
 ДҮРЭМ:
 1. Хүүхдийг ҮРГЭЛЖ ${nickname}-ээр нь нэрлэж дууд.
-2. Зөвхөн ОДООГИЙН гэрийн даалгавартай холбоотой л ярь. Хүүхэд даалгавартай холбоогүй өөр зүйл асуувал (тоглоом, кино, хувийн асуудал, аюултай зүйл г.м.) маш эелдэгээр ингэж хариул: "Уучлаарай ${nickname}, би энэ асуултад хариулж чадахгүй нь. Хоёулаа даалгавартаа эргэж орцгооё." Тэгээд бодлого руугаа эргэн ор.
-3. Шууд хариуг ХЭЗЭЭ Ч битгий хэл. Алхам алхмаар, нэг удаад НЭГ жижиг асуултаар чиглүүл.
-4. Бодлогыг тайлбарласны дараа ЗААВАЛ асуу: "${nickname}, чи энэ хэсгээс аль нь ойлгомжтой, аль нь ойлгомжгүй байна?" Хүүхэд ойлгомжгүй хэсгээ хэлвэл ЯГ ТЭР хэсгийг өөр үгээр, өөр энгийн жишээгээр ДАХИН тайлбарла.
-5. Хүүхэд буруу хариулбал хэзээ ч битгий загна. "Ойролцоо боллоо, дахиад нэг хамт харъя" гэх мэт зөөлөн дэмжиж зас.
-6. Хүүхэд зөв хариулбал чин сэтгэлээсээ магтаж урамшуул.
-7. Бага ангийн хүүхдэд ойлгомжтой, маш энгийн, БОГИНО өгүүлбэр хэрэглэ. Урт яриа битгий хий — нэг хариуд 1-3 өгүүлбэр.
-8. Чиний хариу ДУУ хоолойгоор уншигдана. Тиймээс байгалийн, дулаахан, ярианы хэлээр бич. Emoji, тусгай тэмдэгт, markdown, дугаарлал БҮҮ хэрэглэ — зөвхөн хүн ярьдаг шиг цэвэр өгүүлбэр. ТООГ ХЭЗЭЭ Ч ЦИФРЭЭР бичихгүй — заавал үгэнд хөрвүүлж бич. Жишээ нь: 315 → "гурван зуун арван тав", 114 → "нэг зуун арван дөрөв".
-9. +18, хүчирхийлэл, айдас төрүүлэх, аюултай ямар ч агуулга огт бүү дурд. Үргэлж эерэг, найрсаг, аюулгүй бай.`;
+2. Хүүхдийн ярьсан эсвэл бичсэн үгийг анхааралтай ойлго. Хэрэв сонсголт бүрхэг, үг дутуу, эсвэл ойлгомжгүй бол өөрийн дураар бүү тайлбарла — "${nickname}, чи дахиад нэг хэлээч?" гэж эелдэг асуу. Хүүхдийн ЯГ хэлсэн зүйлд тохирсон хариу өг.
+3. Зөвхөн ОДООГИЙН гэрийн даалгавартай холбоотой л ярь. Хүүхэд даалгавартай холбоогүй өөр зүйл асуувал (тоглоом, кино, хувийн асуудал, аюултай зүйл г.м.) маш эелдэгээр ингэж хариул: "Уучлаарай ${nickname}, би энэ асуултад хариулж чадахгүй нь. Хоёулаа даалгавартаа эргэж орцгооё." Тэгээд бодлого руугаа эргэн ор.
+4. Зургаар өгсөн даалгаврыг (дээрх "бодлого") тодорхой, алхам алхмаар тайлбарла. Юуны тухай бодлого болохыг хүүхдэд эхлээд энгийнээр танилцуул.
+5. Шууд хариуг ХЭЗЭЭ Ч битгий хэл. Алхам алхмаар, нэг удаад НЭГ жижиг асуултаар чиглүүл.
+6. Бодлогыг тайлбарласны дараа ЗААВАЛ асуу: "${nickname}, чи энэ хэсгээс аль нь ойлгомжтой, аль нь ойлгомжгүй байна?" Хүүхэд ойлгомжгүй хэсгээ хэлвэл ЯГ ТЭР хэсгийг өөр үгээр, өөр энгийн жишээгээр (алим, бөмбөг, амттан г.м.) ДАХИН тайлбарла.
+7. Хүүхэд буруу хариулбал хэзээ ч битгий загна. "Ойролцоо боллоо, дахиад нэг хамт харъя" гэх мэт зөөлөн дэмжиж зас.
+8. Хүүхэд зөв хариулбал чин сэтгэлээсээ магтаж урамшуул.
+9. 1-3 ангийн хүүхдэд ойлгомжтой, маш энгийн, БОГИНО өгүүлбэр хэрэглэ. Урт яриа битгий хий — нэг хариуд 1-3 өгүүлбэр.
+10. Чиний хариу ДУУ хоолойгоор уншигдана. Тиймээс байгалийн, дулаахан, ярианы хэлээр, ЦЭВЭР монголоор алдаагүй бич. Emoji, тусгай тэмдэгт, markdown, дугаарлал БҮҮ хэрэглэ — зөвхөн хүн ярьдаг шиг цэвэр өгүүлбэр. ТООГ ХЭЗЭЭ Ч ЦИФРЭЭР бичихгүй — заавал үгэнд хөрвүүлж бич. Жишээ нь: 315 → "гурван зуун арван тав", 114 → "нэг зуун арван дөрөв".
+11. +18, хүчирхийлэл, айдас төрүүлэх, аюултай ямар ч агуулга огт бүү дурд. Үргэлж эерэг, найрсаг, аюулгүй бай.`;
 
   // messages хоосон үед анхны тайлбарыг эхлүүлэх trigger
   const allMessages = messages.length === 0
@@ -67,11 +68,12 @@ app.post("/api/chat", async (req: any, res: any) => {
     : messages;
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const completion = await chatComplete({
+      model: MODELS.chat,
       messages: [{ role: "system", content: systemPrompt }, ...allMessages],
       temperature: 0.75,
-      max_tokens: 200,
+      maxTokens: 1500,
+      reasoningEffort: "low",
     });
     res.json({ text: completion.choices[0]?.message.content ?? "" });
   } catch (e: any) {
@@ -136,8 +138,15 @@ app.post("/api/tts", async (req: any, res: any) => {
       }
     }
 
-    // Chimege ажиллахгүй бол OpenAI TTS fallback
-    const mp3 = await openai.audio.speech.create({ model: "tts-1", voice: "nova", input: speech });
+    // Chimege ажиллахгүй бол OpenAI TTS fallback (steerable gpt-4o-mini-tts).
+    // instructions-ээр монгол хэлээр, орос/казах аялгагүй ярихыг чиглүүлнэ.
+    const mp3 = await openai.audio.speech.create({
+      model: MODELS.tts,
+      voice: MODELS.ttsVoice as any,
+      input: speech,
+      instructions:
+        "Дулаахан, тод, ойлгомжтой багшийн хоолой. Цэвэр монгол хэлээр, орос болон казах аялгагүйгээр, бага ангийн хүүхдэд зориулж тайван, элэгсэг ярь.",
+    } as any);
     const buffer = Buffer.from(await mp3.arrayBuffer());
     res.set("Content-Type", "audio/mpeg");
     res.send(buffer);
@@ -193,13 +202,16 @@ app.post("/api/stt", async (req: any, res: any) => {
       }
     }
 
-    // 2) Chimege амжилтгүй / токенгүй бол OpenAI Whisper fallback.
+    // 2) Chimege амжилтгүй / токенгүй бол OpenAI transcribe fallback.
+    // gpt-4o-transcribe + монгол prompt-оор хазайлгаснаар казах/орос мэт буруу таихыг багасгана.
     const ext = mimeType.includes("mp4") ? "mp4" : "webm";
     const file = new File([buf], `recording.${ext}`, { type: mimeType });
     const transcription = await openai.audio.transcriptions.create({
       file,
-      model: "whisper-1",
+      model: MODELS.transcribe,
       language: "mn",
+      prompt:
+        "Энэ бол монгол хэлний яриа. Бага ангийн математикийн хичээл: нэмэх, хасах, үржих, хуваах, тэнцүү, тоо, бодлого, хариу.",
     });
     res.json({ text: transcription.text });
   } catch (e: any) {
@@ -213,8 +225,8 @@ app.post("/api/analyze-homework", async (req: any, res: any) => {
     return res.status(400).json({ error: "imageBase64 required" });
 
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
+    const response = await chatComplete({
+      model: MODELS.vision,
       messages: [
         {
           role: "user",
@@ -225,12 +237,13 @@ app.post("/api/analyze-homework", async (req: any, res: any) => {
             },
             {
               type: "text",
-              text: "Энэ зурган дээр ямар математикийн бодлого байгааг тайлбарла. Бодлогын бүх тоо, дүрс, текстийг монгол хэлээр нарийн тайлбарла. Зөвхөн бодлогын агуулгыг бич, өөр юу ч бүү нэм.",
+              text: "Энэ зураг дээрх 1-3 ангийн математикийн бодлогыг шинжил. Бүх тоо, үйлдэл (нэмэх, хасах, үржих, хуваах), дүрс, нөхцөлийг монгол хэлээр нарийн, тодорхой бич. Хэд хэдэн бодлого байвал тус бүрийг дугаарла. Зөвхөн бодлогын агуулгыг бич, бодлогын хариуг бүү бод, өөр юу ч бүү нэм.",
             },
           ],
         },
       ],
-      max_tokens: 600,
+      maxTokens: 2000,
+      reasoningEffort: "low",
     });
     res.json({ context: response.choices[0]?.message.content ?? "" });
   } catch (e: any) {
@@ -244,8 +257,8 @@ app.post("/api/ai/analyze", async (req: any, res: any) => {
   if (!problem) return res.status(400).json({ error: "problem шаардлагатай" });
 
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const response = await chatComplete({
+      model: MODELS.chat,
       messages: [
         {
           role: "user",
@@ -264,9 +277,10 @@ app.post("/api/ai/analyze", async (req: any, res: any) => {
 }`,
         },
       ],
-      response_format: { type: "json_object" },
-      max_tokens: 400,
+      jsonMode: true,
+      maxTokens: 2000,
       temperature: 0.3,
+      reasoningEffort: "low",
     });
 
     const analysis = JSON.parse(
@@ -285,8 +299,8 @@ app.post("/api/ai/generate-game", async (req: any, res: any) => {
     return res.status(400).json({ error: "problem болон analysis шаардлагатай" });
 
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    const response = await chatComplete({
+      model: MODELS.chat,
       messages: [
         {
           role: "user",
@@ -321,9 +335,10 @@ app.post("/api/ai/generate-game", async (req: any, res: any) => {
 }`,
         },
       ],
-      response_format: { type: "json_object" },
-      max_tokens: 600,
+      jsonMode: true,
+      maxTokens: 2000,
       temperature: 0.7,
+      reasoningEffort: "low",
     });
 
     const game = JSON.parse(
