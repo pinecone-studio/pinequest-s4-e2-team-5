@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 
 import { arrows, getCirclesConfig } from "@/lib/contactsElements";
 import { useContactsAnimation } from "@/hooks/useContactsAnimation";
-import { handleStartCta } from "@/helpers/handleDownload";
 import { Highlighter } from "../Highlighter";
 import AnimatedButton from "../AnimatedButton";
+import AvatarPicker, { AVATARS } from "../AvatarPicker";
 import Footer from "../Footer";
 
 export default function ContactsSection({
@@ -39,6 +39,33 @@ export default function ContactsSection({
 
   const circles = getCirclesConfig(leftCircleRef, rightCircleRef);
 
+  // Avatar selection gate for the start CTA.
+  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [showError, setShowError] = useState(false);
+  // bumped on each failed start so the toast re-plays its entrance animation
+  const [errorTick, setErrorTick] = useState(0);
+
+  const selectedName =
+    AVATARS.find((a) => a.id === selectedAvatar)?.name ?? null;
+
+  const handleSelectAvatar = (id: string) => {
+    setSelectedAvatar(id);
+    setPickerOpen(false);
+    setShowError(false);
+  };
+
+  const handleStart = () => {
+    if (!selectedAvatar) {
+      setShowError(true);
+      setErrorTick((t) => t + 1);
+      return;
+    }
+    const animate = window.pageTransition;
+    if (animate) animate("/start");
+    else window.location.assign("/start");
+  };
+
   return (
     <div className="h-dvh relative" ref={contactsSectionRef}>
       {/* Background growing circles */}
@@ -70,8 +97,10 @@ export default function ContactsSection({
       {/* Main content */}
       <div className="h-screen w-full flex flex-col justify-center items-center min-[320px]:gap-10 sm:gap-20 z-2 absolute">
         <div
-          onClick={handleStartCta}
-          className="relative text-neutral-900 cursor-pointer text-center uppercase min-[320px]:text-xl text-2xl leading-normal min-[320px]:-mt-[15vh] sm:-mt-10 font-rubik"
+          onClick={handleStart}
+          className={`relative text-neutral-900 cursor-pointer text-center uppercase min-[320px]:text-xl text-2xl leading-normal min-[320px]:-mt-[15vh] sm:-mt-10 font-rubik transition-opacity ${
+            selectedAvatar ? "opacity-100" : "opacity-60"
+          }`}
         >
           <div ref={downloadRef}>
             <span className="font-holtwood">. _ .</span> <br /> <br />
@@ -110,20 +139,55 @@ export default function ContactsSection({
         </div>
 
         {/* Buttons - Голлуулсан товчлуур */}
-        <div className="z-30 flex justify-center items-center w-full font-rubik font-bold py-6">
-          {["select avatar"].map((text, i) => (
+        <div className="z-30 flex flex-col justify-center items-center gap-4 w-full font-rubik font-bold py-6">
+          <div
+            ref={(el) => {
+              if (el) buttonsRef.current[0] = el;
+            }}
+            className="text-center leading-normal"
+          >
+            <AnimatedButton
+              text="select avatar"
+              onClick={() => setPickerOpen(true)}
+            />
+          </div>
+
+          {/* Selected avatar confirmation */}
+          {selectedName && (
+            <p className="ap-toast flex items-center gap-2 font-rubik text-sm font-bold text-neutral-900">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#b778ff] text-[11px] text-white">
+                ✓
+              </span>
+              Сонгосон: <span className="text-[#8b3dff]">{selectedName}</span>
+            </p>
+          )}
+
+          {/* Gentle inline toast when starting without an avatar */}
+          {showError && !selectedAvatar && (
             <div
-              key={text}
-              ref={(el) => {
-                if (el) buttonsRef.current[i] = el;
-              }}
-              className="text-center leading-normal"
+              key={errorTick}
+              className="ap-toast flex items-center gap-2.5 rounded-2xl border border-[#b778ff]/40 bg-white px-4 py-2.5 shadow-[0_10px_30px_-8px_rgba(139,61,255,0.45)]"
             >
-              <AnimatedButton text={text} />
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#b778ff] text-sm font-bold text-white">
+                !
+              </span>
+              <span className="font-rubik text-sm font-semibold text-neutral-800">
+                Эхлэхийн тулд эхлээд аватараа сонгоорой
+              </span>
             </div>
-          ))}
+          )}
         </div>
       </div>
+
+      {/* Avatar selection modal */}
+      {pickerOpen && (
+        <AvatarPicker
+          selected={selectedAvatar}
+          onSelect={handleSelectAvatar}
+          onClose={() => setPickerOpen(false)}
+        />
+      )}
+
       <Footer />
     </div>
   );

@@ -3,14 +3,15 @@ import "./App.css";
 import "./components/avatar/avatar.css";
 import { getPageFromPath } from "./navigation.js";
 import { AvatarSession } from "./components/avatar/AvatarSession.jsx";
+import { AvatarIntro } from "./components/avatar/AvatarIntro.jsx";
 import { MathLesson } from "./components/lesson/MathLesson.jsx";
 import { TypingLesson } from "./components/lesson/TypingLesson.jsx";
+import Landing from "./components/Landing.jsx";
 
 function App() {
   const [page, setPage] = useState(() =>
     getPageFromPath(window.location.pathname),
   );
-  const [sessionNickname, setSessionNickname] = useState("");
 
   useEffect(() => {
     const handlePopState = () =>
@@ -24,11 +25,16 @@ function App() {
     setPage(getPageFromPath(path));
   };
 
-  const handleStart = () => {
-    const name = "хүүхэд";
-    setSessionNickname(name);
-    navigate("/learn", { nickname: name, avatar: "narsbagsh" });
-  };
+  if (page === "start") {
+    return (
+      <AvatarIntro
+        onBack={() => navigate("/")}
+        onContinue={(nickname) =>
+          navigate("/learn", { nickname, avatar: "narsbagsh" })
+        }
+      />
+    );
+  }
 
   if (page === "lesson") {
     return <MathLesson onBack={() => navigate("/")} />;
@@ -39,7 +45,7 @@ function App() {
   }
 
   if (page === "learn") {
-    const name = sessionNickname || window.history.state?.nickname || "хүүхэд";
+    const name = window.history.state?.nickname || "хүүхэд";
     return (
       <main className="learn-page">
         <nav className="topbar">
@@ -66,19 +72,8 @@ function App() {
     );
   }
 
-  // TODO: Энд үндсэн web-ийн landing хуудас орно (өөр project-оос оруулна).
-  // Доорх нь зөвхөн lesson хуудсуудыг шалгахад зориулсан түр холбоосууд.
-  return (
-    <main style={{ padding: 40, fontFamily: "sans-serif" }}>
-      <h1>Placeholder — landing хуудас энд орно</h1>
-      <p>Хуудаснууд руу очих түр холбоосууд:</p>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8, maxWidth: 260 }}>
-        <button onClick={handleStart}>Эхлэх (Нарс багштай суралц)</button>
-        <button onClick={() => navigate("/lesson")}>🎲 Тоо нэмэх дасгал</button>
-        <button onClick={() => navigate("/typing-lesson")}>🔢 Тоо хасах дасгал</button>
-      </div>
-    </main>
-  );
+  // Үндсэн landing хуудас (өмнө нь Next.js project байсныг энд оруулсан).
+  return <Landing />;
 }
 
 export default App;
