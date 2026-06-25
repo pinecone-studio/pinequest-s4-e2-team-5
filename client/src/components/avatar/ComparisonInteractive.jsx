@@ -2,6 +2,7 @@
 // answer: a<b бол -1, a=b бол 0, a>b бол 1.
 import { useState } from 'react'
 import { NumberVisual } from '../lesson/NumberVisual.jsx'
+import { CelebrationBurst } from './CelebrationBurst.jsx'
 
 const OPTIONS = [
   { sym: '<', val: -1 },
@@ -49,11 +50,7 @@ export function ComparisonInteractive({ problem, onCorrect, onWrong }) {
           {phase === 'correct' ? (
             <>
               <span className="cmp-sym cmp-sym-answer">{answerSym}</span>
-              <div className="adz-burst">
-                {['⭐','✨','🎉','💫','🌟','✨'].map((s, i) => (
-                  <span key={i} className="adz-burst-item" style={{ '--angle': `${i * 60}deg` }}>{s}</span>
-                ))}
-              </div>
+              <CelebrationBurst />
             </>
           ) : (
             <span className="adz-q">?</span>

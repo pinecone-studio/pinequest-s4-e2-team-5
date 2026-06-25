@@ -6,6 +6,7 @@
 //   answer          = хайж буй (хоосон) утга
 import { useMemo, useState } from 'react'
 import { NumberVisual } from '../lesson/NumberVisual.jsx'
+import { CelebrationBurst } from './CelebrationBurst.jsx'
 
 function shuffle(arr) {
   const a = [...arr]
@@ -74,11 +75,7 @@ export function MissingAddendInteractive({ problem, onCorrect, onWrong }) {
           {phase === 'correct' ? (
             <>
               <div className="vm-durs-wrap vm-ans-durs"><NumberVisual value={answer} /></div>
-              <div className="adz-burst">
-                {['⭐','✨','🎉','💫','🌟','✨'].map((s, i) => (
-                  <span key={i} className="adz-burst-item" style={{ '--angle': `${i * 60}deg` }}>{s}</span>
-                ))}
-              </div>
+              <CelebrationBurst />
             </>
           ) : (
             <span className="adz-q">?</span>
