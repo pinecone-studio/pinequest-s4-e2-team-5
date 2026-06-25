@@ -1,17 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { MascotScene } from '../KidMascotScene.jsx'
 import { useTutor } from './useTutor.js'
-import { DraggableTile } from '../lesson/DraggableTile.jsx'
 
 const TILE_COLORS = {
-  1:'#f2a36b',2:'#f6cf69',3:'#80b7c7',4:'#6abf8e',
-  5:'#f48fb1',6:'#ce93d8',7:'#ff8a65',8:'#4db6ac',
-  9:'#7986cb',10:'#a5d6a7',11:'#ef9a9a',12:'#80cbc4',
-  13:'#ffcc80',14:'#bcaaa4',15:'#b0bec5',
+  1:'#f2a36b', 2:'#f6cf69', 3:'#80b7c7', 4:'#6abf8e',
+  5:'#f48fb1', 6:'#ce93d8', 7:'#ff8a65', 8:'#4db6ac',
+  9:'#7986cb', 10:'#a5d6a7', 11:'#ef9a9a', 12:'#80cbc4',
+  13:'#ffcc80', 14:'#bcaaa4', 15:'#b0bec5',
 }
-function tileColor(n) {
-  return TILE_COLORS[n] ?? '#65d99d'
-}
+function tileColor(n) { return TILE_COLORS[n] ?? '#65d99d' }
+
+const NUM_COLORS = [
+  '#ff6b6b','#ffa94d','#ffd43b','#69db7c','#4dabf7',
+  '#da77f2','#f783ac','#63e6be','#74c0fc','#ffe066',
+]
+function numColor(n) { return NUM_COLORS[n % NUM_COLORS.length] }
 
 function shuffle(arr) {
   const a = [...arr]
@@ -32,21 +35,6 @@ function makeChoices(answer) {
   return shuffle([...set].slice(0, 4))
 }
 
-const THEMES = [
-  { emoji: '🌲', color: '#4ade80' },
-  { emoji: '⭐', color: '#fbbf24' },
-  { emoji: '🍎', color: '#f87171' },
-  { emoji: '🌸', color: '#f9a8d4' },
-  { emoji: '🦋', color: '#a78bfa' },
-  { emoji: '🐣', color: '#fcd34d' },
-  { emoji: '🍊', color: '#fb923c' },
-  { emoji: '💎', color: '#67e8f9' },
-]
-
-function pickTheme(seed) {
-  return THEMES[seed % THEMES.length]
-}
-
 function parseMath(ctx) {
   if (!ctx) return null
   let m = ctx.match(/(\d+)\s*[+]\s*(\d+)/)
@@ -58,29 +46,28 @@ function parseMath(ctx) {
   return null
 }
 
-function EmojiGrid({ count, theme, offsetDelay = 0 }) {
-  const capped = Math.min(count, 10)
+/* ── Custom draggable number tile ── */
+function NumberTile({ value }) {
+  const color = tileColor(value)
   return (
-    <div className="eg-wrap">
-      {[...Array(capped)].map((_, i) => (
-        <span
-          key={i}
-          className="eg-item"
-          style={{
-            animationDelay: `${(offsetDelay + i) * 0.08}s`,
-            '--glow': theme.color,
-          }}
-        >
-          {theme.emoji}
-        </span>
-      ))}
+    <div
+      className="nt-tile"
+      style={{ '--tile-clr': color }}
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData('text/plain', String(value))
+        e.dataTransfer.effectAllowed = 'move'
+      }}
+    >
+      {value}
     </div>
   )
 }
 
+/* ── Answer drop zone ── */
 function AnswerDropZone({ answer, onCorrect, onWrong }) {
   const ref = useRef()
-  const [state, setState] = useState('empty') // empty | correct | wrong
+  const [state, setState] = useState('empty')
 
   useEffect(() => { setState('empty') }, [answer])
 
@@ -108,7 +95,8 @@ function AnswerDropZone({ answer, onCorrect, onWrong }) {
   }
 
   return (
-    <div ref={ref}
+    <div
+      ref={ref}
       className={`adz adz-${state}`}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -117,12 +105,9 @@ function AnswerDropZone({ answer, onCorrect, onWrong }) {
       {state === 'correct' && (
         <>
           <span className="adz-num">{answer}</span>
-          <div className="vm-burst">
-            {[...Array(6)].map((_, i) => (
-              <span key={i} className="vm-burst-item"
-                style={{ '--angle': `${i * 60}deg` }}>
-                {THEMES[i % THEMES.length].emoji}
-              </span>
+          <div className="adz-burst">
+            {['⭐','✨','🎉','💫','🌟','✨'].map((s, i) => (
+              <span key={i} className="adz-burst-item" style={{ '--angle': `${i * 60}deg` }}>{s}</span>
             ))}
           </div>
         </>
@@ -133,38 +118,40 @@ function AnswerDropZone({ answer, onCorrect, onWrong }) {
   )
 }
 
-function VisualMath({ problem, onCorrect, onWrong }) {
+/* ── Visual Math: clean number cards + tiles ── */
+function VisualMath({ problem, choices, droppedCorrect, onCorrect, onWrong }) {
   const { a, b, op } = problem
-  const themeA = pickTheme(a)
-  const themeB = pickTheme(b + 4)
   const answer = op === '+' ? a + b : a - b
 
   return (
     <div className="vm-root">
-      <div className="vm-card">
-        <div className="vm-number" style={{ color: themeA.color }}>{a}</div>
-        <EmojiGrid count={a} theme={themeA} offsetDelay={0} />
-      </div>
-
-      <div className="vm-op-wrap">
+      <div className="vm-equation">
+        <div className="vm-num-card" style={{ '--card-clr': numColor(a) }}>
+          {a}
+        </div>
         <span className="vm-op">{op}</span>
-      </div>
-
-      <div className="vm-card">
-        <div className="vm-number" style={{ color: themeB.color }}>{b}</div>
-        <EmojiGrid count={b} theme={themeB} offsetDelay={a} />
-      </div>
-
-      <div className="vm-op-wrap">
+        <div className="vm-num-card" style={{ '--card-clr': numColor(b + 5) }}>
+          {b}
+        </div>
         <span className="vm-op">=</span>
+        <AnswerDropZone answer={answer} onCorrect={onCorrect} onWrong={onWrong} />
       </div>
 
-      <AnswerDropZone answer={answer} onCorrect={onCorrect} onWrong={onWrong} />
+      {choices.length > 0 && !droppedCorrect && (
+        <div className="vm-tiles">
+          <p className="vm-tiles-label">Зөв хариугаа чирж оруул 👇</p>
+          <div className="vm-tiles-row">
+            {choices.map((n) => (
+              <NumberTile key={n} value={n} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-// Short version of text: max 60 chars
+/* ── Speech bubble ── */
 function trimBubble(text) {
   if (!text) return ''
   const first = text.split(/[.!?]/)[0] ?? text
@@ -197,9 +184,7 @@ function SpeechBubble({ text, isThinking }) {
       <div className="sb-tail" />
       <div className="sb-box">
         {isThinking && !shortText ? (
-          <span className="sb-dots">
-            <span /><span /><span />
-          </span>
+          <span className="sb-dots"><span /><span /><span /></span>
         ) : (
           <p className="sb-text">{displayed}</p>
         )}
@@ -208,7 +193,8 @@ function SpeechBubble({ text, isThinking }) {
   )
 }
 
-export function TutorAvatar({ nickname, homeworkContext, avatar = 'sun-buddy' }) {
+/* ── Main TutorAvatar ── */
+export function TutorAvatar({ nickname, homeworkContext, avatar = 'robot' }) {
   const {
     isSpeaking, isListening, isThinking, error,
     lastText, greet, announceHomework, chat,
@@ -237,7 +223,6 @@ export function TutorAvatar({ nickname, homeworkContext, avatar = 'sun-buddy' })
     }
   }, [homeworkContext, announceHomework])
 
-  // Бодлого өөрчлөгдөх бүрт шинэ сонголтууд үүсгэнэ
   useEffect(() => {
     if (!problem) { setChoices([]); return }
     const ans = problem.op === '+' ? problem.a + problem.b : problem.a - problem.b
@@ -261,54 +246,53 @@ export function TutorAvatar({ nickname, homeworkContext, avatar = 'sun-buddy' })
     return { text: 'БЭЛЭН', cls: '' }
   }
   const { text: statusText, cls: statusCls } = statusLabel()
-  const mascotMood = isSpeaking
-    ? 'speaking'
-    : isListening
-      ? 'listening'
-      : isThinking
-        ? 'thinking'
-        : 'ready'
+  const mascotMood = isSpeaking ? 'speaking' : isListening ? 'listening' : isThinking ? 'thinking' : 'ready'
+
   return (
     <div className="ta-root">
       <div className="ta-blob ta-blob-1" />
       <div className="ta-blob ta-blob-2" />
       <div className="ta-blob ta-blob-3" />
 
-      {/* 3D kid-friendly tutor */}
-      <div className="tutor-spline-wrap">
-        <MascotScene avatar={avatar} className="tutor-mascot" mood={mascotMood} />
-      </div>
-
-      {/* LEFT COLUMN: bubble + controls */}
-      <div className="ta-left">
-        <SpeechBubble text={lastText} isThinking={isThinking} />
-
-        {/* Drag tiles below bubble */}
-        {choices.length > 0 && !droppedCorrect && (
-          <div className="ta-tile-tray">
-            {choices.map((n) => (
-              <DraggableTile key={n} value={n} color={tileColor(n)} />
-            ))}
+      {!problem ? (
+        /* No homework: big robot centered */
+        <div className="ta-center">
+          <div className="tutor-spline-wrap tutor-spline-big">
+            <MascotScene avatar={avatar} className="tutor-mascot" mood={mascotMood} />
           </div>
-        )}
-
-        <div className="ta-status-row">
-          {isListening && <span className="tutor-listen-dot" />}
-          <span className={`tutor-status${statusCls ? ` ${statusCls}` : ''}`}>{statusText}</span>
+          <SpeechBubble text={lastText} isThinking={isThinking} />
+          <div className="ta-status-row">
+            {isListening && <span className="tutor-listen-dot" />}
+            <span className={`tutor-status${statusCls ? ` ${statusCls}` : ''}`}>{statusText}</span>
+          </div>
+          {error && <p className="tutor-error">{error}</p>}
         </div>
-        {error && <p className="tutor-error">{error}</p>}
-      </div>
-
-      {/* RIGHT COLUMN: interactive board */}
-      <div className="ta-right">
-        {problem ? (
-          <VisualMath problem={problem} onCorrect={handleCorrect} onWrong={handleWrong} />
-        ) : (
-          <div className="ta-idle">
-            {homeworkContext && <p className="ta-hw-txt">{homeworkContext.slice(0, 120)}</p>}
+      ) : (
+        /* Has homework: small robot top-left + big interactive right */
+        <>
+          <div className="ta-left">
+            <div className="tutor-spline-wrap">
+              <MascotScene avatar={avatar} className="tutor-mascot" mood={mascotMood} />
+            </div>
+            <SpeechBubble text={lastText} isThinking={isThinking} />
+            <div className="ta-status-row">
+              {isListening && <span className="tutor-listen-dot" />}
+              <span className={`tutor-status${statusCls ? ` ${statusCls}` : ''}`}>{statusText}</span>
+            </div>
+            {error && <p className="tutor-error">{error}</p>}
           </div>
-        )}
-      </div>
+
+          <div className="ta-right">
+            <VisualMath
+              problem={problem}
+              choices={choices}
+              droppedCorrect={droppedCorrect}
+              onCorrect={handleCorrect}
+              onWrong={handleWrong}
+            />
+          </div>
+        </>
+      )}
     </div>
   )
 }

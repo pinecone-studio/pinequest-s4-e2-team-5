@@ -243,9 +243,21 @@
   to   { transform: translate(18px,28px) scale(1.1); }
 }
 
-/* ── LEFT: robot column ── */
+/* ── CENTER: full-width layout (no problem) ── */
+.ta-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  gap: 16px;
+  padding: 20px;
+}
+
+/* ── LEFT: robot column (small, when problem exists) ── */
 .ta-left {
-  width: 38%;
+  width: 30%;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
@@ -256,17 +268,27 @@
   gap: 0;
 }
 
-/* 3D tutor sits absolute full behind */
+/* 3D robot — small inside ta-left */
 .tutor-spline-wrap {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
+  width: 100%;
+  height: 200px;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  z-index: 2;
+}
+
+/* Big variant — for centered no-problem layout */
+.tutor-spline-big {
+  height: 380px;
+  max-width: 480px;
 }
 
 .tutor-mascot {
   width: 100%;
   height: 100%;
-  min-height: 560px;
+  min-height: unset;
 }
 
 .kid-mascot-scene {
@@ -296,8 +318,8 @@
 
 .kid-mascot-stage {
   position: relative;
-  width: min(48vw, 460px);
-  min-width: 300px;
+  width: min(28vw, 280px);
+  min-width: 160px;
   aspect-ratio: 1;
   display: grid;
   place-items: center;
@@ -624,74 +646,114 @@
 /* ── Visual Math — big, game-like ── */
 .vm-root {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  width: 100%;
+  height: 100%;
+}
+
+/* Equation row: cards + operators + drop zone */
+.vm-equation {
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
   flex-wrap: nowrap;
-  width: 100%;
 }
 
-/* Number card */
-.vm-card {
+/* Tile tray inside interactive panel */
+.vm-tiles {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  background: rgba(255,255,255,0.05);
-  border: 1.5px solid rgba(255,255,255,0.1);
+  gap: 12px;
+  padding: 16px 24px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
   border-radius: 22px;
-  padding: 14px 12px 12px;
-  min-width: 90px;
-  animation: card-drop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+  min-width: 260px;
 }
-.vm-card:nth-child(3) { animation-delay: 0.15s; }
+
+.vm-tiles-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+  letter-spacing: 0.03em;
+}
+
+.vm-tiles-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* ── Number card (clean, no emoji grid) ── */
+.vm-num-card {
+  width: 110px;
+  height: 110px;
+  border-radius: 28px;
+  background: rgba(255,255,255,0.05);
+  border: 3px solid var(--card-clr, #65d99d);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 60px;
+  font-weight: 900;
+  color: var(--card-clr, #65d99d);
+  filter: drop-shadow(0 0 18px var(--card-clr, #65d99d));
+  animation: card-drop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+  flex-shrink: 0;
+}
+.vm-num-card:nth-child(3) { animation-delay: 0.15s; }
 @keyframes card-drop {
-  from { transform: translateY(-30px) scale(0.8); opacity: 0; }
+  from { transform: translateY(-28px) scale(0.75); opacity: 0; }
   to   { transform: translateY(0) scale(1); opacity: 1; }
 }
 
-.vm-number {
-  font-size: 48px;
+/* ── Custom draggable number tile ── */
+.nt-tile {
+  width: 76px;
+  height: 76px;
+  border-radius: 20px;
+  background: var(--tile-clr, #65d99d);
+  color: #0a1512;
+  font-size: 34px;
   font-weight: 900;
-  line-height: 1;
-  filter: drop-shadow(0 0 14px currentColor);
-}
-
-/* Emoji grid inside card */
-.eg-wrap {
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  align-items: center;
   justify-content: center;
-  max-width: 100px;
+  cursor: grab;
+  user-select: none;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.35), 0 0 0 0 var(--tile-clr);
+  transition: transform 0.15s, box-shadow 0.15s;
+  animation: tile-appear 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
 }
-.eg-item {
-  font-size: 22px;
-  display: inline-block;
-  animation: item-fly 0.45s cubic-bezier(0.34,1.56,0.64,1) both;
-  filter: drop-shadow(0 0 4px var(--glow, transparent));
+.nt-tile:hover {
+  transform: translateY(-6px) scale(1.1);
+  box-shadow: 0 14px 32px rgba(0,0,0,0.45), 0 0 22px var(--tile-clr);
 }
-@keyframes item-fly {
-  from { transform: translateX(-30px) scale(0) rotate(-20deg); opacity: 0; }
-  to   { transform: translateX(0) scale(1) rotate(0deg); opacity: 1; }
+.nt-tile:active { cursor: grabbing; transform: scale(0.93); }
+@keyframes tile-appear {
+  from { transform: scale(0) rotate(-15deg); opacity: 0; }
+  to   { transform: scale(1) rotate(0deg);   opacity: 1; }
 }
 
 /* Operator */
-.vm-op-wrap {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
 .vm-op {
-  font-size: 40px;
+  font-size: 48px;
   font-weight: 900;
   color: #65d99d;
-  text-shadow: 0 0 20px rgba(101,217,157,0.6);
+  text-shadow: 0 0 22px rgba(101,217,157,0.7);
+  flex-shrink: 0;
   animation: op-pulse 2s ease-in-out infinite;
 }
 @keyframes op-pulse {
   0%,100% { transform: scale(1); }
-  50%      { transform: scale(1.12); }
+  50%      { transform: scale(1.14); }
 }
 
 /* Answer slot */
@@ -734,30 +796,30 @@
   to   { transform: scale(1) rotate(0deg);  opacity: 1; }
 }
 
-/* Burst emojis on correct answer */
-.vm-burst {
+/* ── Burst on correct drop ── */
+.adz-burst {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
-.vm-burst-item {
+.adz-burst-item {
   position: absolute;
-  font-size: 18px;
+  font-size: 20px;
   top: 50%; left: 50%;
   transform-origin: 0 0;
   animation: burst-fly 0.9s cubic-bezier(0.25,0.46,0.45,0.94) both;
-  animation-delay: 0.1s;
+  animation-delay: 0.08s;
 }
 @keyframes burst-fly {
   from { transform: rotate(var(--angle)) translateX(0); opacity: 1; }
-  to   { transform: rotate(var(--angle)) translateX(55px); opacity: 0; }
+  to   { transform: rotate(var(--angle)) translateX(62px); opacity: 0; }
 }
-.vm-burst-item:nth-child(1) { --angle: 0deg; }
-.vm-burst-item:nth-child(2) { --angle: 60deg; }
-.vm-burst-item:nth-child(3) { --angle: 120deg; }
-.vm-burst-item:nth-child(4) { --angle: 180deg; }
-.vm-burst-item:nth-child(5) { --angle: 240deg; }
-.vm-burst-item:nth-child(6) { --angle: 300deg; }
+.adz-burst-item:nth-child(1) { --angle: 0deg; }
+.adz-burst-item:nth-child(2) { --angle: 60deg; }
+.adz-burst-item:nth-child(3) { --angle: 120deg; }
+.adz-burst-item:nth-child(4) { --angle: 180deg; }
+.adz-burst-item:nth-child(5) { --angle: 240deg; }
+.adz-burst-item:nth-child(6) { --angle: 300deg; }
 
 /* ── Tile tray (left column, below bubble) ── */
 .ta-tile-tray {
@@ -785,10 +847,10 @@
 
 /* ── Answer drop zone ── */
 .adz {
-  min-width: 80px;
-  min-height: 90px;
-  border-radius: 22px;
-  border: 3px dashed rgba(255,255,255,0.2);
+  width: 110px;
+  height: 110px;
+  border-radius: 28px;
+  border: 3px dashed rgba(255,255,255,0.25);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -968,6 +1030,138 @@
   font-weight: 700;
   color: var(--ink);
 }
+
+/* ===== Robot Interactive ===== */
+.ri-root {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  color: white;
+  position: relative;
+  background: #0a1512;
+}
+
+.ri-robot-corner {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 3;
+}
+
+.ri-robot-emoji {
+  font-size: 56px;
+  display: block;
+  filter: drop-shadow(0 0 12px rgba(101, 217, 157, 0.45));
+  transition: transform 0.3s;
+  line-height: 1;
+}
+
+.ri-robot-bounce {
+  animation: ri-bounce 0.5s ease-in-out infinite alternate;
+}
+
+@keyframes ri-bounce {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-10px); }
+}
+
+.ri-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 36px 24px 96px;
+  gap: 12px;
+}
+
+.ri-idle-title {
+  font-size: 22px;
+  font-weight: 800;
+  text-align: center;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.ri-idle-sub {
+  font-size: 14px;
+  text-align: center;
+  opacity: 0.55;
+  margin: 0;
+}
+
+.ri-mission-title {
+  font-size: 20px;
+  font-weight: 800;
+  text-align: center;
+  margin: 0;
+  color: #65d99d;
+  text-shadow: 0 0 18px rgba(101, 217, 157, 0.4);
+}
+
+.ri-mission-story {
+  font-size: 14px;
+  text-align: center;
+  opacity: 0.82;
+  max-width: 440px;
+  line-height: 1.65;
+  margin: 0;
+}
+
+.ri-mission-visual {
+  font-size: 40px;
+  text-align: center;
+  letter-spacing: 0.04em;
+  margin: 4px 0;
+}
+
+.ri-answer-row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  max-width: 380px;
+  margin-top: 8px;
+}
+
+.ri-answer-input {
+  flex: 1;
+  border-radius: 14px;
+  padding: 13px 16px;
+  font-size: 15px;
+  font-family: inherit;
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  outline: none;
+  background: rgba(255, 255, 255, 0.07);
+  color: white;
+  transition: border-color 0.2s;
+}
+
+.ri-answer-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.ri-answer-input:focus {
+  border-color: #65d99d;
+  background: rgba(101, 217, 157, 0.06);
+}
+
+.ri-answer-btn {
+  background: #65d99d;
+  color: #0a1512;
+  border: none;
+  border-radius: 14px;
+  padding: 13px 22px;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, transform 0.1s;
+  flex-shrink: 0;
+}
+
+.ri-answer-btn:hover  { background: #4ec989; transform: scale(1.03); }
+.ri-answer-btn:active { transform: scale(0.97); }
 
 /* ===== Responsive ===== */
 @media (max-width: 760px) {
