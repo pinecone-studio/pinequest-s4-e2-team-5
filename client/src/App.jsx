@@ -8,6 +8,7 @@ import { MathLesson } from "./components/lesson/MathLesson.jsx";
 import { TypingLesson } from "./components/lesson/TypingLesson.jsx";
 import { BigAddLesson } from "./components/lesson/BigAddLesson.jsx";
 import Landing from "./components/Landing.jsx";
+import { stopAllAudio } from "./components/avatar/audioBus.js";
 
 function normalizeAvatar(avatar) {
   if (avatar === "robot" || avatar === "hero") return "robot";
@@ -23,13 +24,16 @@ function App() {
   );
 
   useEffect(() => {
-    const handlePopState = () =>
+    const handlePopState = () => {
+      stopAllAudio();
       setPage(getPageFromPath(window.location.pathname));
+    };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
   const navigate = (path, state = {}) => {
+    stopAllAudio();
     window.history.pushState(state, "", path);
     setPage(getPageFromPath(path));
   };
