@@ -54,15 +54,22 @@ export default function ContactsSection({
     else window.location.assign("/start");
   };
 
+  // Аватар сонгоход зөвхөн сонгоно — шууд хуудас руу шилжихгүй.
   const handleSelectAvatar = (id: string) => {
     setSelectedAvatar(id);
     window.sessionStorage.setItem("selectedAvatar", id);
     setPickerOpen(false);
-    goToStart();
+    setShowError(false);
   };
 
+  // "ЭХЭЛЦГЭЭЕ" дарахад: аватар сонгоогүй бол алдаа, сонгосон бол шилжинэ.
   const handleStart = () => {
-    setPickerOpen(true);
+    if (!selectedAvatar) {
+      setShowError(true);
+      setErrorTick((t) => t + 1);
+      return;
+    }
+    goToStart();
   };
 
   return (
@@ -158,6 +165,20 @@ export default function ContactsSection({
                 ✓
               </span>
               Сонгосон: <span className="text-[#8b3dff]">{selectedName}</span>
+            </p>
+          )}
+
+          {/* Аватар сонгоогүй үед гарах алдааны мессеж */}
+          {showError && !selectedAvatar && (
+            <p
+              key={errorTick}
+              role="alert"
+              className="ap-toast flex items-center gap-2 font-rubik text-sm font-bold text-[#dc2626]"
+            >
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#dc2626] text-[11px] text-white">
+                !
+              </span>
+              Эхлэхийн тулд эхлээд аватар сонгоно уу
             </p>
           )}
         </div>
