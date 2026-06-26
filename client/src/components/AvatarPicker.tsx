@@ -9,7 +9,6 @@ export type AvatarOption = {
   available: boolean;
 };
 
-
 export const AVATARS: AvatarOption[] = [
   { id: "sun-buddy", name: "Нархан", emoji: "☀️", available: true },
   { id: "robot", name: "Робот", emoji: "🤖", available: true },
@@ -26,7 +25,6 @@ export default function AvatarPicker({
   onSelect: (id: string) => void;
   onClose: () => void;
 }) {
-  
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -70,8 +68,8 @@ export default function AvatarPicker({
         </h2>
         <p className="mx-auto mt-2 mb-7 max-w-xs text-center text-sm leading-relaxed text-neutral-400">
           Одоогоор{" "}
-          <span className="font-semibold text-[#8b3dff]">Нархан</span> бэлэн.
-          Бусад найзууд тун удахгүй!
+          <span className="font-semibold text-[#8b3dff]">Нархан болон Жой</span>{" "}
+          бэлэн. Бусад найзууд тун удахгүй!
         </p>
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
