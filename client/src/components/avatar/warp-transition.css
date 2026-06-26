@@ -1,0 +1,84 @@
+/* Username → Bodoh шилжилтийн hyperspace эффект.
+   Анхны SCSS-ийг plain CSS болгож хувиргав (sass-гүй төсөл).
+   Өнгийг тогтвортой 2-3 байлгахын тулд hue-rotate-ийг ХАСав. */
+
+.warp {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #000;
+  overflow: hidden;
+  display: flex;
+  animation: warp-screen-fade 2.5s ease-in-out forwards;
+}
+
+.warp-container {
+  margin: auto;
+  perspective: 5px;
+  perspective-origin: 50% 50%;
+  position: relative;
+}
+
+.warp-group {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  left: -50vw;
+  top: -50vh;
+  transform-style: preserve-3d;
+  animation: warp-move 8s infinite linear;
+}
+
+.warp-group:nth-child(2) {
+  animation-delay: -4s;
+}
+
+.warp-item {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(#05040a, #03010e);
+  background-size: cover;
+  opacity: 1;
+  animation: warp-fade 8s infinite linear;
+}
+
+.warp-item::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  border-radius: 50%;
+  box-shadow: var(--star-shadow);
+}
+
+.warp-group:nth-child(2) .warp-item {
+  animation-delay: -4s;
+}
+
+.item-right  { transform: rotateY(90deg)  translateZ(500px); }
+.item-left   { transform: rotateY(-90deg) translateZ(500px); }
+.item-top    { transform: rotateX(90deg)  translateZ(500px); }
+.item-bottom { transform: rotateX(-90deg) translateZ(500px); }
+.item-middle { transform: rotateX(180deg) translateZ(1000px); }
+
+@keyframes warp-move {
+  0%   { transform: translateZ(-200px) rotate(0deg); }
+  100% { transform: translateZ(150px)  rotate(0deg); }
+}
+
+@keyframes warp-fade {
+  0%        { opacity: 0.2; }
+  25%, 60%  { opacity: 1; }
+  100%      { opacity: 0.2; }
+}
+
+/* Эхэнд бараг хар → дунд тод → төгсгөлд бүдгэрч /learn руу зөөлөн шилжинэ */
+@keyframes warp-screen-fade {
+  0%   { opacity: 0; }
+  15%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { opacity: 0; }
+}

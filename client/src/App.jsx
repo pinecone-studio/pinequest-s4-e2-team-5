@@ -4,6 +4,7 @@ import "./components/avatar/avatar.css";
 import { getPageFromPath } from "./navigation.js";
 import { AvatarSession } from "./components/avatar/AvatarSession.jsx";
 import { AvatarIntro } from "./components/avatar/AvatarIntro.jsx";
+import { WarpTransition } from "./components/avatar/WarpTransition.jsx";
 import { MathLesson } from "./components/lesson/MathLesson.jsx";
 import { TypingLesson } from "./components/lesson/TypingLesson.jsx";
 import { BigAddLesson } from "./components/lesson/BigAddLesson.jsx";
@@ -19,6 +20,8 @@ function App() {
   const [page, setPage] = useState(() =>
     getPageFromPath(window.location.pathname),
   );
+  // Username → Bodoh хооронд warp шилжилт үзүүлэх үед {nickname, avatar}-г барина.
+  const [warpTo, setWarpTo] = useState(null);
   const selectedAvatar = normalizeAvatar(
     window.history.state?.avatar || window.sessionStorage.getItem("selectedAvatar"),
   );
@@ -38,13 +41,25 @@ function App() {
     setPage(getPageFromPath(path));
   };
 
+  // Нэр авсны дараа шууд /learn руу үсрэхгүй — 2-3 сек warp шилжилт үзүүлнэ.
+  if (warpTo) {
+    return (
+      <WarpTransition
+        onDone={() => {
+          setWarpTo(null);
+          navigate("/learn", warpTo);
+        }}
+      />
+    );
+  }
+
   if (page === "start") {
     return (
       <AvatarIntro
         avatar={selectedAvatar}
         onBack={() => navigate("/")}
         onContinue={(nickname) =>
-          navigate("/learn", { nickname, avatar: selectedAvatar })
+          setWarpTo({ nickname, avatar: selectedAvatar })
         }
       />
     );
