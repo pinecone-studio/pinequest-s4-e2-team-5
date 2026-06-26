@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { api } from "../../lib/api.js";
 import { API_BASE } from "../../lib/config.js";
 import { VAD, blobToBase64 } from "./voice.js";
+import { registerAudio, getNavEpoch } from "./audioBus.js";
 
 export function useTutor({ nickname, homeworkContext, interpretCommand }) {
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -84,6 +85,8 @@ export function useTutor({ nickname, homeworkContext, interpretCommand }) {
     if (!text) return;
     // Шинэ яриа эхэллээ — өмнөх тоглож буй аудиог таслаж, өөрийгөө "эзэн" болгоно.
     const seq = ++speakSeqRef.current;
+    // Шилжилт болсон эсэхийг fetch-ийн өмнө барьж аваад дараа нь шалгана.
+    const epoch = getNavEpoch();
     stopCurrentAudio();
     isBusyRef.current = true;
     setIsSpeaking(true);
@@ -96,19 +99,20 @@ export function useTutor({ nickname, homeworkContext, interpretCommand }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
-      // Энэ хооронд илүү шинэ speak эхэлсэн бол энэ хариуг хаяна (давхцахгүй).
-      if (seq !== speakSeqRef.current) return;
+      // Энэ хооронд илүү шинэ speak эхэлсэн эсвэл хуудас шилжсэн бол хаяна.
+      if (seq !== speakSeqRef.current || epoch !== getNavEpoch()) return;
       if (!res.ok) {
         const errText = await res.text();
         throw new Error(`TTS алдаа: ${res.status} ${errText}`);
       }
       const blob = await res.blob();
-      if (seq !== speakSeqRef.current) return;
+      if (seq !== speakSeqRef.current || epoch !== getNavEpoch()) return;
       const url = URL.createObjectURL(blob);
       currentUrlRef.current = url;
       await new Promise((resolve, reject) => {
         const audio = new Audio(url);
         currentAudioRef.current = audio;
+        registerAudio(audio, url);
         audioResolveRef.current = resolve;
         // Дуу хоолой жинхэнэ эхлэх агшинд текстийг гаргаж синкжүүлнэ.
         audio.onplay = () => { if (seq === speakSeqRef.current) setLastText(text); };
@@ -346,5 +350,6 @@ export function useTutor({ nickname, homeworkContext, interpretCommand }) {
     getHint,
     startAlwaysListen,
     stopAlwaysListen,
+    stopCurrentAudio,
   };
 }

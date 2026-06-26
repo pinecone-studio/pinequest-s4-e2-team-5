@@ -264,7 +264,7 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
   const {
     isSpeaking, isListening, isThinking, error,
     lastText, greet, chat, explainProblem, speak,
-    startAlwaysListen, stopAlwaysListen,
+    startAlwaysListen, stopAlwaysListen, stopCurrentAudio,
   } = useTutor({ nickname, homeworkContext, interpretCommand })
 
   const greetedRef = useRef(false)
@@ -321,7 +321,7 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
     if (greetedRef.current || !nickname) return
     greetedRef.current = true
     greet().then(() => startAlwaysListen())
-    return () => stopAlwaysListen()
+    return () => { stopAlwaysListen(); stopCurrentAudio() }
   }, [nickname]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Олон бодлого орж ирэхэд "аль вэ?" гэж асууна

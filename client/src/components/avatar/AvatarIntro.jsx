@@ -4,6 +4,7 @@ import { DEFAULT_MASCOT } from "../mascotConfig.js";
 import { API_BASE } from "../../lib/config.js";
 import { useVoiceCapture } from "./useVoiceCapture.js";
 import { extractName } from "./extractName.js";
+import { registerAudio, getNavEpoch } from "./audioBus.js";
 import "./avatar-intro.css";
 
 const ROBOT_INTRO_TEXT =
@@ -36,6 +37,8 @@ export function AvatarIntro({ onContinue, onBack, avatar = DEFAULT_MASCOT.id }) 
   const playTts = useCallback(
     async (text) => {
       cleanupAudio();
+      // Шилжилт болсон эсэхийг fetch-ийн өмнө барьж аваад дараа нь шалгана.
+      const epoch = getNavEpoch();
       const response = await fetch(`${API_BASE}/api/tts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -43,9 +46,12 @@ export function AvatarIntro({ onContinue, onBack, avatar = DEFAULT_MASCOT.id }) 
       });
       if (!response.ok) throw new Error("TTS failed");
       const blob = await response.blob();
+      // Fetch явж байх зуур хуудас шилжсэн бол дуу эхлүүлэхгүй.
+      if (epoch !== getNavEpoch()) return;
       audioUrlRef.current = URL.createObjectURL(blob);
       const audio = new Audio(audioUrlRef.current);
       audioRef.current = audio;
+      registerAudio(audio, audioUrlRef.current);
       await new Promise((resolve) => {
         audio.onended = resolve;
         audio.onerror = resolve;
