@@ -205,7 +205,7 @@ export function useTutor({ nickname, homeworkContext, interpretCommand }) {
         console.error(e);
         setIsThinking(false);
         isBusyRef.current = false;
-        setError("Дуу таних алдаа гарлаа.");
+        setError("");
       }
     },
     [chat],
