@@ -1,6 +1,67 @@
 import { useState, useRef } from 'react'
 import { API_BASE } from '../../lib/config.js'
 
+// Vision API нь зөвхөн JPEG/PNG/WEBP дэмждэг (HEIC ❌). Утасны зураг ч хэт хүнд.
+// Тиймээс илгээхээс өмнө canvas дээр зурж, багасгаад JPEG болгож хувиргана.
+const MAX_DIM = 1600
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => resolve(img)
+    img.onerror = () =>
+      reject(new Error('Энэ зургийн форматыг уншиж чадсангүй. JPEG эсвэл PNG оруулна уу.'))
+    img.src = src
+  })
+}
+
+// dataUrl → багасгасан JPEG base64 (mimeType үргэлж image/jpeg).
+async function normalizeImage(dataUrl) {
+  const img = await loadImage(dataUrl)
+  const scale = Math.min(1, MAX_DIM / Math.max(img.width, img.height))
+  const width = Math.max(1, Math.round(img.width * scale))
+  const height = Math.max(1, Math.round(img.height * scale))
+
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  canvas.getContext('2d').drawImage(img, 0, 0, width, height)
+
+  const jpegUrl = canvas.toDataURL('image/jpeg', 0.85)
+  return jpegUrl.split(',')[1]
+}
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+
+// Render free tier унтсан байвал эхний хүсэлт сэрээх зуур алдаа өгдөг тул дахин оролдоно.
+async function analyzeWithRetry(base64, attempts = 3) {
+  let lastErr
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch(`${API_BASE}/api/analyze-homework`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageBase64: base64, mimeType: 'image/jpeg' }),
+      })
+      if (res.ok) return res.json()
+      // 404/502/503 — сервер сэрж байна. Хүлээгээд дахин оролдоно.
+      if ((res.status === 404 || res.status >= 500) && i < attempts - 1) {
+        lastErr = new Error(`сервер сэрж байна (${res.status})`)
+        await sleep(4000)
+        continue
+      }
+      // Бусад алдаа (400 гэх мэт) — серверийн бодит мессежийг гаргана.
+      let detail = `${res.status}`
+      try { const j = await res.json(); if (j?.error) detail = j.error } catch { /* JSON биш */ }
+      throw new Error(detail)
+    } catch (e) {
+      lastErr = e
+      if (i < attempts - 1) await sleep(4000)
+    }
+  }
+  throw lastErr
+}
+
 export function HomeworkUpload({ onHomeworkLoaded, onAnalyzingChange }) {
   const [preview, setPreview]     = useState(null)
   const [analyzing, setAnalyzing] = useState(false)
@@ -25,20 +86,14 @@ export function HomeworkUpload({ onHomeworkLoaded, onAnalyzingChange }) {
       setAnalyzingState(true)
 
       try {
-        const base64    = dataUrl.split(',')[1]
-        const mimeType  = file.type
-
-        const res = await fetch(`${API_BASE}/api/analyze-homework`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ imageBase64: base64, mimeType }),
-        })
-        if (!res.ok) throw new Error('analyze failed')
-        const { context, problems = [] } = await res.json()
+        // HEIC/том зургийг дэмжигдэх JPEG болгож багасгана.
+        const base64 = await normalizeImage(dataUrl)
+        const { context, problems = [] } = await analyzeWithRetry(base64)
         onHomeworkLoaded(context, problems)
         setDone(true)
-      } catch {
-        setError('Зурагыг шинжлэхэд алдаа гарлаа.')
+      } catch (err) {
+        // Серверийн жинхэнэ алдааг харуулна (зүгээр л "алдаа" биш).
+        setError(`Зурагыг шинжлэхэд алдаа гарлаа: ${err.message}`)
         onHomeworkLoaded('', [])
       } finally {
         setAnalyzingState(false)
