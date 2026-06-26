@@ -8,14 +8,27 @@ export function StudentCamera() {
   const start = useCallback(async () => {
     setErr(false);
     try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error("getUserMedia дэмжигдэхгүй (HTTPS/localhost шаардлагатай)");
+      }
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: 320, height: 240, facingMode: "user" },
         audio: false,
       });
-      videoRef.current.srcObject = stream;
-      await videoRef.current.play();
+      const video = videoRef.current;
+      if (!video) {
+        stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
+      // Видео нь үргэлж DOM-д байх ба зөвхөн opacity-аар нуугддаг.
+      // display:none үед зарим браузер кадр зураггүй / play() амжилтгүй болдог.
       setOn(true);
-    } catch {
+      video.srcObject = stream;
+      video.muted = true;
+      await video.play();
+    } catch (e) {
+      console.error("StudentCamera start failed:", e);
+      setOn(false);
       setErr(true);
     }
   }, []);
@@ -43,7 +56,7 @@ export function StudentCamera() {
           muted
           playsInline
           className="student-cam-video"
-          style={{ display: on ? "block" : "none" }}
+          style={{ opacity: on ? 1 : 0 }}
         />
         {!on && (
           <div className="student-cam-placeholder">

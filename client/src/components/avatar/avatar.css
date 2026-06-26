@@ -187,11 +187,15 @@
 }
 
 .student-cam-placeholder {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   color: #4b5563;
+  background: #111;
 }
 
 .student-cam-placeholder svg {
