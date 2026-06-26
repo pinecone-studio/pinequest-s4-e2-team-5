@@ -28,6 +28,8 @@ export function StudentCamera() {
     setOn(false)
   }, [])
 
+  useEffect(() => { start() }, [start])
+
   useEffect(() => () => stop(), [stop])
 
   return (
