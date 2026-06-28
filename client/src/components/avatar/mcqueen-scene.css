@@ -1,0 +1,234 @@
+/* ════════════════════════════════════════════════════════════
+   .ta-mcq — McQueen аватарын /learn (session) сэдэв
+   Тэнгэр + хурдны зам + хөвөгч 95/цом + McQueen найз + улаан уралдааны карт
+   ════════════════════════════════════════════════════════════ */
+.ta-root.ta-mcq {
+  background: linear-gradient(180deg, #3f9be0 0%, #7ec8f3 40%, #ffd9a8 74%, #ffb877 100%);
+  background-size: 100% 100%;
+  animation: none;
+}
+.ta-root.ta-mcq::before { opacity: 0; }
+.ta-mcq .ta-blob { opacity: 0.14; mix-blend-mode: multiply; }
+
+/* ── Дэвсгэр чимэглэл ── */
+.mcqs-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+
+.mcqs-sun {
+  position: absolute; top: 7%; right: 8%;
+  width: 58px; height: 58px; border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #fff3b0, #ffd23a 58%, #ffb02e);
+  box-shadow: 0 0 44px rgba(255, 200, 80, 0.55);
+}
+
+.mcqs-cloud {
+  position: absolute;
+  background: #ffffff;
+  border-radius: 999px;
+  filter: drop-shadow(0 6px 10px rgba(120, 160, 200, 0.16));
+  opacity: 0.96;
+  animation: mcqs-cloud-drift linear infinite alternate;
+}
+.mcqs-cloud::before, .mcqs-cloud::after {
+  content: ""; position: absolute; background: #ffffff; border-radius: 50%;
+}
+.mcqs-cloud::before { width: 52%; height: 155%; left: 13%; bottom: 28%; }
+.mcqs-cloud::after  { width: 40%; height: 128%; right: 15%; bottom: 24%; }
+@keyframes mcqs-cloud-drift {
+  from { transform: translateX(0); }
+  to   { transform: translateX(30px); }
+}
+
+.mcqs-deco {
+  position: absolute;
+  width: var(--s); height: auto;
+  filter: drop-shadow(0 8px 12px rgba(120, 40, 20, 0.28));
+  animation: mcqs-float ease-in-out infinite;
+}
+@keyframes mcqs-float {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50%      { transform: translateY(-14px) rotate(3deg); }
+}
+
+/* Хурдны зам (асфальт) — доод хэсэг */
+.mcqs-road {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: 13%;
+  background: linear-gradient(#3c424c 0%, #262a31 100%);
+  box-shadow: inset 0 8px 14px rgba(0, 0, 0, 0.22);
+}
+.mcqs-road::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 9px;
+  background: repeating-linear-gradient(90deg, #e23b3b 0 22px, #f5f5f5 22px 44px);
+}
+.mcqs-lane {
+  position: absolute; left: 0; right: 0; top: 54%;
+  height: 7px;
+  background: repeating-linear-gradient(90deg, #ffd33a 0 42px, transparent 42px 80px);
+  animation: mcqs-lane-move 0.7s linear infinite;
+}
+@keyframes mcqs-lane-move {
+  from { background-position: 0 0; }
+  to   { background-position: 122px 0; }
+}
+
+/* Зам дээр зогсох том чимэглэл (гэрлэн дохио, Queen машин) */
+.mcqs-ground-item {
+  position: absolute;
+  filter: drop-shadow(0 10px 14px rgba(80, 30, 20, 0.32));
+  animation: mcqs-idle 4.5s ease-in-out infinite;
+  user-select: none; -webkit-user-drag: none;
+}
+@keyframes mcqs-idle {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+
+/* ── McQueen найз: center=ТОМ голд, split=ЖИЖИГ зүүн-дээд ──
+   McQueen.png ≈ 1513×787 (өргөн), тул aspect-ratio-г өргөн авна. */
+.mcq-stage {
+  position: relative;
+  aspect-ratio: 1513 / 787;
+  flex-shrink: 0;
+}
+.mcq-stage .mcq-buddy {
+  width: 100%;
+  animation: mcqs-bob 4.6s ease-in-out infinite;
+}
+@keyframes mcqs-bob {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50%      { transform: translateY(-10px) rotate(1deg); }
+}
+
+/* ── Хөдөлдөг нүд (McQueen.png 1513×787-д тааруулсан) ── */
+.mcq-buddy { position: relative; width: 100%; }
+.mcq-buddy-img {
+  display: block;
+  width: 100%; height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 16px 24px rgba(150, 25, 12, 0.4));
+  user-select: none; -webkit-user-drag: none;
+}
+.mcq-eye {
+  position: absolute;
+  width: 7.5%; height: 11.8%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 42%, #cfeefb 0%, #6cc0e6 26%, #2f7fc4 60%, #1a4d86 100%);
+  box-shadow: inset 0 -3px 6px rgba(0, 0, 60, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.55), 0 0 0 1px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+.mcq-eye--l { left: 40.05%; top: 16.9%; }
+.mcq-eye--r { left: 51.85%; top: 16.9%; }
+.mcq-pupil {
+  position: absolute; left: 50%; top: 50%;
+  width: 56%; height: 56%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 42% 36%, #34343a 0%, #0b0b0e 66%);
+  transform: translate(-50%, -50%) translate(calc(var(--gx) * 28%), calc(var(--gy) * 24%));
+  transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.5, 1);
+}
+.mcq-pupil::after {
+  content: "";
+  position: absolute; top: 12%; right: 14%;
+  width: 32%; height: 28%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+}
+@media (prefers-reduced-motion: reduce) { .mcq-pupil { transition: none !important; } }
+
+.ta-mcq.ta-root-center .ta-robot-col {
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 20px;
+}
+.ta-mcq.ta-root-center .mcq-stage { width: min(84vw, 640px); }
+
+.ta-mcq.ta-root-split .ta-robot-col {
+  position: absolute;
+  top: 0; left: 0;
+  width: auto;
+  max-width: min(48%, 420px);
+  height: auto;
+  flex: none;
+  z-index: 5;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 18px 20px;
+  border: none;
+  pointer-events: none;
+}
+.ta-mcq.ta-root-split .mcq-stage { width: clamp(190px, 30vw, 330px); }
+/* Интерактивийг дээш өргөж, доод талын замтай тулахаас сэргийлнэ */
+.ta-mcq.ta-root-split .ta-problem-pane { padding-top: 30px; padding-bottom: 15vh; }
+
+/* Ярианы бөмбөлөг + статус */
+.ta-mcq.ta-root-center .sb-wrap {
+  position: static; transform: none; left: auto; bottom: auto; margin: 0;
+  width: min(82%, 380px); align-self: center;
+}
+.ta-mcq.ta-root-center .ta-status-row {
+  position: static; transform: none; left: auto; bottom: auto; margin-top: 0;
+}
+.ta-mcq.ta-root-center .sb-box { text-align: center; justify-content: center; }
+.ta-mcq.ta-root-split .sb-wrap { align-self: flex-start; width: 100%; }
+.ta-mcq.ta-root-split .sb-box { text-align: left; justify-content: flex-start; }
+
+.ta-mcq .sb-box {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(210, 60, 50, 0.25);
+  box-shadow: 0 10px 26px rgba(150, 40, 30, 0.18);
+}
+.ta-mcq .sb-text { color: #4a2018; }
+.ta-mcq .tutor-status { color: #c0331f; }
+.ta-mcq .ta-back-btn { color: #c0271a; border-color: rgba(210, 60, 50, 0.35); }
+.ta-mcq .ta-back-btn:hover { background: rgba(255, 90, 70, 0.12); }
+
+/* ── Интерактив — McQueen улаан уралдааны карт ── */
+.ta-mcq .vm-choice-btn {
+  position: relative;
+  background: linear-gradient(#ff5544 0 58%, #c8160d 58% 100%);
+  border: 3px solid #8c1109;
+  border-radius: 14px;
+  box-shadow: 0 8px 0 #6e0d07, 0 14px 22px rgba(150, 30, 20, 0.28);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.ta-mcq .vm-choice-btn:hover:not(:disabled) { transform: translateY(-5px); }
+.ta-mcq .vm-choice-btn:active:not(:disabled) {
+  transform: translateY(5px);
+  box-shadow: 0 3px 0 #6e0d07, 0 6px 12px rgba(150, 30, 20, 0.24);
+}
+.ta-mcq .vm-choice-correct {
+  border-color: #2fb35f;
+  box-shadow: 0 8px 0 #1f7d42, 0 14px 22px rgba(40, 120, 50, 0.3);
+}
+.ta-mcq .vm-choice-wrong {
+  border-color: #ffd33a;
+  box-shadow: 0 8px 0 #c79a00, 0 14px 22px rgba(180, 140, 0, 0.3);
+}
+
+/* Тэгшитгэл/хариултын тоо — тэнгэр дээр БАРААН */
+.ta-mcq .vm-equation .num-big-label {
+  color: #3a1812;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.ta-mcq .vm-equation .domino-label { color: rgba(58, 24, 18, 0.6); }
+/* Хариултын картын тоо — улаан машин дээр ЦАГААН + сүүдэр */
+.ta-mcq .vm-choice-btn .num-big-label {
+  color: #ffffff;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.4), 0 0 8px rgba(0, 0, 0, 0.25);
+}
+.ta-mcq .vm-choice-btn .domino-label { color: rgba(255, 255, 255, 0.78); }
+.ta-mcq .vm-word-prompt { color: #4a2018; }
+.ta-mcq .vm-op { color: #c8160d; text-shadow: 0 2px 0 rgba(255, 255, 255, 0.5); }
+
+/* Хариултын нүх — улаан хүрээ */
+.ta-mcq .vm-ans-slot {
+  border: 3px dashed #c8160d;
+  background: linear-gradient(165deg, #fffdf6, #ffe8e2);
+  border-radius: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mcqs-deco, .mcqs-cloud, .mcqs-ground-item, .mcqs-lane, .mcq-stage img { animation: none !important; }
+}
