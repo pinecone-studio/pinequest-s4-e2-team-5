@@ -15,7 +15,7 @@ const ROBOT_INTRO_TEXT =
 const MC_FLOATERS = [
   { src: "/block.png", top: "12%", left: "7%", s: 70, dur: "7s" }, // өвсний блок
   { src: "/sukh.png", top: "36%", left: "3%", s: 60, dur: "9s" }, // pickaxe
-  { src: "/lerobrine.png", top: "58%", left: "6%", s: 56, dur: "7.8s" }, // алмаз блок
+  { src: "/lerobrine.png", top: "50%", left: "6%", s: 56, dur: "7.8s" }, // алмаз блок
   { src: "/borblock.png", top: "13%", left: "83%", s: 64, dur: "8.5s" }, // модон блок
   { src: "/gal.png", top: "34%", left: "91%", s: 44, dur: "6.5s" }, // дэнлүү
   { src: "/mavis.png", top: "57%", left: "85%", s: 56, dur: "8.2s" }, // зуух
@@ -193,7 +193,7 @@ export function AvatarIntro({ onContinue, onBack, avatar = DEFAULT_MASCOT.id }) 
               ))}
             </div>
             <div className="avatar-intro__mc-wrap">
-              <img className="mc-main-img" src="/hun.png" alt="Майнкрафт найз" draggable="false" />
+              <img className="mc-main-img" src="/maynkrap.png" alt="Майнкрафт найз" draggable="false" />
             </div>
           </>
         ) : (

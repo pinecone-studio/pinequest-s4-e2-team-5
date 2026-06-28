@@ -8,6 +8,7 @@ import { MissingAddendInteractive } from './MissingAddendInteractive.jsx'
 import { ProblemList } from './ProblemList.jsx'
 import { CelebrationBurst } from './CelebrationBurst.jsx'
 import { JoyBackground, JoyRobot } from './JoyScene.jsx'
+import { MinecraftBackground } from './MinecraftScene.jsx'
 import { extractProblemNumber } from './extractProblemNumber.js'
 import '../lesson/lesson.css'
 import '../lesson/big-add-lesson.css'
@@ -400,13 +401,15 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
   // Бодлого бүрд background-ийн өнгө аяс өөр болгоно (5 палитр эргэлдэнэ)
   const themeIndex = ((effectiveIndex ?? 0) % 5 + 5) % 5
   const isJoy = avatar === 'robot'
+  const isMc = avatar === 'minecraft'
 
   return (
     <div
-      className={`ta-root${showProblemPane ? ' ta-root-split' : ' ta-root-center'}${celebrating ? ' ta-celebrate' : ''}${isJoy ? ' ta-joy' : ''}`}
+      className={`ta-root${showProblemPane ? ' ta-root-split' : ' ta-root-center'}${celebrating ? ' ta-celebrate' : ''}${isJoy ? ' ta-joy' : ''}${isMc ? ' ta-mc' : ''}`}
       data-theme={themeIndex}
     >
       {isJoy && <JoyBackground />}
+      {isMc && <MinecraftBackground />}
       <div className="ta-blob ta-blob-1" />
       <div className="ta-blob ta-blob-2" />
       <div className="ta-blob ta-blob-3" />
@@ -445,6 +448,10 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
         {isJoy ? (
           <div className="joy-stage">
             <JoyRobot mood={mascotMood} />
+          </div>
+        ) : isMc ? (
+          <div className="mc-stage">
+            <img src="/maynkrap.png" alt="Майнкрафт найз" draggable="false" />
           </div>
         ) : (
           <div className={`tutor-spline-wrap tutor-spline-big${showProblemPane ? ' tutor-spline-side' : ''}`}>
