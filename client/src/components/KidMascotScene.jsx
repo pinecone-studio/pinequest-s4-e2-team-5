@@ -1,4 +1,4 @@
-import { CreeperFace } from './AvatarPicker.tsx'
+import { CreeperFace, McQueenCar } from './AvatarPicker.tsx'
 
 export function KidMascotScene({ className = '', mood = 'ready' }) {
   return (
@@ -72,6 +72,21 @@ export function MascotScene({ avatar = 'sun-buddy', className = '', mood = 'read
       >
         <div style={{ width: 'min(60%, 320px)', aspectRatio: '1 / 1', filter: 'drop-shadow(0 14px 22px rgba(40,80,30,0.3))' }}>
           <CreeperFace />
+        </div>
+      </div>
+    )
+  }
+
+  if (avatar === 'mcqueen') {
+    return (
+      <div
+        className={className}
+        style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        role="img"
+        aria-label="Маккуин машин"
+      >
+        <div style={{ width: 'min(72%, 400px)', aspectRatio: '1 / 1', filter: 'drop-shadow(0 14px 22px rgba(120,30,20,0.3))' }}>
+          <McQueenCar />
         </div>
       </div>
     )
