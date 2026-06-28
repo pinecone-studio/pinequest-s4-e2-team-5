@@ -12,9 +12,45 @@ export type AvatarOption = {
 export const AVATARS: AvatarOption[] = [
   { id: "sun-buddy", name: "Нархан", emoji: "☀️", available: true },
   { id: "robot", name: "Жой", emoji: "🤖", available: true },
+  { id: "minecraft", name: "Майнкрафт", emoji: "🟩", available: true },
   { id: "rocket", name: "Пуужин", emoji: "🚀", available: false },
   { id: "dino", name: "Дино", emoji: "🦖", available: false },
 ];
+
+/** Майнкрафт креепер царай (пиксел блок хэлбэр) — picker болон scene-д хуваалцана. */
+export function CreeperFace({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      width="100%"
+      height="100%"
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <defs>
+        <linearGradient id="apCreeper" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#7ac74f" />
+          <stop offset="100%" stopColor="#4e9b3a" />
+        </linearGradient>
+      </defs>
+      {/* толгой */}
+      <rect x="9" y="7" width="46" height="50" rx="4" fill="url(#apCreeper)" />
+      {/* пиксел хээ */}
+      <rect x="9" y="7" width="12" height="13" fill="#8ed15f" opacity="0.45" />
+      <rect x="43" y="34" width="12" height="13" fill="#3c8a2e" opacity="0.5" />
+      <rect x="30" y="11" width="9" height="9" fill="#6cbf45" opacity="0.4" />
+      <rect x="13" y="40" width="9" height="9" fill="#5fae3e" opacity="0.4" />
+      {/* царай */}
+      <g fill="#22381b">
+        <rect x="17" y="20" width="9" height="9" />
+        <rect x="38" y="20" width="9" height="9" />
+        <rect x="27" y="29" width="10" height="9" />
+        <rect x="22" y="38" width="9" height="14" />
+        <rect x="33" y="38" width="9" height="14" />
+      </g>
+    </svg>
+  );
+}
 
 /** Custom-drawn mascot art (emoji-аас илүү гоё, бодит дүртэй) */
 function AvatarArt({ id, className }: { id: string; className?: string }) {
@@ -150,6 +186,10 @@ function AvatarArt({ id, className }: { id: string; className?: string }) {
         <circle cx="43.6" cy="29" r="1.3" fill="#0F172A" />
       </svg>
     );
+  }
+
+  if (id === "minecraft") {
+    return <CreeperFace className={className} />;
   }
 
   return null;

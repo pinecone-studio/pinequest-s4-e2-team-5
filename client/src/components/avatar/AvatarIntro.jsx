@@ -23,7 +23,11 @@ export function AvatarIntro({ onContinue, onBack, avatar = DEFAULT_MASCOT.id }) 
   const audioRef = useRef(null);
   const audioUrlRef = useRef("");
   const continuedRef = useRef(false);
-  const mascotName = isRobot ? "Жой" : DEFAULT_MASCOT.name;
+  const mascotName = isRobot
+    ? "Жой"
+    : avatar === "minecraft"
+      ? "Крийпер"
+      : DEFAULT_MASCOT.name;
 
   const cleanupAudio = useCallback(() => {
     audioRef.current?.pause();
