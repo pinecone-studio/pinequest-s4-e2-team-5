@@ -9,6 +9,7 @@ import { ProblemList } from './ProblemList.jsx'
 import { CelebrationBurst } from './CelebrationBurst.jsx'
 import { JoyBackground, JoyRobot } from './JoyScene.jsx'
 import { MinecraftBackground } from './MinecraftScene.jsx'
+import { McQueenBackground } from './McQueenScene.jsx'
 import { extractProblemNumber } from './extractProblemNumber.js'
 import '../lesson/lesson.css'
 import '../lesson/big-add-lesson.css'
@@ -402,14 +403,16 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
   const themeIndex = ((effectiveIndex ?? 0) % 5 + 5) % 5
   const isJoy = avatar === 'robot'
   const isMc = avatar === 'minecraft'
+  const isMcq = avatar === 'mcqueen'
 
   return (
     <div
-      className={`ta-root${showProblemPane ? ' ta-root-split' : ' ta-root-center'}${celebrating ? ' ta-celebrate' : ''}${isJoy ? ' ta-joy' : ''}${isMc ? ' ta-mc' : ''}`}
+      className={`ta-root${showProblemPane ? ' ta-root-split' : ' ta-root-center'}${celebrating ? ' ta-celebrate' : ''}${isJoy ? ' ta-joy' : ''}${isMc ? ' ta-mc' : ''}${isMcq ? ' ta-mcq' : ''}`}
       data-theme={themeIndex}
     >
       {isJoy && <JoyBackground />}
       {isMc && <MinecraftBackground />}
+      {isMcq && <McQueenBackground />}
       <div className="ta-blob ta-blob-1" />
       <div className="ta-blob ta-blob-2" />
       <div className="ta-blob ta-blob-3" />
@@ -452,6 +455,10 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
         ) : isMc ? (
           <div className="mc-stage">
             <img src="/maynkrap.png" alt="Майнкрафт найз" draggable="false" />
+          </div>
+        ) : isMcq ? (
+          <div className="mcq-stage">
+            <img src="/McQueen.png" alt="Маккуин найз" draggable="false" />
           </div>
         ) : (
           <div className={`tutor-spline-wrap tutor-spline-big${showProblemPane ? ' tutor-spline-side' : ''}`}>
