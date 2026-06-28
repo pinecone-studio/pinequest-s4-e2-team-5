@@ -11,12 +11,23 @@ import "./avatar-intro.css";
 const ROBOT_INTRO_TEXT =
   "Сайн байна уу? Таны нэрийг хэн гэдэг вэ? Намайг Жой гэдэг.";
 
+// Minecraft /start дэлгэцийн чимэглэл — зүүн/баруун тэнцвэртэй хөвөгч эд зүйлс.
+const MC_FLOATERS = [
+  { src: "/block.png", top: "12%", left: "7%", s: 70, dur: "7s" }, // өвсний блок
+  { src: "/sukh.png", top: "36%", left: "3%", s: 60, dur: "9s" }, // pickaxe
+  { src: "/lerobrine.png", top: "58%", left: "6%", s: 56, dur: "7.8s" }, // алмаз блок
+  { src: "/borblock.png", top: "13%", left: "83%", s: 64, dur: "8.5s" }, // модон блок
+  { src: "/gal.png", top: "34%", left: "91%", s: 44, dur: "6.5s" }, // дэнлүү
+  { src: "/mavis.png", top: "57%", left: "85%", s: 56, dur: "8.2s" }, // зуух
+];
+
 // Full-screen intro: the 3D tutor greets the child and asks for a name.
 // The child can speak the name (mic) or type it. After the name is captured we
 // greet by name and continue to the real lesson page (/learn).
 export function AvatarIntro({ onContinue, onBack, avatar = DEFAULT_MASCOT.id }) {
   const [name, setName] = useState("");
   const isRobot = avatar === "robot";
+  const isMinecraft = avatar === "minecraft";
 
   const introPlayedRef = useRef(false);
   const introPlayingRef = useRef(false);
@@ -138,7 +149,10 @@ export function AvatarIntro({ onContinue, onBack, avatar = DEFAULT_MASCOT.id }) 
   };
 
   return (
-    <div className={`avatar-intro${isRobot ? " avatar-intro--joy" : ""}`} onPointerDown={playIntro}>
+    <div
+      className={`avatar-intro${isRobot ? " avatar-intro--joy" : isMinecraft ? " avatar-intro--mc" : ""}`}
+      onPointerDown={playIntro}
+    >
       <button
         className="avatar-intro__back"
         onClick={onBack}
@@ -157,6 +171,29 @@ export function AvatarIntro({ onContinue, onBack, avatar = DEFAULT_MASCOT.id }) 
                 className="avatar-intro__joy"
                 mood={listening ? "listening" : "speaking"}
               />
+            </div>
+          </>
+        ) : isMinecraft ? (
+          <>
+            <div className="mc-bg" aria-hidden="true">
+              <span className="mc-sun" />
+              <span className="mc-cloud" style={{ top: "13%", left: "10%", width: 92, height: 26, animationDuration: "15s" }} />
+              <span className="mc-cloud" style={{ top: "27%", left: "60%", width: 120, height: 30, animationDuration: "19s" }} />
+              <span className="mc-cloud" style={{ top: "19%", left: "38%", width: 66, height: 22, animationDuration: "12s" }} />
+              <div className="mc-ground" />
+              {MC_FLOATERS.map((f, i) => (
+                <img
+                  key={i}
+                  className="mc-deco"
+                  src={f.src}
+                  alt=""
+                  draggable="false"
+                  style={{ top: f.top, left: f.left, "--s": `${f.s}px`, animationDuration: f.dur }}
+                />
+              ))}
+            </div>
+            <div className="avatar-intro__mc-wrap">
+              <img className="mc-main-img" src="/hun.png" alt="Майнкрафт найз" draggable="false" />
             </div>
           </>
         ) : (

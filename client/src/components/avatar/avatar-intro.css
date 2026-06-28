@@ -245,3 +245,211 @@
     animation: none !important;
   }
 }
+
+/* ════════════════════════════════════════════════════════════
+   Minecraft (/start) — maynkrap.png + хөөрхөн блок ертөнцийн дэвсгэр
+   ════════════════════════════════════════════════════════════ */
+.avatar-intro--mc {
+  background: linear-gradient(180deg, #8ecbff 0%, #b7e4ff 52%, #d8f3ff 100%);
+}
+
+.mc-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+
+/* Пиксел нар */
+.mc-sun {
+  position: absolute; top: 8%; right: 9%;
+  width: 60px; height: 60px;
+  background: #ffe14d; border-radius: 8px;
+  box-shadow: 0 0 0 6px rgba(255, 225, 77, 0.3), 0 0 44px rgba(255, 225, 77, 0.55);
+}
+
+/* Үүлс — сэвсгэр (доод хавтгай + дээр нь товгор) */
+.mc-cloud {
+  position: absolute;
+  background: #ffffff;
+  border-radius: 999px;
+  filter: drop-shadow(0 6px 10px rgba(120, 160, 200, 0.16));
+  opacity: 0.96;
+  animation: mc-cloud-drift linear infinite alternate;
+}
+.mc-cloud::before, .mc-cloud::after {
+  content: "";
+  position: absolute;
+  background: #ffffff;
+  border-radius: 50%;
+}
+.mc-cloud::before { width: 52%; height: 155%; left: 13%; bottom: 28%; }
+.mc-cloud::after  { width: 40%; height: 128%; right: 15%; bottom: 24%; }
+@keyframes mc-cloud-drift {
+  from { transform: translateX(0); }
+  to   { transform: translateX(34px); }
+}
+
+/* Дэлгэцийн арын чимэглэл — Майнкрафт байшин (газар дээр) */
+.mc-house {
+  position: absolute;
+  right: 2%;
+  bottom: 8%;
+  width: min(30vw, 320px);
+  filter: drop-shadow(0 14px 20px rgba(40, 80, 30, 0.32));
+  animation: mc-house-float 6s ease-in-out infinite;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+@keyframes mc-house-float {
+  0%, 100% { transform: translateY(0) rotate(-1.2deg); }
+  50%      { transform: translateY(-8px) rotate(1.2deg); }
+}
+
+/* Хөвөгч эд зүйлс (блок, дэнлүү, pickaxe, зуух г.м.) */
+.mc-deco {
+  position: absolute;
+  width: var(--s);
+  height: auto;
+  filter: drop-shadow(0 8px 12px rgba(40, 80, 30, 0.28));
+  animation: mc-float ease-in-out infinite;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Газар дээр зогсох амьтад (морь, зомби) */
+.mc-mob {
+  position: absolute;
+  width: auto;
+  filter: drop-shadow(0 10px 14px rgba(40, 80, 30, 0.3));
+  animation: mc-mob-idle 4.5s ease-in-out infinite;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+@keyframes mc-mob-idle {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+
+/* Газар — өвс + шороо */
+.mc-ground {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: 16%;
+  background: linear-gradient(#74bd3f 0 22%, #8a5a32 22% 100%);
+  box-shadow: inset 0 8px 0 rgba(0, 0, 0, 0.07);
+}
+.mc-ground::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 12px;
+  background: repeating-linear-gradient(90deg, #74bd3f 0 20px, #66a836 20px 40px);
+}
+
+/* Хөвөгч Майнкрафт блокууд (block.png зураг) */
+@keyframes mc-float {
+  0%, 100% { transform: translateY(0) rotate(-3deg); }
+  50%      { transform: translateY(-16px) rotate(3deg); }
+}
+
+/* maynkrap.png найз — голлуулж хөвүүлнэ (1024×1024) */
+.avatar-intro__mc-wrap {
+  position: absolute;
+  left: 50%; top: 43%;
+  transform: translate(-50%, -50%);
+  width: min(56vh, 480px); height: min(56vh, 480px);
+  max-width: 88vw;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1; pointer-events: none;
+}
+.avatar-intro__mc { width: 100%; height: 100%; }
+/* Гол avatar зураг (hun.png зомби) — голлуулж зөөлөн хөвүүлнэ */
+.mc-main-img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 18px 26px rgba(40, 80, 30, 0.3));
+  animation: mc-bob 5s ease-in-out infinite;
+  user-select: none; -webkit-user-drag: none;
+}
+.mc-buddy {
+  --gx: 0; --gy: 0;
+  position: relative;
+  width: 100%; height: 100%;
+  animation: mc-bob 5s ease-in-out infinite;
+}
+.mc-buddy-img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 18px 26px rgba(40, 80, 30, 0.3));
+  user-select: none; -webkit-user-drag: none;
+}
+@keyframes mc-bob {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-14px); }
+}
+
+/* Нүд — жинхэнэ зурсан нүдийг таглаж, дотор нь хөдөлдөг хүүхэн хараа.
+   maynkrap.png (1024×1024) нүдний байрлалд тааруулсан хувиуд. */
+.mc-eye {
+  position: absolute;
+  width: 10%; height: 12.4%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 42% 32%, #45301f 0%, #2a1c12 52%, #160d07 100%);
+  box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.4), inset 0 2px 3px rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+.mc-eye--l { left: 33.5%; top: 34.8%; }
+.mc-eye--r { left: 52.5%; top: 34.8%; }
+.mc-pupil {
+  position: absolute; left: 50%; top: 50%;
+  width: 52%; height: 52%;
+  border-radius: 50%;
+  background: #0f0a06;
+  transform: translate(-50%, -50%) translate(calc(var(--gx) * 26%), calc(var(--gy) * 22%));
+  transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.5, 1);
+}
+.mc-pupil::after {
+  content: "";
+  position: absolute;
+  top: 12%; left: 16%;
+  width: 38%; height: 32%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.95);
+}
+@media (prefers-reduced-motion: reduce) {
+  .mc-buddy { animation: none !important; }
+  .mc-pupil { transition: none !important; }
+}
+
+/* Back товч */
+.avatar-intro--mc .avatar-intro__back {
+  border-color: rgba(60, 120, 40, 0.3);
+  background: rgba(255, 255, 255, 0.75);
+  color: #3a6d22;
+}
+.avatar-intro--mc .avatar-intro__back:hover { background: rgba(255, 255, 255, 0.95); }
+
+/* Нэр оруулах карт — хөөрхөн ногоон аяс */
+.avatar-intro--mc .avatar-intro__panel {
+  background: linear-gradient(165deg, #ffffff 0%, #eefce2 100%);
+  border-radius: 30px;
+  box-shadow: 0 26px 60px rgba(60, 120, 40, 0.3), inset 0 0 0 4px rgba(120, 200, 90, 0.18);
+  animation: avatar-intro-pop 0.5s cubic-bezier(0.22, 1.2, 0.4, 1) both;
+}
+.avatar-intro--mc .avatar-intro__title {
+  background: linear-gradient(120deg, #4aa12e 0%, #2f7d1f 60%, #8a5a32 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: #3a7d22;
+}
+.avatar-intro--mc .avatar-intro__subtitle { color: #43603a; }
+.avatar-intro--mc .avatar-intro__subtitle strong { color: #4a9c2e; }
+.avatar-intro--mc .avatar-intro__listening { color: #3a8c2a; }
+.avatar-intro--mc .avatar-intro__listening-dot { background: #3a8c2a; }
+.avatar-intro--mc .avatar-intro__input { border-color: #cde9bd; background: #fcfff8; color: #243a1a; }
+.avatar-intro--mc .avatar-intro__input:focus {
+  border-color: #6cae3a; box-shadow: 0 0 0 4px rgba(108, 174, 58, 0.25);
+}
+.avatar-intro--mc .avatar-intro__submit {
+  background: linear-gradient(135deg, #7ec850 0%, #4a9c2e 100%);
+  box-shadow: 0 12px 26px rgba(74, 156, 46, 0.36);
+}
+.avatar-intro--mc .avatar-intro__submit:hover { filter: brightness(1.06); transform: translateY(-2px); }
+
+@media (prefers-reduced-motion: reduce) {
+  .mc-deco, .mc-mob, .mc-cloud, .mc-house, .mc-main-img, .avatar-intro__mc, .avatar-intro--mc .avatar-intro__panel { animation: none !important; }
+}
