@@ -272,6 +272,8 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
   const analyzingSaidRef = useRef(false)
   const lastExplainedRef = useRef('')
   const [selectedIndex, setSelectedIndex] = useState(null)
+  // Зөв хариулсан үед background-ийг богино хугацаанд баяр хөөртэй болгоно
+  const [celebrating, setCelebrating] = useState(false)
 
   // structured problems, эс бол хуучин нэг текстээс fallback
   const structuredProblems = useMemo(() => {
@@ -352,6 +354,9 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
 
   const handleCorrect = useCallback(() => {
     chat('зөв хариулт')
+    // Зөв хариулсан тул background-ийг богино хугацаанд баяр хөөртэй болгоно
+    setCelebrating(true)
+    setTimeout(() => setCelebrating(false), 1800)
     // Магтаалыг тоглуулах зуур түр зогсоод ЗУРАГ ДЭЭРХ дараагийн бодлого руу шилжинэ.
     // AI шинэ бодлого зохиохгүй — зөвхөн оруулсан зураг дээрх бодлогуудыг дараалуулна.
     const total = structuredProblems.length
@@ -386,11 +391,18 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
   const showInteractive = !showList && activeProblem
   const showProblemPane = showList || showInteractive
 
+  // Бодлого бүрд background-ийн өнгө аяс өөр болгоно (5 палитр эргэлдэнэ)
+  const themeIndex = ((effectiveIndex ?? 0) % 5 + 5) % 5
+
   return (
-    <div className={`ta-root${showProblemPane ? ' ta-root-split' : ' ta-root-center'}`}>
+    <div
+      className={`ta-root${showProblemPane ? ' ta-root-split' : ' ta-root-center'}${celebrating ? ' ta-celebrate' : ''}`}
+      data-theme={themeIndex}
+    >
       <div className="ta-blob ta-blob-1" />
       <div className="ta-blob ta-blob-2" />
       <div className="ta-blob ta-blob-3" />
+      {celebrating && <CelebrationBurst />}
 
       {/* LEFT — interactive board / problem list (only when a problem is active) */}
       {showProblemPane && (
