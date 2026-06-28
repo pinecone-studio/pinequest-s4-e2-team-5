@@ -231,7 +231,7 @@ export function AvatarIntro({ onContinue, onBack, avatar = DEFAULT_MASCOT.id }) 
               <span className="mcq-cone" style={{ left: "10%" }} />
               <span className="mcq-cone" style={{ left: "26%" }} />
               <span className="mcq-cone" style={{ right: "30%" }} />
-              <img className="mcq-buddy-car" src="/Queen.png" alt="" draggable="false" />
+              <img className="mcq-buddy-car" src="/mater.png" alt="" draggable="false" />
             </div>
             <div className="avatar-intro__mcq-wrap">
               <img className="mcq-main-img" src="/McQueen.png" alt="Маккуин найз" draggable="false" />
