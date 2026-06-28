@@ -137,3 +137,111 @@
     margin: auto 0 6vh 6vw;
   }
 }
+
+/* ════════════════════════════════════════════════════════════
+   Joy (robot) аватар — joy.png sticker + гэрэлтэй ирээдүйн дэвсгэр
+   ════════════════════════════════════════════════════════════ */
+.avatar-intro--joy {
+  background:
+    radial-gradient(120% 90% at 18% 8%, rgba(120, 224, 255, 0.4), transparent 58%),
+    radial-gradient(120% 95% at 85% 92%, rgba(190, 150, 255, 0.36), transparent 60%),
+    linear-gradient(160deg, #f3fbff 0%, #eef1ff 52%, #f8f3ff 100%);
+}
+
+/* joy.png роботыг (хөдөлдөг нүдтэй JoyRobot) голлуулж, арай жижиг хөвүүлнэ.
+   joy.png харьцаа 1024/1536 тул өргөн = өндөр × 0.667. */
+.avatar-intro__joy-wrap {
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  transform: translate(-50%, -50%);
+  width: min(40vh, 348px);
+  height: min(60vh, 520px);
+  max-width: 84vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  pointer-events: none;
+}
+/* JoyRobot үндсэн div энэ wrap-ийг бүтнээр дүүргэнэ */
+.avatar-intro__joy {
+  width: 100%;
+  height: 100%;
+}
+/* Доорх зөөлөн туяа */
+.avatar-intro__joy-glow {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  width: 64%;
+  height: 70%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at center, rgba(120, 224, 255, 0.38), transparent 66%);
+  filter: blur(40px);
+  animation: avatar-intro-glow 4.5s ease-in-out infinite;
+}
+@keyframes avatar-intro-glow {
+  0%, 100% { opacity: 0.65; }
+  50%      { opacity: 1; }
+}
+
+/* Цайвар дэвсгэрт тохирох back товч */
+.avatar-intro--joy .avatar-intro__back {
+  border-color: rgba(90, 110, 190, 0.3);
+  background: rgba(255, 255, 255, 0.7);
+  color: #3a3a66;
+}
+.avatar-intro--joy .avatar-intro__back:hover {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+/* Нэр оруулах карт — арай хөөрхөн, тодорхой ялгарсан */
+.avatar-intro--joy .avatar-intro__panel {
+  background: linear-gradient(165deg, #ffffff 0%, #f3f8ff 100%);
+  border-radius: 34px;
+  box-shadow:
+    0 26px 60px rgba(90, 110, 190, 0.3),
+    inset 0 0 0 4px rgba(120, 200, 255, 0.16);
+  animation: avatar-intro-pop 0.5s cubic-bezier(0.22, 1.2, 0.4, 1) both;
+}
+@keyframes avatar-intro-pop {
+  from { opacity: 0; transform: translateY(18px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.avatar-intro--joy .avatar-intro__title {
+  background: linear-gradient(120deg, #2bb6c9 0%, #7c83ff 60%, #b06cff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: #5a55a0;
+}
+.avatar-intro--joy .avatar-intro__subtitle { color: #4a5074; }
+.avatar-intro--joy .avatar-intro__subtitle strong { color: #7c5fe6; }
+.avatar-intro--joy .avatar-intro__listening { color: #2b8fa6; }
+.avatar-intro--joy .avatar-intro__listening-dot { background: #2b8fa6; }
+
+/* Интерактив хэсэг — өнгөөр тод ялгарна */
+.avatar-intro--joy .avatar-intro__input {
+  border-color: #d4e3ff;
+  background: #fbfdff;
+  color: #20264a;
+}
+.avatar-intro--joy .avatar-intro__input:focus {
+  border-color: #7c83ff;
+  box-shadow: 0 0 0 4px rgba(124, 131, 255, 0.22);
+}
+.avatar-intro--joy .avatar-intro__submit {
+  background: linear-gradient(135deg, #3ed0e0 0%, #7c83ff 55%, #b06cff 100%);
+  box-shadow: 0 12px 26px rgba(110, 120, 230, 0.36);
+}
+.avatar-intro--joy .avatar-intro__submit:hover {
+  filter: brightness(1.06);
+  transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatar-intro__joy, .avatar-intro__joy-glow, .avatar-intro--joy .avatar-intro__panel {
+    animation: none !important;
+  }
+}

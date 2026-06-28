@@ -8,6 +8,10 @@
   filter: drop-shadow(0 4px 6px rgba(0,0,0,.15)) !important;
 }
 
+/* Ганц нүдтэй "1" — нэг баганаар голлуулна (зүүн тийш бүү тонгой) */
+.domino-tile.tile-one { grid-template-columns: 22px; }
+.domino-tile.tile-one.tile-sm { grid-template-columns: 13px; }
+
 /* Small tile for tens (cells 13px instead of 22px) */
 .tile-sm {
   grid-template-columns: repeat(2, 13px);
@@ -49,6 +53,22 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
+}
+
+/* row=true — блокууд нэг хэвтээ эгнээнд, тооноосоо жоохон доош */
+.num-row-tiles {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 6px;
+}
+.num-row-cell {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  background: var(--cell-color);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, .18), inset 0 1px 0 rgba(255, 255, 255, .22);
 }
 
 /* Grid for ten-blocks: max 3 columns so 5 tens = 2 rows */

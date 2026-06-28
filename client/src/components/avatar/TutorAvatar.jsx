@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MascotScene } from '../KidMascotScene.jsx'
 import { useTutor } from './useTutor.js'
-import { NumberVisual } from '../lesson/NumberVisual.jsx'
+import { NumberVisual, COLORS } from '../lesson/NumberVisual.jsx'
 import { RobotInteractive } from './RobotInteractive.jsx'
 import { ComparisonInteractive } from './ComparisonInteractive.jsx'
 import { MissingAddendInteractive } from './MissingAddendInteractive.jsx'
 import { ProblemList } from './ProblemList.jsx'
 import { CelebrationBurst } from './CelebrationBurst.jsx'
+import { JoyBackground, JoyRobot } from './JoyScene.jsx'
 import { extractProblemNumber } from './extractProblemNumber.js'
 import '../lesson/lesson.css'
 import '../lesson/big-add-lesson.css'
@@ -14,6 +15,9 @@ import '../lesson/big-add-lesson.css'
 // Хүүхдийн дуут асуулт/тусламжийн хүсэлт — эдгээрийг бодлого сонголт гэж үзэхгүй,
 // шууд chat руу дамжуулж AI дахин тайлбарлана.
 const HELP_RE = /ойлгох|ойлгом|мэдэхг|яагаад|яаж|юу гэс|юу вэ|юу гэ|дахиад|дахин|хэлээ|хэлэхг|туслаач|ойлгуул|алхам|болохг|бодож өг/
+
+// Хариултын карт бүрийг тооныхоо өнгөөр (чихэр блок загвар) будна.
+const numColor = (n) => COLORS[n] ?? COLORS[((Math.abs(n) - 1) % 10) + 1] ?? '#7e8bff'
 
 function shuffle(arr) {
   const a = [...arr]
@@ -105,11 +109,11 @@ function VisualMath({ problem, choices, onCorrect, onWrong }) {
     <div className="vm-root">
       <div className="vm-equation">
         <div className="vm-durs-wrap">
-          <NumberVisual value={a} />
+          <NumberVisual value={a} row />
         </div>
         <span className="vm-op">{op}</span>
         <div className="vm-durs-wrap">
-          <NumberVisual value={b} />
+          <NumberVisual value={b} row />
         </div>
         <span className="vm-op">=</span>
 
@@ -117,7 +121,7 @@ function VisualMath({ problem, choices, onCorrect, onWrong }) {
           {phase === 'correct' ? (
             <>
               <div className="vm-durs-wrap vm-ans-durs">
-                <NumberVisual value={answer} />
+                <NumberVisual value={answer} row />
               </div>
               <CelebrationBurst />
             </>
@@ -133,11 +137,12 @@ function VisualMath({ problem, choices, onCorrect, onWrong }) {
             <button
               key={n}
               className={`vm-choice-btn vm-choice-${choiceState(n)}`}
+              style={{ '--card-c': numColor(n) }}
               onClick={() => handleChoice(n)}
               disabled={phase !== 'choosing'}
             >
               <div className="vm-durs-wrap">
-                <NumberVisual value={n} />
+                <NumberVisual value={n} row />
               </div>
             </button>
           ))}
@@ -176,7 +181,7 @@ function AnswerChoice({ problem, onCorrect, onWrong }) {
       <div className="vm-word-prompt">{problem.promptMn || problem.raw}</div>
       {phase === 'correct' ? (
         <div className="vm-ans-slot vm-ans-correct">
-          <div className="vm-durs-wrap vm-ans-durs"><NumberVisual value={answer} /></div>
+          <div className="vm-durs-wrap vm-ans-durs"><NumberVisual value={answer} row /></div>
           <CelebrationBurst />
         </div>
       ) : (
@@ -185,10 +190,11 @@ function AnswerChoice({ problem, onCorrect, onWrong }) {
             <button
               key={n}
               className={`vm-choice-btn vm-choice-${state(n)}`}
+              style={{ '--card-c': numColor(n) }}
               onClick={() => handle(n)}
               disabled={phase !== 'choosing'}
             >
-              <div className="vm-durs-wrap"><NumberVisual value={n} /></div>
+              <div className="vm-durs-wrap"><NumberVisual value={n} row /></div>
             </button>
           ))}
         </div>
@@ -393,12 +399,14 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
 
   // Бодлого бүрд background-ийн өнгө аяс өөр болгоно (5 палитр эргэлдэнэ)
   const themeIndex = ((effectiveIndex ?? 0) % 5 + 5) % 5
+  const isJoy = avatar === 'robot'
 
   return (
     <div
-      className={`ta-root${showProblemPane ? ' ta-root-split' : ' ta-root-center'}${celebrating ? ' ta-celebrate' : ''}`}
+      className={`ta-root${showProblemPane ? ' ta-root-split' : ' ta-root-center'}${celebrating ? ' ta-celebrate' : ''}${isJoy ? ' ta-joy' : ''}`}
       data-theme={themeIndex}
     >
+      {isJoy && <JoyBackground />}
       <div className="ta-blob ta-blob-1" />
       <div className="ta-blob ta-blob-2" />
       <div className="ta-blob ta-blob-3" />
@@ -434,9 +442,15 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
 
       {/* RIGHT (or centered) — robot + speech bubble + status */}
       <div className="ta-robot-col">
-        <div className={`tutor-spline-wrap tutor-spline-big${showProblemPane ? ' tutor-spline-side' : ''}`}>
-          <MascotScene avatar={avatar} className="tutor-mascot" mood={mascotMood} />
-        </div>
+        {isJoy ? (
+          <div className="joy-stage">
+            <JoyRobot mood={mascotMood} />
+          </div>
+        ) : (
+          <div className={`tutor-spline-wrap tutor-spline-big${showProblemPane ? ' tutor-spline-side' : ''}`}>
+            <MascotScene avatar={avatar} className="tutor-mascot" mood={mascotMood} />
+          </div>
+        )}
         <SpeechBubble text={lastText} isThinking={isThinking} />
         <div className="ta-status-row">
           {isListening && <span className="tutor-listen-dot" />}
