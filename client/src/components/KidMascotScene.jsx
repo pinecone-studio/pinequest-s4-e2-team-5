@@ -1,3 +1,5 @@
+import { CreeperFace } from './AvatarPicker.tsx'
+
 export function KidMascotScene({ className = '', mood = 'ready' }) {
   return (
     <div
@@ -57,6 +59,21 @@ export function MascotScene({ avatar = 'sun-buddy', className = '', mood = 'read
         className={className}
         style={{ width: '100%', height: '100%', objectFit: 'contain' }}
       />
+    )
+  }
+
+  if (avatar === 'minecraft') {
+    return (
+      <div
+        className={className}
+        style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        role="img"
+        aria-label="Майнкрафт креепер"
+      >
+        <div style={{ width: 'min(60%, 320px)', aspectRatio: '1 / 1', filter: 'drop-shadow(0 14px 22px rgba(40,80,30,0.3))' }}>
+          <CreeperFace />
+        </div>
+      </div>
     )
   }
 

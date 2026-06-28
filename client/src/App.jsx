@@ -13,6 +13,7 @@ import { stopAllAudio } from "./components/avatar/audioBus.js";
 
 function normalizeAvatar(avatar) {
   if (avatar === "robot" || avatar === "hero") return "robot";
+  if (avatar === "minecraft") return "minecraft";
   return "sun-buddy";
 }
 
