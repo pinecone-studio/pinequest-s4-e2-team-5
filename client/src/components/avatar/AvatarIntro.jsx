@@ -21,6 +21,14 @@ const MC_FLOATERS = [
   { src: "/mavis.png", top: "57%", left: "85%", s: 56, dur: "8.2s" }, // зуух
 ];
 
+// McQueen /start — хөвөгч аянгын тэмдэг (хурд + Cars сэдэв).
+const MCQ_BOLTS = [
+  { top: "20%", left: "12%", s: 30, dur: "6.5s" },
+  { top: "30%", left: "84%", s: 38, dur: "8s" },
+  { top: "46%", left: "6%", s: 24, dur: "7.2s" },
+  { top: "54%", left: "90%", s: 28, dur: "6.8s" },
+];
+
 // Full-screen intro: the 3D tutor greets the child and asks for a name.
 // The child can speak the name (mic) or type it. After the name is captured we
 // greet by name and continue to the real lesson page (/learn).
@@ -28,6 +36,7 @@ export function AvatarIntro({ onContinue, onBack, avatar = DEFAULT_MASCOT.id }) 
   const [name, setName] = useState("");
   const isRobot = avatar === "robot";
   const isMinecraft = avatar === "minecraft";
+  const isMcqueen = avatar === "mcqueen";
 
   const introPlayedRef = useRef(false);
   const introPlayingRef = useRef(false);
@@ -152,7 +161,7 @@ export function AvatarIntro({ onContinue, onBack, avatar = DEFAULT_MASCOT.id }) 
 
   return (
     <div
-      className={`avatar-intro${isRobot ? " avatar-intro--joy" : isMinecraft ? " avatar-intro--mc" : ""}`}
+      className={`avatar-intro${isRobot ? " avatar-intro--joy" : isMinecraft ? " avatar-intro--mc" : isMcqueen ? " avatar-intro--mcq" : ""}`}
       onPointerDown={playIntro}
     >
       <button
@@ -196,6 +205,36 @@ export function AvatarIntro({ onContinue, onBack, avatar = DEFAULT_MASCOT.id }) 
             </div>
             <div className="avatar-intro__mc-wrap">
               <img className="mc-main-img" src="/maynkrap.png" alt="Майнкрафт найз" draggable="false" />
+            </div>
+          </>
+        ) : isMcqueen ? (
+          <>
+            <div className="mcq-bg" aria-hidden="true">
+              <span className="mcq-sun" />
+              <span className="mc-cloud" style={{ top: "16%", left: "8%", width: 96, height: 28, animationDuration: "16s" }} />
+              <span className="mc-cloud" style={{ top: "10%", left: "62%", width: 124, height: 32, animationDuration: "20s" }} />
+              <img className="mcq-logo" src="/cars.png" alt="" draggable="false" />
+              <span className="mcq-flag mcq-flag--l" />
+              <span className="mcq-flag mcq-flag--r" />
+              {MCQ_BOLTS.map((b, i) => (
+                <span
+                  key={i}
+                  className="mcq-bolt"
+                  style={{ top: b.top, left: b.left, "--s": `${b.s}px`, animationDuration: b.dur }}
+                >
+                  ⚡
+                </span>
+              ))}
+              <div className="mcq-road">
+                <span className="mcq-lane" />
+              </div>
+              <span className="mcq-cone" style={{ left: "10%" }} />
+              <span className="mcq-cone" style={{ left: "26%" }} />
+              <span className="mcq-cone" style={{ right: "30%" }} />
+              <img className="mcq-buddy-car" src="/Queen.png" alt="" draggable="false" />
+            </div>
+            <div className="avatar-intro__mcq-wrap">
+              <img className="mcq-main-img" src="/McQueen.png" alt="Маккуин найз" draggable="false" />
             </div>
           </>
         ) : (
