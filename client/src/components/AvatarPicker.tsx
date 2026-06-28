@@ -13,6 +13,7 @@ export const AVATARS: AvatarOption[] = [
   { id: "sun-buddy", name: "Нархан", emoji: "☀️", available: true },
   { id: "robot", name: "Жой", emoji: "🤖", available: true },
   { id: "minecraft", name: "Майнкрафт", emoji: "🟩", available: true },
+  { id: "mcqueen", name: "Маккуин", emoji: "🏎️", available: true },
   { id: "rocket", name: "Пуужин", emoji: "🚀", available: false },
   { id: "dino", name: "Дино", emoji: "🦖", available: false },
 ];
@@ -53,6 +54,50 @@ export function CreeperFace({ className }: { className?: string }) {
 }
 
 /** Custom-drawn mascot art (emoji-аас илүү гоё, бодит дүртэй) */
+/** Lightning McQueen маягийн улаан спорт машин (нүдтэй) — picker болон scene-д. */
+export function McQueenCar({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      width="100%"
+      height="100%"
+      className={className}
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <defs>
+        <linearGradient id="apMcq" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#ff4133" />
+          <stop offset="100%" stopColor="#cf1d14" />
+        </linearGradient>
+      </defs>
+      {/* сүүдэр */}
+      <ellipse cx="32" cy="56" rx="24" ry="3.5" fill="rgba(0,0,0,0.16)" />
+      {/* бие */}
+      <rect x="7" y="22" width="50" height="30" rx="13" fill="url(#apMcq)" />
+      <rect x="12" y="25" width="40" height="9" rx="7" fill="#ff6a5c" opacity="0.55" />
+      {/* салхины шил + нүд */}
+      <rect x="17" y="13" width="30" height="18" rx="9" fill="#bfe8ff" stroke="#e6f3ff" strokeWidth="1.5" />
+      <circle cx="26" cy="22" r="5" fill="#fff" />
+      <circle cx="38" cy="22" r="5" fill="#fff" />
+      <circle cx="27.5" cy="23" r="2.6" fill="#27303d" />
+      <circle cx="39.5" cy="23" r="2.6" fill="#27303d" />
+      {/* аянга */}
+      <path d="M30 33 h6 l-3.5 4 h4 l-8 9 l2.5 -7 h-4 z" fill="#ffd633" stroke="#c79a00" strokeWidth="0.6" strokeLinejoin="round" />
+      {/* инээмсэглэл */}
+      <path d="M23 44 Q32 50 41 44" stroke="#7a1410" strokeWidth="2.4" fill="none" strokeLinecap="round" />
+      {/* гэрэл */}
+      <circle cx="15" cy="42" r="3" fill="#ffd84d" />
+      <circle cx="49" cy="42" r="3" fill="#ffd84d" />
+      {/* дугуй */}
+      <circle cx="18" cy="51" r="7" fill="#222834" />
+      <circle cx="46" cy="51" r="7" fill="#222834" />
+      <circle cx="18" cy="51" r="3" fill="#9aa3b2" />
+      <circle cx="46" cy="51" r="3" fill="#9aa3b2" />
+    </svg>
+  );
+}
+
 function AvatarArt({ id, className }: { id: string; className?: string }) {
   const common = {
     viewBox: "0 0 64 64",
@@ -190,6 +235,10 @@ function AvatarArt({ id, className }: { id: string; className?: string }) {
 
   if (id === "minecraft") {
     return <CreeperFace className={className} />;
+  }
+
+  if (id === "mcqueen") {
+    return <McQueenCar className={className} />;
   }
 
   return null;

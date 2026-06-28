@@ -38,7 +38,9 @@ export function AvatarIntro({ onContinue, onBack, avatar = DEFAULT_MASCOT.id }) 
     ? "Жой"
     : avatar === "minecraft"
       ? "Крийпер"
-      : DEFAULT_MASCOT.name;
+      : avatar === "mcqueen"
+        ? "Маккуин"
+        : DEFAULT_MASCOT.name;
 
   const cleanupAudio = useCallback(() => {
     audioRef.current?.pause();
