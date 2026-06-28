@@ -11,7 +11,7 @@ export const TEN_COLORS = [
 ];
 
 export const CELL_PATTERNS = {
-  1:  [[1,0]],
+  1:  [[1]],
   2:  [[1,1]],
   3:  [[1,0],[1,1]],
   4:  [[1,1],[1,1]],
@@ -26,7 +26,7 @@ export const CELL_PATTERNS = {
 export function StaticTile({ value, color, small }) {
   const rows = CELL_PATTERNS[value] || [];
   return (
-    <div className={`domino-tile tile-static${small ? ' tile-sm' : ''}`}>
+    <div className={`domino-tile tile-static${small ? ' tile-sm' : ''}${value === 1 ? ' tile-one' : ''}`}>
       {rows.map((row, ri) =>
         row.map((filled, ci) => (
           <div
@@ -44,7 +44,24 @@ export function StaticTile({ value, color, small }) {
 // Shows a number 1-100 as domino дүрс:
 //   tens  → small 10-tiles stacked in a 3-column grid
 //   ones  → regular-sized ones tile
-export function NumberVisual({ value }) {
+// row=true → тоо нэг мөрөнд, блокууд НЭГ ХЭВТЭЭ ЭГНЭЭНД (домино хэлбэргүй).
+// Зөвхөн жижиг тоонд (≤10) эгнээ; том тоонд (ж: 100) аравт/нэгж бүтэцтэй дүрс рүү
+// шилжинэ — эс бол 100 блок нэг эгнээнд багтахгүй.
+export function NumberVisual({ value, row = false }) {
+  if (row && value >= 1 && value <= 10) {
+    const color =
+      COLORS[value] ?? COLORS[((Math.abs(value) - 1) % 10) + 1] ?? '#80b7c7';
+    return (
+      <div className="num-visual">
+        <div className="num-big-label">{value}</div>
+        <div className="num-row-tiles">
+          {[...Array(Math.max(0, value))].map((_, i) => (
+            <span key={i} className="num-row-cell" style={{ '--cell-color': color }} />
+          ))}
+        </div>
+      </div>
+    );
+  }
   const tens = Math.floor(value / 10);
   const ones = value % 10;
   return (

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MascotScene } from "../KidMascotScene.jsx";
+import { JoyBackground, JoyRobot } from "./JoyScene.jsx";
 import { DEFAULT_MASCOT } from "../mascotConfig.js";
 import { API_BASE } from "../../lib/config.js";
 import { useVoiceCapture } from "./useVoiceCapture.js";
@@ -133,7 +134,7 @@ export function AvatarIntro({ onContinue, onBack, avatar = DEFAULT_MASCOT.id }) 
   };
 
   return (
-    <div className="avatar-intro" onPointerDown={playIntro}>
+    <div className={`avatar-intro${isRobot ? " avatar-intro--joy" : ""}`} onPointerDown={playIntro}>
       <button
         className="avatar-intro__back"
         onClick={onBack}
@@ -143,7 +144,20 @@ export function AvatarIntro({ onContinue, onBack, avatar = DEFAULT_MASCOT.id }) 
       </button>
 
       <div className="avatar-intro__scene">
-        <MascotScene avatar={avatar} className="avatar-intro__mascot" mood="speaking" />
+        {isRobot ? (
+          <>
+            <JoyBackground />
+            <div className="avatar-intro__joy-wrap">
+              <span className="avatar-intro__joy-glow" aria-hidden="true" />
+              <JoyRobot
+                className="avatar-intro__joy"
+                mood={listening ? "listening" : "speaking"}
+              />
+            </div>
+          </>
+        ) : (
+          <MascotScene avatar={avatar} className="avatar-intro__mascot" mood="speaking" />
+        )}
       </div>
 
       <form className="avatar-intro__panel" onSubmit={handleSubmit} onFocusCapture={playIntro}>

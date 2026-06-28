@@ -1,5 +1,3 @@
-import { SplineScene } from './SplineScene.jsx'
-
 export function KidMascotScene({ className = '', mood = 'ready' }) {
   return (
     <div
@@ -49,7 +47,17 @@ export function KidMascotScene({ className = '', mood = 'ready' }) {
 
 export function MascotScene({ avatar = 'sun-buddy', className = '', mood = 'ready' }) {
   if (avatar === 'robot') {
-    return <SplineScene className={className} />
+    // robot.png устсан тул Жойг joy.png зургаар үзүүлнэ (хөдөлдөг нүдтэй
+    // JoyRobot нь robot.png-д тулгуурладаг байсан тул түр идэвхгүй).
+    return (
+      <img
+        src="/joy.png"
+        alt="Жой робот"
+        draggable="false"
+        className={className}
+        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+      />
+    )
   }
 
   return <KidMascotScene className={className} mood={mood} />
