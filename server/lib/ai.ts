@@ -5,8 +5,8 @@ export const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Загваруудыг нэг газар төвлөрүүлж, .env-ээр дарж тохируулах боломжтой.
 export const MODELS = {
-  chat: process.env.OPENAI_CHAT_MODEL ?? "gpt-5.4",
-  vision: process.env.OPENAI_VISION_MODEL ?? "gpt-5.4",
+  chat: process.env.OPENAI_CHAT_MODEL ?? "gpt-5",
+  vision: process.env.OPENAI_VISION_MODEL ?? "gpt-5",
   transcribe: process.env.OPENAI_TRANSCRIBE_MODEL ?? "gpt-4o-transcribe",
   tts: process.env.OPENAI_TTS_MODEL ?? "gpt-4o-mini-tts",
   ttsVoice: process.env.OPENAI_TTS_VOICE ?? "sage",

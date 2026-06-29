@@ -16,11 +16,7 @@ const chimegeSttEndpoint =
 // хүсэлт бүрд 403 буцааж дэмий саатал үүсгэдэг тул зөвхөн TTS-д зориулсан түлхүүр авна.
 // Chimege дуу хоолой идэвхжүүлэхийн тулд .env-д CHIMEGE_TTS_API_KEY=... нэмнэ.
 function getChimegeTtsToken() {
-  return (
-    process.env.CHIMEGE_TTS_API_KEY ??
-    process.env.CHIMEGE_API_KEY ??
-    ""
-  );
+  return process.env.CHIMEGE_TTS_API_KEY ?? process.env.CHIMEGE_API_KEY ?? "";
 }
 
 function getChimegeSttToken() {
@@ -70,9 +66,10 @@ app.post("/api/chat", async (req: any, res: any) => {
 11. +18, хүчирхийлэл, айдас төрүүлэх, аюултай ямар ч агуулга огт бүү дурд. Үргэлж эерэг, найрсаг, аюулгүй бай.`;
 
   // messages хоосон үед анхны тайлбарыг эхлүүлэх trigger
-  const allMessages = messages.length === 0
-    ? [{ role: "user" as const, content: "Даалгаврыг тайлбарлаад эхэл." }]
-    : messages;
+  const allMessages =
+    messages.length === 0
+      ? [{ role: "user" as const, content: "Даалгаврыг тайлбарлаад эхэл." }]
+      : messages;
 
   try {
     const completion = await chatComplete({
@@ -93,10 +90,16 @@ function splitIntoChunks(text: string, maxLen = 280): string[] {
   const chunks: string[] = [];
   let remaining = text;
   while (remaining.length > 0) {
-    if (remaining.length <= maxLen) { chunks.push(remaining); break; }
+    if (remaining.length <= maxLen) {
+      chunks.push(remaining);
+      break;
+    }
     let cut = maxLen;
     for (let i = maxLen - 1; i > 0; i--) {
-      if (".!?,".includes(remaining[i] ?? "")) { cut = i + 1; break; }
+      if (".!?,".includes(remaining[i] ?? "")) {
+        cut = i + 1;
+        break;
+      }
     }
     chunks.push(remaining.slice(0, cut).trim());
     remaining = remaining.slice(cut).trim();
@@ -139,7 +142,10 @@ app.post("/api/tts", async (req: any, res: any) => {
       }
 
       if (chimegeOk && audioBuffers.length > 0) {
-        const combined = audioBuffers.length === 1 ? audioBuffers[0]! : Buffer.concat(audioBuffers);
+        const combined =
+          audioBuffers.length === 1
+            ? audioBuffers[0]!
+            : Buffer.concat(audioBuffers);
         res.set("Content-Type", contentType);
         return res.send(combined);
       }
@@ -169,7 +175,6 @@ app.post("/api/stt", async (req: any, res: any) => {
   try {
     const buf = Buffer.from(audio, "base64");
 
-    // 1) Эхлээд Chimege STT (монгол хэлэнд илүү тохиромжтой) оролдоно.
     const chimegeToken = getChimegeSttToken();
     if (chimegeToken) {
       try {
@@ -184,7 +189,7 @@ app.post("/api/stt", async (req: any, res: any) => {
         if (chimegeRes.ok) {
           const ct = chimegeRes.headers.get("content-type") ?? "";
           const raw = await chimegeRes.text();
-          // Chimege нь JSON эсвэл цэвэр текст буцааж болно.
+
           let text = "";
           if (ct.includes("application/json")) {
             try {
@@ -205,7 +210,10 @@ app.post("/api/stt", async (req: any, res: any) => {
           );
         }
       } catch (chimegeErr) {
-        console.warn("Chimege STT алдаа, Whisper руу шилжиж байна:", chimegeErr);
+        console.warn(
+          "Chimege STT алдаа, Whisper руу шилжиж байна:",
+          chimegeErr,
+        );
       }
     }
 
@@ -216,9 +224,8 @@ app.post("/api/stt", async (req: any, res: any) => {
     const transcription = await openai.audio.transcriptions.create({
       file,
       model: MODELS.transcribe,
-      language: "mn",
       prompt:
-        "Энэ бол монгол хэлний яриа. Бага ангийн математикийн хичээл: нэмэх, хасах, үржих, хуваах, тэнцүү, тоо, бодлого, хариу.",
+        "This audio is spoken in Mongolian. Transcribe the speech exactly as spoken in Mongolian. Do not translate. Common words include: нэмэх, хасах, үржих, хуваах, тэнцүү, бодлого, хариу.",
     });
     res.json({ text: transcription.text });
   } catch (e: any) {
@@ -263,14 +270,17 @@ function normalizeProblems(problems: any[]): any[] {
       else if (out.type === "subtraction") out.answer = a - b;
       else if (out.type === "multiplication") out.answer = a * b;
       else if (out.type === "division" && b !== 0) out.answer = a / b;
-      else if (out.type === "comparison") out.answer = a < b ? -1 : a > b ? 1 : 0;
+      else if (out.type === "comparison")
+        out.answer = a < b ? -1 : a > b ? 1 : 0;
     }
     return out;
   });
 }
 
 function buildContextFromProblems(problems: any[]): string {
-  return problems.map((p) => `${p.index}. ${p.raw ?? p.promptMn ?? ""}`).join("\n");
+  return problems
+    .map((p) => `${p.index}. ${p.raw ?? p.promptMn ?? ""}`)
+    .join("\n");
 }
 
 app.post("/api/analyze-homework", async (req: any, res: any) => {
@@ -378,7 +388,9 @@ ${PROBLEM_SCHEMA_INSTRUCTION}
 app.post("/api/ai/generate-game", async (req: any, res: any) => {
   const { problem, analysis } = req.body;
   if (!problem || !analysis)
-    return res.status(400).json({ error: "problem болон analysis шаардлагатай" });
+    return res
+      .status(400)
+      .json({ error: "problem болон analysis шаардлагатай" });
 
   try {
     const response = await chatComplete({
@@ -423,9 +435,7 @@ app.post("/api/ai/generate-game", async (req: any, res: any) => {
       reasoningEffort: "low",
     });
 
-    const game = JSON.parse(
-      response.choices[0]?.message?.content ?? "{}"
-    );
+    const game = JSON.parse(response.choices[0]?.message?.content ?? "{}");
     res.json(game);
   } catch (e: any) {
     res.status(500).json({ error: e.message });
