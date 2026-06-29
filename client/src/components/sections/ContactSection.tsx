@@ -122,7 +122,7 @@ export default function ContactsSection({
             </span>
           </div>
 
-          {/* Arrows */}
+          
           {arrows.map((cls, i) => (
             <svg
               key={i}
@@ -153,7 +153,7 @@ export default function ContactsSection({
             className="text-center leading-normal"
           >
             <AnimatedButton
-              text="select avatar"
+              text="Найзаа сонгох"
               onClick={() => setPickerOpen(true)}
             />
           </div>
@@ -178,7 +178,7 @@ export default function ContactsSection({
               <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#dc2626] text-[11px] text-white">
                 !
               </span>
-              Эхлэхийн тулд эхлээд аватар сонгоно уу
+              Эхлэхийн тулд эхлээд найзаа сонгоно уу
             </p>
           )}
         </div>
