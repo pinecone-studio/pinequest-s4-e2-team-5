@@ -4,6 +4,8 @@ export function StudentCamera() {
   const videoRef = useRef(null);
   const [on, setOn] = useState(false);
   const [err, setErr] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const wsRef = useRef(null);
 
   const start = useCallback(async () => {
     setErr(false);
@@ -15,22 +17,73 @@ export function StudentCamera() {
       videoRef.current.srcObject = stream;
       await videoRef.current.play();
       setOn(true);
-    } catch {
+
+      // Create MediaRecorder
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+      mediaRecorderRef.current = mediaRecorder;
+
+      const chunks = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunks.push(e.data);
+          if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+            wsRef.current.send(e.data); // Send as binary
+          }
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        // Send end signal
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({ type: 'video-end' }));
+          // Close the WebSocket after sending the end signal
+          wsRef.current.close();
+        }
+      };
+
+      mediaRecorder.start();
+
+      // Set up WebSocket
+      const ws = new WebSocket('ws://localhost:3000/ws');
+      wsRef.current = ws;
+      ws.onopen = () => console.log('WebSocket connected for video');
+      ws.onerror = (error) => console.error('WebSocket error:', error);
+      ws.onclose = () => {
+        console.log('WebSocket disconnected');
+        wsRef.current = null;
+      };
+
+    } catch (err) {
       setErr(true);
+      console.error('Error accessing media devices.', err);
     }
   }, []);
 
   const stop = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    // Stop the video tracks
     if (videoRef.current?.srcObject) {
       videoRef.current.srcObject.getTracks().forEach((t) => t.stop());
       videoRef.current.srcObject = null;
     }
     setOn(false);
+    setErr(false);
   }, []);
 
-  // Камерыг ачаалахад автоматаар асаахгүй — зөвшөөрөл өгөөгүй үед
-  // ачаалах үед улаан алдаа гарахаас сэргийлнэ. Хэрэглэгч товчоор асаана.
-  useEffect(() => () => stop(), [stop]);
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+      }
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+    };
+  }, []);
 
   return (
     <div className="student-cam">
