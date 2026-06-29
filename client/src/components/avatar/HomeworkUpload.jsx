@@ -33,6 +33,109 @@ async function normalizeImage(dataUrl) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 
+function parseSequenceProblem(clean) {
+  const nums = clean.match(/-?\d+/g)?.map(Number) ?? []
+  const tokenMatches = clean.match(/-?\d+|\.{2,}|…|_{1,}|□|▢|\?/g) ?? []
+  const hasBlank = tokenMatches.some((t) => /\.{2,}|…|_{1,}|□|▢|\?/.test(t))
+
+  if (hasBlank) {
+    const slots = tokenMatches.map((t) => (/^-?\d+$/.test(t) ? Number(t) : null))
+    const known = slots
+      .map((value, index) => ({ value, index }))
+      .filter((item) => Number.isFinite(item.value))
+    if (known.length >= 2 && slots.some((value) => value === null)) {
+      let step = null
+      for (let i = 1; i < known.length; i++) {
+        const gap = known[i].index - known[i - 1].index
+        const diff = known[i].value - known[i - 1].value
+        if (gap > 0 && diff % gap === 0) {
+          step = diff / gap
+          break
+        }
+      }
+      if (step !== null) {
+        const first = known[0].value - step * known[0].index
+        const complete = slots.map((_, i) => first + step * i)
+        const isConsistent = known.every(({ value, index }) => complete[index] === value)
+        if (isConsistent) {
+          const missingPositions = slots
+            .map((value, index) => (value === null ? index : -1))
+            .filter((index) => index >= 0)
+          const answer = missingPositions.map((index) => complete[index])
+          return {
+            index: 1,
+            raw: clean,
+            type: 'number_sequence',
+            operator: null,
+            operands: slots.filter((value) => Number.isFinite(value)),
+            sequenceSlots: slots,
+            missingPositions,
+            missingPosition: missingPositions[0] ?? null,
+            knownResult: null,
+            answer,
+            sequenceStep: step,
+            answerCount: answer.length,
+            promptMn: `${slots.map((v) => (v == null ? '?' : v)).join(', ')} дарааллыг гүйцээгээрэй.`,
+          }
+        }
+      }
+    }
+  }
+
+  const looksLikeSequence =
+    /дараал|дараагийн|дараах|г[үу]йцээ|үргэлжлүүл/i.test(clean) ||
+    (nums.length >= 3 && /[,;\s]\s*-?\d+\s*[,;\s]/.test(clean))
+  if (!looksLikeSequence || nums.length < 2) return null
+
+  const shown = nums.slice(0, Math.max(2, nums.length))
+  const step = shown[shown.length - 1] - shown[shown.length - 2]
+  const isArithmetic = shown.length < 3 || shown.every((n, i) => i === 0 || n - shown[i - 1] === step)
+  if (isArithmetic) {
+    const answer = [1, 2, 3].map((i) => shown[shown.length - 1] + step * i)
+    return {
+      index: 1,
+      raw: clean,
+      type: 'number_sequence',
+      operator: null,
+      operands: shown,
+      sequenceSlots: [...shown, null, null, null],
+      missingPositions: [shown.length, shown.length + 1, shown.length + 2],
+      missingPosition: shown.length,
+      knownResult: null,
+      answer,
+      sequenceStep: step,
+      answerCount: 3,
+      promptMn: `${shown.join(', ')} дарааллын дараагийн 3 тоог олоорой.`,
+    }
+  }
+
+  const ratio = shown[shown.length - 2] !== 0 ? shown[shown.length - 1] / shown[shown.length - 2] : null
+  const isGeometric =
+    ratio !== null &&
+    Number.isFinite(ratio) &&
+    shown.every((n, i) => i === 0 || shown[i - 1] !== 0 && n / shown[i - 1] === ratio)
+  if (isGeometric) {
+    const answer = [1, 2, 3].map((i) => shown[shown.length - 1] * ratio ** i)
+    return {
+      index: 1,
+      raw: clean,
+      type: 'number_sequence',
+      operator: null,
+      operands: shown,
+      sequenceSlots: [...shown, null, null, null],
+      missingPositions: [shown.length, shown.length + 1, shown.length + 2],
+      missingPosition: shown.length,
+      knownResult: null,
+      answer,
+      sequenceRatio: ratio,
+      answerCount: 3,
+      promptMn: `${shown.join(', ')} дарааллын дараагийн 3 тоог олоорой.`,
+    }
+  }
+
+  return null
+}
+
 // Render free tier унтсан байвал эхний хүсэлт сэрээх зуур алдаа өгдөг тул дахин оролдоно.
 async function analyzeWithRetry(base64, attempts = 3) {
   let lastErr
@@ -120,6 +223,9 @@ export function HomeworkUpload({ onHomeworkLoaded, onAnalyzingChange }) {
     const clean = text.trim()
     if (!clean) return null
 
+    const sequence = parseSequenceProblem(clean)
+    if (sequence) return sequence
+
     let m = clean.match(/(-?\d+)\s*([+＋]|нэмэх)\s*(-?\d+)/i)
     if (m) {
       const a = Number(m[1])
@@ -161,7 +267,7 @@ export function HomeworkUpload({ onHomeworkLoaded, onAnalyzingChange }) {
     e.preventDefault()
     const problem = parseTypedProblem(typedProblem)
     if (!problem) {
-      setError('Бодлогоо 8-3, 8 хасах 3, 5+2 хэлбэрээр бичээрэй.')
+      setError('Бодлогоо 8-3, 5+2, 2,4,6 дараагийн 3 эсвэл 60,...,64,66,68 хэлбэрээр бичээрэй.')
       return
     }
     setPreview(null)
@@ -191,7 +297,7 @@ export function HomeworkUpload({ onHomeworkLoaded, onAnalyzingChange }) {
           className="hw-text-input"
           value={typedProblem}
           onChange={(e) => setTypedProblem(e.target.value)}
-          placeholder="Ж: 8-3 эсвэл 8 хасах 3"
+          placeholder="Ж: 60,...,64,66,68"
           aria-label="Бодлого бичих"
         />
         <button type="submit" className="hw-text-btn">

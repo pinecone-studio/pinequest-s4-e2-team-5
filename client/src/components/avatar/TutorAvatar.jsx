@@ -5,6 +5,7 @@ import { NumberVisual, COLORS } from '../lesson/NumberVisual.jsx'
 import { RobotInteractive } from './RobotInteractive.jsx'
 import { ComparisonInteractive } from './ComparisonInteractive.jsx'
 import { MissingAddendInteractive } from './MissingAddendInteractive.jsx'
+import { NumberSequenceInteractive } from './NumberSequenceInteractive.jsx'
 import { ProblemList } from './ProblemList.jsx'
 import { CelebrationBurst } from './CelebrationBurst.jsx'
 import { JoyBackground, JoyRobot } from './JoyScene.jsx'
@@ -52,7 +53,106 @@ function parseMath(ctx) {
   return null
 }
 
+function parseSequence(ctx) {
+  if (!ctx) return null
+  const nums = ctx.match(/-?\d+/g)?.map(Number) ?? []
+  const tokenMatches = ctx.match(/-?\d+|\.{2,}|…|_{1,}|□|▢|\?/g) ?? []
+  const hasBlank = tokenMatches.some((t) => /\.{2,}|…|_{1,}|□|▢|\?/.test(t))
+
+  if (hasBlank) {
+    const slots = tokenMatches.map((t) => (/^-?\d+$/.test(t) ? Number(t) : null))
+    const known = slots
+      .map((value, index) => ({ value, index }))
+      .filter((item) => Number.isFinite(item.value))
+    if (known.length >= 2 && slots.some((value) => value === null)) {
+      let step = null
+      for (let i = 1; i < known.length; i++) {
+        const gap = known[i].index - known[i - 1].index
+        const diff = known[i].value - known[i - 1].value
+        if (gap > 0 && diff % gap === 0) {
+          step = diff / gap
+          break
+        }
+      }
+      if (step !== null) {
+        const first = known[0].value - step * known[0].index
+        const complete = slots.map((_, i) => first + step * i)
+        const isConsistent = known.every(({ value, index }) => complete[index] === value)
+        if (isConsistent) {
+          const missingPositions = slots
+            .map((value, index) => (value === null ? index : -1))
+            .filter((index) => index >= 0)
+          const answer = missingPositions.map((index) => complete[index])
+          return {
+            index: 1,
+            raw: ctx,
+            type: 'number_sequence',
+            operator: null,
+            operands: slots.filter((value) => Number.isFinite(value)),
+            sequenceSlots: slots,
+            missingPositions,
+            missingPosition: missingPositions[0] ?? null,
+            knownResult: null,
+            answer,
+            sequenceStep: step,
+            answerCount: answer.length,
+            promptMn: `${slots.map((v) => (v == null ? '?' : v)).join(', ')} дарааллыг гүйцээгээрэй.`,
+          }
+        }
+      }
+    }
+  }
+
+  const looksLikeSequence =
+    /дараал|дараагийн|дараах|г[үу]йцээ|үргэлжлүүл/i.test(ctx) ||
+    (nums.length >= 3 && /[,;\s]\s*-?\d+\s*[,;\s]/.test(ctx))
+  if (!looksLikeSequence || nums.length < 2) return null
+  const step = nums[nums.length - 1] - nums[nums.length - 2]
+  const isArithmetic = nums.length < 3 || nums.every((n, i) => i === 0 || n - nums[i - 1] === step)
+  if (isArithmetic) {
+    return {
+      index: 1,
+      raw: ctx,
+      type: 'number_sequence',
+      operator: null,
+      operands: nums,
+      sequenceSlots: [...nums, null, null, null],
+      missingPositions: [nums.length, nums.length + 1, nums.length + 2],
+      missingPosition: nums.length,
+      knownResult: null,
+      answer: [1, 2, 3].map((i) => nums[nums.length - 1] + step * i),
+      sequenceStep: step,
+      answerCount: 3,
+      promptMn: `${nums.join(', ')} дарааллын дараагийн 3 тоог олоорой.`,
+    }
+  }
+
+  const ratio = nums[nums.length - 2] !== 0 ? nums[nums.length - 1] / nums[nums.length - 2] : null
+  const isGeometric =
+    ratio !== null &&
+    Number.isFinite(ratio) &&
+    nums.every((n, i) => i === 0 || nums[i - 1] !== 0 && n / nums[i - 1] === ratio)
+  if (!isGeometric) return null
+  return {
+    index: 1,
+    raw: ctx,
+    type: 'number_sequence',
+    operator: null,
+    operands: nums,
+    sequenceSlots: [...nums, null, null, null],
+    missingPositions: [nums.length, nums.length + 1, nums.length + 2],
+    missingPosition: nums.length,
+    knownResult: null,
+    answer: [1, 2, 3].map((i) => nums[nums.length - 1] * ratio ** i),
+    sequenceRatio: ratio,
+    answerCount: 3,
+    promptMn: `${nums.join(', ')} дарааллын дараагийн 3 тоог олоорой.`,
+  }
+}
+
 function fallbackProblem(ctx) {
+  const seq = parseSequence(ctx)
+  if (seq) return seq
   const m = parseMath(ctx)
   if (!m) return null
   const type = m.op === '+' ? 'addition' : 'subtraction'
@@ -221,6 +321,8 @@ function ProblemInteractive({ problem, isSpeaking, onCorrect, onWrong }) {
     return <ComparisonInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
   if (problem.type === 'missing_addend')
     return <MissingAddendInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+  if (problem.type === 'number_sequence')
+    return <NumberSequenceInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
 
   const op = inferOperator(problem)
   if (op === '*' || op === '/')

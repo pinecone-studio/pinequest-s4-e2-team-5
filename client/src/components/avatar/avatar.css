@@ -1556,6 +1556,109 @@
 }
 
 /* ─────────────────────────────────────────────
+   Тоон дараалал гүйцээх
+   ───────────────────────────────────────────── */
+.seq-root {
+  position: relative;
+  width: min(100%, 720px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  animation: fade-up .22s ease;
+}
+
+.seq-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.seq-chip,
+.seq-input {
+  width: clamp(68px, 8vw, 92px);
+  height: clamp(62px, 8vw, 86px);
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  font-size: clamp(24px, 4vw, 42px);
+  font-weight: 900;
+  line-height: 1;
+}
+
+.seq-chip {
+  background: rgba(255,255,255,0.08);
+  border: 2px solid rgba(255,255,255,0.16);
+  color: #fff;
+  text-shadow: 0 0 18px rgba(255,255,255,0.26);
+  box-shadow: 0 14px 30px rgba(0,0,0,0.18);
+}
+
+.seq-input {
+  border: 3px dashed rgba(255,255,255,0.24);
+  background: rgba(255,255,255,0.06);
+  color: #fff;
+  text-align: center;
+  outline: none;
+  transition: border-color .15s, background .15s, box-shadow .15s, transform .15s;
+}
+
+.seq-input:focus {
+  border-color: #65d99d;
+  background: rgba(101,217,157,0.1);
+  box-shadow: 0 0 0 4px rgba(101,217,157,0.16);
+}
+
+.seq-input-wrong {
+  border-color: #ef4444;
+  background: rgba(239,68,68,0.12);
+  animation: vm-shake .35s ease;
+}
+
+.seq-input-correct {
+  border-color: #65d99d;
+  background: rgba(101,217,157,0.16);
+  box-shadow: 0 0 34px rgba(101,217,157,0.36);
+}
+
+.seq-check-btn {
+  border: 2px solid rgba(255,255,255,0.16);
+  border-radius: 16px;
+  background: rgba(101,217,157,0.16);
+  color: #fff;
+  padding: 12px 28px;
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform .12s, border-color .12s, background .12s;
+}
+
+.seq-check-btn:hover {
+  transform: translateY(-3px);
+  border-color: #65d99d;
+  background: rgba(101,217,157,0.24);
+}
+
+.seq-check-wrong {
+  border-color: rgba(239,68,68,0.72);
+}
+
+.seq-success {
+  position: relative;
+  border-radius: 16px;
+  background: rgba(101,217,157,0.16);
+  border: 2px solid rgba(101,217,157,0.52);
+  color: #fff;
+  padding: 13px 24px;
+  font-size: 18px;
+  font-weight: 900;
+  box-shadow: 0 0 38px rgba(101,217,157,0.34);
+}
+
+/* ─────────────────────────────────────────────
    "← Бодлогууд" буцах товч
    ───────────────────────────────────────────── */
 .ta-back-btn {
