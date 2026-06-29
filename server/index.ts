@@ -1,16 +1,10 @@
 import express from "express";
 import cors from "cors";
-import http from "http";
-import { WebSocketServer } from "ws";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { v4 as uuidv4 } from "uuid";
 import progressRouter from "./api/progress";
 import hintsRouter from "./api/hints";
-import { normalizeForSpeech, sanitizeForChimegeTts } from "./lib/mn-speech";
+import recordingsRouter from "./api/recordings";
+import { normalizeForSpeech } from "./lib/mn-speech";
 import { openai, MODELS, chatComplete } from "./lib/ai";
-import uploadRouter from "./api/upload";
-import { db } from "./db";
-import { recordings } from "./db/schema";
 
 const app = express();
 const port = Number(process.env.PORT) || 3010;
@@ -37,10 +31,10 @@ function getChimegeSttToken() {
 }
 
 app.use(cors());
+app.use("/api/recordings", recordingsRouter);
 app.use(express.json({ limit: "12mb" }));
 app.use("/api/progress", progressRouter);
 app.use("/api/hints", hintsRouter);
-app.use("/api/upload", uploadRouter);
 
 app.get("/", (_req, res) => {
   res.json({ message: "PineQuest server ажиллаж байна! 🌲" });
@@ -560,90 +554,6 @@ app.post("/api/ai/generate-game", async (req: any, res: any) => {
   }
 });
 
-// Initialize S3 client for Cloudflare R2
-const s3 = new S3Client({
-  endpoint: process.env.R2_ENDPOINT
-    ? process.env.R2_ENDPOINT
-    : `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID ?? "",
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY ?? "",
-  },
-  region: "auto", // required for R2
-});
-
-// Set up HTTP server and WebSocket
-const server = http.createServer(app);
-const wss = new WebSocketServer({ server });
-
-wss.on("connection", (ws, req) => {
-  console.log("WebSocket client connected");
-  const chunks: Buffer[] = [];
-  ws.binaryType = "nodebuffer";
-
-  // Extract session ID from query parameters or headers
-  const url = new URL(req.url || '', `http://${req.headers.host}`);
-  const sessionId = url.searchParams.get('sessionId') ||
-                   req.headers['x-session-id'] as string ||
-                   null;
-
-  ws.on("message", (data, isBinary) => {
-    if (isBinary && Buffer.isBuffer(data)) {
-      // Collect binary chunks (video/webm fragments from MediaRecorder)
-      chunks.push(data);
-    }
-    // Ignore text messages
-  });
-
-  ws.on("close", async () => {
-    console.log("WebSocket client disconnected");
-    if (chunks.length === 0) return;
-    const videoBlob = Buffer.concat(chunks);
-    // Generate a unique key: uuid-timestamp.webm
-    const key = `${uuidv4()}-${Date.now()}.webm`;
-    try {
-      await s3.send(
-        new PutObjectCommand({
-          Bucket: process.env.R2_BUCKET_NAME,
-          Key: key,
-          Body: videoBlob,
-          ContentType: "video/webm",
-        })
-      );
-      console.log(`Uploaded video to R2: ${key}`);
-
-      // Save recording reference to database
-      if (sessionId) {
-        try {
-          // Construct public URL for the video
-          const publicUrl = process.env.R2_PUBLIC_URL
-            ? `${process.env.R2_PUBLIC_URL.replace(/\/+$/, "")}/${key}`
-            : `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${process.env.R2_BUCKET_NAME}/${key}`;
-
-          await db.insert(recordings).values({
-            sessionId: sessionId,
-            videoKey: key,
-            videoUrl: publicUrl,
-            uploadedAt: new Date(),
-          });
-          console.log(`Recording reference saved to database for session: ${sessionId}`);
-        } catch (dbErr) {
-          console.error("Failed to save recording reference to DB:", dbErr);
-          // Optionally notify client about DB error
-        }
-      } else {
-        console.log("No session ID provided, skipping database record");
-      }
-    } catch (err) {
-      console.error("Failed to upload video to R2:", err);
-    }
-  });
-
-  ws.on("error", (err) => {
-    console.error("WebSocket error:", err);
-  });
-});
-
-server.listen(port, "0.0.0.0", () => {
+app.listen(port, "0.0.0.0", () => {
   console.log(`Server ${port} порт дээр ажиллаж байна`);
 });

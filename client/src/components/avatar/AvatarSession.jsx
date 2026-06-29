@@ -22,7 +22,7 @@ export function AvatarSession({ nickname = 'хүүхэд', avatar = 'sun-buddy' 
           <HomeworkUpload onHomeworkLoaded={handleHomeworkLoaded} onAnalyzingChange={setAnalyzing} />
         </div>
         <div className="session-camera">
-          <StudentCamera />
+          <StudentCamera childId={nickname} />
         </div>
       </div>
 
