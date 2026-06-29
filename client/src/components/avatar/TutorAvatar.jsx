@@ -64,9 +64,18 @@ function fallbackProblem(ctx) {
 }
 
 /* structured problem → RobotInteractive/VisualMath-д хэрэгтэй { a, b, op } */
+function inferOperator(p) {
+  if (p?.operator) return p.operator
+  if (p?.type === 'addition') return '+'
+  if (p?.type === 'subtraction') return '-'
+  if (p?.type === 'multiplication') return '*'
+  if (p?.type === 'division') return '/'
+  return '+'
+}
+
 function toAB(p) {
   const [a, b] = (p.operands ?? []).map(Number)
-  return { a: a ?? 0, b: b ?? 0, op: p.operator ?? '+' }
+  return { a: a ?? 0, b: b ?? 0, op: inferOperator(p) }
 }
 
 function problemKey(p) {
@@ -213,7 +222,7 @@ function ProblemInteractive({ problem, isSpeaking, onCorrect, onWrong }) {
   if (problem.type === 'missing_addend')
     return <MissingAddendInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
 
-  const op = problem.operator
+  const op = inferOperator(problem)
   if (op === '*' || op === '/')
     return <RobotInteractive problem={toAB(problem)} isSpeaking={isSpeaking} onCorrect={onCorrect} onWrong={onWrong} />
   if (op === '+' || op === '-')

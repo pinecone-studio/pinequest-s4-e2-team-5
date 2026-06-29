@@ -67,6 +67,7 @@ export function HomeworkUpload({ onHomeworkLoaded, onAnalyzingChange }) {
   const [analyzing, setAnalyzing] = useState(false)
   const [done, setDone]           = useState(false)
   const [error, setError]         = useState(null)
+  const [typedProblem, setTypedProblem] = useState('')
   const inputRef                  = useRef(null)
 
   function setAnalyzingState(v) {
@@ -115,10 +116,67 @@ export function HomeworkUpload({ onHomeworkLoaded, onAnalyzingChange }) {
     if (file) handleFile(file)
   }
 
+  function parseTypedProblem(text) {
+    const clean = text.trim()
+    if (!clean) return null
+
+    let m = clean.match(/(-?\d+)\s*([+＋]|нэмэх)\s*(-?\d+)/i)
+    if (m) {
+      const a = Number(m[1])
+      const b = Number(m[3])
+      return {
+        index: 1,
+        raw: clean,
+        type: 'addition',
+        operator: '+',
+        operands: [a, b],
+        missingPosition: null,
+        knownResult: null,
+        answer: a + b,
+        promptMn: `${a} + ${b} = ?`,
+      }
+    }
+
+    m = clean.match(/(-?\d+)\s*([-−–]|хасах)\s*(-?\d+)/i)
+    if (m) {
+      const a = Number(m[1])
+      const b = Number(m[3])
+      return {
+        index: 1,
+        raw: clean,
+        type: 'subtraction',
+        operator: '-',
+        operands: [a, b],
+        missingPosition: null,
+        knownResult: null,
+        answer: a - b,
+        promptMn: `${a} - ${b} = ?`,
+      }
+    }
+
+    return null
+  }
+
+  function handleTypedSubmit(e) {
+    e.preventDefault()
+    const problem = parseTypedProblem(typedProblem)
+    if (!problem) {
+      setError('Бодлогоо 8-3, 8 хасах 3, 5+2 хэлбэрээр бичээрэй.')
+      return
+    }
+    setPreview(null)
+    setDone(true)
+    setError(null)
+    setAnalyzingState(false)
+    onHomeworkLoaded(problem.raw, [problem])
+    if (inputRef.current) inputRef.current.value = ''
+  }
+
   function handleReset() {
     setPreview(null)
     setDone(false)
     setError(null)
+    setTypedProblem('')
     setAnalyzingState(false)
     onHomeworkLoaded('', [])
     if (inputRef.current) inputRef.current.value = ''
@@ -127,6 +185,19 @@ export function HomeworkUpload({ onHomeworkLoaded, onAnalyzingChange }) {
   return (
     <div className="hw-upload">
       <p className="hw-title">ДААЛГАВАР</p>
+
+      <form className="hw-text-form" onSubmit={handleTypedSubmit}>
+        <input
+          className="hw-text-input"
+          value={typedProblem}
+          onChange={(e) => setTypedProblem(e.target.value)}
+          placeholder="Ж: 8-3 эсвэл 8 хасах 3"
+          aria-label="Бодлого бичих"
+        />
+        <button type="submit" className="hw-text-btn">
+          Бодох
+        </button>
+      </form>
 
       <div
         className="hw-drop-area"
