@@ -23,6 +23,7 @@ function getChimegeTtsToken() {
 function getChimegeSttToken() {
   return (
     process.env.CHIMEGE_STT_API_KEY ??
+    process.env.CHIMEGE_TTS_API_KEY ??
     process.env.CHIMEGE_API_KEY ??
     process.env.NEXT_PUBLIC_CHIMEGE_API_KEY ??
     ""
@@ -114,9 +115,7 @@ app.post("/api/tts", async (req: any, res: any) => {
   if (!text) return res.status(400).json({ error: "text required" });
 
   try {
-    // Дижит ба математик тэмдгийг монгол үгэнд хөрвүүлж байж л дуу болгоно.
-    // (ж: "31+3=" → "гучин нэг нэмэх гурав тэнцүү"). Чанк хуваахаас ӨМНӨ хийнэ.
-    const speech = normalizeForSpeech(text);
+    const speech = sanitizeForChimegeTts(normalizeForSpeech(text));
     const chunks = splitIntoChunks(speech);
     const audioBuffers: Buffer[] = [];
     const chimegeToken = getChimegeTtsToken();
@@ -134,11 +133,14 @@ app.post("/api/tts", async (req: any, res: any) => {
           },
           body: chunk,
         });
+
         if (!chimegeRes.ok) {
+          const errorText = await chimegeRes.text();
+          console.error("❌ Chimege TTS failed:", chimegeRes.status, errorText);
           chimegeOk = false;
-          console.warn("Chimege TTS unavailable, falling back to OpenAI TTS");
           break;
         }
+
         contentType = chimegeRes.headers.get("content-type") ?? contentType;
         audioBuffers.push(Buffer.from(await chimegeRes.arrayBuffer()));
       }
@@ -148,13 +150,19 @@ app.post("/api/tts", async (req: any, res: any) => {
           audioBuffers.length === 1
             ? audioBuffers[0]!
             : Buffer.concat(audioBuffers);
+
+        console.log("✅ Using Chimege TTS");
         res.set("Content-Type", contentType);
         return res.send(combined);
       }
+    } else {
+      console.warn(
+        "⚠️ CHIMEGE_TTS_API_KEY байхгүй байна. OpenAI TTS ашиглана.",
+      );
     }
 
-    // Chimege ажиллахгүй бол OpenAI TTS fallback (steerable gpt-4o-mini-tts).
-    // instructions-ээр монгол хэлээр, орос/казах аялгагүй ярихыг чиглүүлнэ.
+    console.log("➡️ Falling back to OpenAI TTS");
+
     const mp3 = await openai.audio.speech.create({
       model: MODELS.tts,
       voice: MODELS.ttsVoice as any,
@@ -162,10 +170,12 @@ app.post("/api/tts", async (req: any, res: any) => {
       instructions:
         "Дулаахан, тод, ойлгомжтой багшийн хоолой. Цэвэр монгол хэлээр, орос болон казах аялгагүйгээр, бага ангийн хүүхдэд зориулж тайван, элэгсэг ярь.",
     } as any);
+
     const buffer = Buffer.from(await mp3.arrayBuffer());
     res.set("Content-Type", "audio/mpeg");
     res.send(buffer);
   } catch (e: any) {
+    console.error("❌ TTS ERROR:", e);
     res.status(500).json({ error: e.message });
   }
 });
@@ -178,6 +188,7 @@ app.post("/api/stt", async (req: any, res: any) => {
     const buf = Buffer.from(audio, "base64");
 
     const chimegeToken = getChimegeSttToken();
+
     if (chimegeToken) {
       try {
         const chimegeRes = await fetch(chimegeSttEndpoint, {
@@ -188,49 +199,77 @@ app.post("/api/stt", async (req: any, res: any) => {
           },
           body: buf,
         });
+
+        console.log("========== CHIMEGE STT ==========");
+        console.log("STT mimeType:", mimeType);
+        console.log("STT audio size:", buf.length);
+        console.log("STT status:", chimegeRes.status);
+        console.log(
+          "STT content-type:",
+          chimegeRes.headers.get("content-type"),
+        );
+
         if (chimegeRes.ok) {
           const ct = chimegeRes.headers.get("content-type") ?? "";
           const raw = await chimegeRes.text();
 
+          console.log("Chimege STT raw:", raw);
+
           let text = "";
+
           if (ct.includes("application/json")) {
             try {
               const j = JSON.parse(raw);
+              console.log("Parsed JSON:", j);
               text = j.text ?? j.result ?? j.transcript ?? "";
-            } catch {
+            } catch (err) {
+              console.log("JSON parse failed:", err);
               text = raw;
             }
           } else {
             text = raw;
           }
+
           text = (text ?? "").trim();
-          if (text) return res.json({ text });
-          console.warn("Chimege STT хоосон хариу, Whisper руу шилжиж байна");
-        } else {
+
+          console.log("Final STT text:", text);
+
+          if (text) {
+            console.log("✅ Using Chimege STT");
+            return res.json({ text });
+          }
+
           console.warn(
-            `Chimege STT боломжгүй (${chimegeRes.status}), Whisper руу шилжиж байна`,
+            "⚠️ Chimege STT хоосон хариу өглөө. OpenAI STT руу шилжинэ.",
           );
+        } else {
+          const errorText = await chimegeRes.text();
+          console.error("❌ Chimege STT failed:", chimegeRes.status, errorText);
         }
       } catch (chimegeErr) {
-        console.warn(
-          "Chimege STT алдаа, Whisper руу шилжиж байна:",
-          chimegeErr,
-        );
+        console.error("❌ Chimege STT Exception:", chimegeErr);
       }
+    } else {
+      console.warn(
+        "⚠️ CHIMEGE_STT_API_KEY байхгүй байна. OpenAI STT ашиглана.",
+      );
     }
 
-    // 2) Chimege амжилтгүй / токенгүй бол OpenAI transcribe fallback.
-    // gpt-4o-transcribe + монгол prompt-оор хазайлгаснаар казах/орос мэт буруу таихыг багасгана.
+    console.log("➡️ Falling back to OpenAI STT");
+
     const ext = mimeType.includes("mp4") ? "mp4" : "webm";
     const file = new File([buf], `recording.${ext}`, { type: mimeType });
+
     const transcription = await openai.audio.transcriptions.create({
       file,
       model: MODELS.transcribe,
       prompt:
-        "This audio is spoken in Mongolian. Transcribe the speech exactly as spoken in Mongolian. Do not translate. Common words include: нэмэх, хасах, үржих, хуваах, тэнцүү, бодлого, хариу.",
+        "This audio is spoken in Mongolian. Transcribe exactly in Mongolian. Do not translate. Common words include: нэмэх, хасах, үржих, хуваах, тэнцүү, бодлого, хариу.",
     });
+
     res.json({ text: transcription.text });
   } catch (e: any) {
+    console.error("❌ STT ERROR:", e);
     res.status(500).json({ error: e.message });
   }
 });
