@@ -1,16 +1,10 @@
 import express from "express";
 import cors from "cors";
-import http from "http";
-import { WebSocketServer } from "ws";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { v4 as uuidv4 } from "uuid";
 import progressRouter from "./api/progress";
 import hintsRouter from "./api/hints";
+import recordingsRouter from "./api/recordings";
 import { normalizeForSpeech } from "./lib/mn-speech";
 import { openai, MODELS, chatComplete } from "./lib/ai";
-import uploadRouter from "./api/upload";
-import { db } from "./db";
-import { recordings } from "./db/schema";
 
 const app = express();
 const port = Number(process.env.PORT) || 3010;
@@ -29,6 +23,7 @@ function getChimegeTtsToken() {
 function getChimegeSttToken() {
   return (
     process.env.CHIMEGE_STT_API_KEY ??
+    process.env.CHIMEGE_TTS_API_KEY ??
     process.env.CHIMEGE_API_KEY ??
     process.env.NEXT_PUBLIC_CHIMEGE_API_KEY ??
     ""
@@ -36,10 +31,10 @@ function getChimegeSttToken() {
 }
 
 app.use(cors());
+app.use("/api/recordings", recordingsRouter);
 app.use(express.json({ limit: "12mb" }));
 app.use("/api/progress", progressRouter);
 app.use("/api/hints", hintsRouter);
-app.use("/api/upload", uploadRouter);
 
 app.get("/", (_req, res) => {
   res.json({ message: "PineQuest server ажиллаж байна! 🌲" });
@@ -120,9 +115,7 @@ app.post("/api/tts", async (req: any, res: any) => {
   if (!text) return res.status(400).json({ error: "text required" });
 
   try {
-    // Дижит ба математик тэмдгийг монгол үгэнд хөрвүүлж байж л дуу болгоно.
-    // (ж: "31+3=" → "гучин нэг нэмэх гурав тэнцүү"). Чанк хуваахаас ӨМНӨ хийнэ.
-    const speech = normalizeForSpeech(text);
+    const speech = sanitizeForChimegeTts(normalizeForSpeech(text));
     const chunks = splitIntoChunks(speech);
     const audioBuffers: Buffer[] = [];
     const chimegeToken = getChimegeTtsToken();
@@ -140,11 +133,14 @@ app.post("/api/tts", async (req: any, res: any) => {
           },
           body: chunk,
         });
+
         if (!chimegeRes.ok) {
+          const errorText = await chimegeRes.text();
+          console.error("❌ Chimege TTS failed:", chimegeRes.status, errorText);
           chimegeOk = false;
-          console.warn("Chimege TTS unavailable, falling back to OpenAI TTS");
           break;
         }
+
         contentType = chimegeRes.headers.get("content-type") ?? contentType;
         audioBuffers.push(Buffer.from(await chimegeRes.arrayBuffer()));
       }
@@ -154,13 +150,19 @@ app.post("/api/tts", async (req: any, res: any) => {
           audioBuffers.length === 1
             ? audioBuffers[0]!
             : Buffer.concat(audioBuffers);
+
+        console.log("✅ Using Chimege TTS");
         res.set("Content-Type", contentType);
         return res.send(combined);
       }
+    } else {
+      console.warn(
+        "⚠️ CHIMEGE_TTS_API_KEY байхгүй байна. OpenAI TTS ашиглана.",
+      );
     }
 
-    // Chimege ажиллахгүй бол OpenAI TTS fallback (steerable gpt-4o-mini-tts).
-    // instructions-ээр монгол хэлээр, орос/казах аялгагүй ярихыг чиглүүлнэ.
+    console.log("➡️ Falling back to OpenAI TTS");
+
     const mp3 = await openai.audio.speech.create({
       model: MODELS.tts,
       voice: MODELS.ttsVoice as any,
@@ -168,10 +170,12 @@ app.post("/api/tts", async (req: any, res: any) => {
       instructions:
         "Дулаахан, тод, ойлгомжтой багшийн хоолой. Цэвэр монгол хэлээр, орос болон казах аялгагүйгээр, бага ангийн хүүхдэд зориулж тайван, элэгсэг ярь.",
     } as any);
+
     const buffer = Buffer.from(await mp3.arrayBuffer());
     res.set("Content-Type", "audio/mpeg");
     res.send(buffer);
   } catch (e: any) {
+    console.error("❌ TTS ERROR:", e);
     res.status(500).json({ error: e.message });
   }
 });
@@ -184,6 +188,7 @@ app.post("/api/stt", async (req: any, res: any) => {
     const buf = Buffer.from(audio, "base64");
 
     const chimegeToken = getChimegeSttToken();
+
     if (chimegeToken) {
       try {
         const chimegeRes = await fetch(chimegeSttEndpoint, {
@@ -194,49 +199,77 @@ app.post("/api/stt", async (req: any, res: any) => {
           },
           body: buf,
         });
+
+        console.log("========== CHIMEGE STT ==========");
+        console.log("STT mimeType:", mimeType);
+        console.log("STT audio size:", buf.length);
+        console.log("STT status:", chimegeRes.status);
+        console.log(
+          "STT content-type:",
+          chimegeRes.headers.get("content-type"),
+        );
+
         if (chimegeRes.ok) {
           const ct = chimegeRes.headers.get("content-type") ?? "";
           const raw = await chimegeRes.text();
 
+          console.log("Chimege STT raw:", raw);
+
           let text = "";
+
           if (ct.includes("application/json")) {
             try {
               const j = JSON.parse(raw);
+              console.log("Parsed JSON:", j);
               text = j.text ?? j.result ?? j.transcript ?? "";
-            } catch {
+            } catch (err) {
+              console.log("JSON parse failed:", err);
               text = raw;
             }
           } else {
             text = raw;
           }
+
           text = (text ?? "").trim();
-          if (text) return res.json({ text });
-          console.warn("Chimege STT хоосон хариу, Whisper руу шилжиж байна");
-        } else {
+
+          console.log("Final STT text:", text);
+
+          if (text) {
+            console.log("✅ Using Chimege STT");
+            return res.json({ text });
+          }
+
           console.warn(
-            `Chimege STT боломжгүй (${chimegeRes.status}), Whisper руу шилжиж байна`,
+            "⚠️ Chimege STT хоосон хариу өглөө. OpenAI STT руу шилжинэ.",
           );
+        } else {
+          const errorText = await chimegeRes.text();
+          console.error("❌ Chimege STT failed:", chimegeRes.status, errorText);
         }
       } catch (chimegeErr) {
-        console.warn(
-          "Chimege STT алдаа, Whisper руу шилжиж байна:",
-          chimegeErr,
-        );
+        console.error("❌ Chimege STT Exception:", chimegeErr);
       }
+    } else {
+      console.warn(
+        "⚠️ CHIMEGE_STT_API_KEY байхгүй байна. OpenAI STT ашиглана.",
+      );
     }
 
-    // 2) Chimege амжилтгүй / токенгүй бол OpenAI transcribe fallback.
-    // gpt-4o-transcribe + монгол prompt-оор хазайлгаснаар казах/орос мэт буруу таихыг багасгана.
+    console.log("➡️ Falling back to OpenAI STT");
+
     const ext = mimeType.includes("mp4") ? "mp4" : "webm";
     const file = new File([buf], `recording.${ext}`, { type: mimeType });
+
     const transcription = await openai.audio.transcriptions.create({
       file,
       model: MODELS.transcribe,
       prompt:
-        "This audio is spoken in Mongolian. Transcribe the speech exactly as spoken in Mongolian. Do not translate. Common words include: нэмэх, хасах, үржих, хуваах, тэнцүү, бодлого, хариу.",
+        "This audio is spoken in Mongolian. Transcribe exactly in Mongolian. Do not translate. Common words include: нэмэх, хасах, үржих, хуваах, тэнцүү, бодлого, хариу.",
     });
+
     res.json({ text: transcription.text });
   } catch (e: any) {
+    console.error("❌ STT ERROR:", e);
     res.status(500).json({ error: e.message });
   }
 });
@@ -521,90 +554,6 @@ app.post("/api/ai/generate-game", async (req: any, res: any) => {
   }
 });
 
-// Initialize S3 client for Cloudflare R2
-const s3 = new S3Client({
-  endpoint: process.env.R2_ENDPOINT
-    ? process.env.R2_ENDPOINT
-    : `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID ?? "",
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY ?? "",
-  },
-  region: "auto", // required for R2
-});
-
-// Set up HTTP server and WebSocket
-const server = http.createServer(app);
-const wss = new WebSocketServer({ server });
-
-wss.on("connection", (ws, req) => {
-  console.log("WebSocket client connected");
-  const chunks: Buffer[] = [];
-  ws.binaryType = "nodebuffer";
-
-  // Extract session ID from query parameters or headers
-  const url = new URL(req.url || '', `http://${req.headers.host}`);
-  const sessionId = url.searchParams.get('sessionId') ||
-                   req.headers['x-session-id'] as string ||
-                   null;
-
-  ws.on("message", (data, isBinary) => {
-    if (isBinary && Buffer.isBuffer(data)) {
-      // Collect binary chunks (video/webm fragments from MediaRecorder)
-      chunks.push(data);
-    }
-    // Ignore text messages
-  });
-
-  ws.on("close", async () => {
-    console.log("WebSocket client disconnected");
-    if (chunks.length === 0) return;
-    const videoBlob = Buffer.concat(chunks);
-    // Generate a unique key: uuid-timestamp.webm
-    const key = `${uuidv4()}-${Date.now()}.webm`;
-    try {
-      await s3.send(
-        new PutObjectCommand({
-          Bucket: process.env.R2_BUCKET_NAME,
-          Key: key,
-          Body: videoBlob,
-          ContentType: "video/webm",
-        })
-      );
-      console.log(`Uploaded video to R2: ${key}`);
-
-      // Save recording reference to database
-      if (sessionId) {
-        try {
-          // Construct public URL for the video
-          const publicUrl = process.env.R2_PUBLIC_URL
-            ? `${process.env.R2_PUBLIC_URL.replace(/\/+$/, "")}/${key}`
-            : `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${process.env.R2_BUCKET_NAME}/${key}`;
-
-          await db.insert(recordings).values({
-            sessionId: sessionId,
-            videoKey: key,
-            videoUrl: publicUrl,
-            uploadedAt: new Date(),
-          });
-          console.log(`Recording reference saved to database for session: ${sessionId}`);
-        } catch (dbErr) {
-          console.error("Failed to save recording reference to DB:", dbErr);
-          // Optionally notify client about DB error
-        }
-      } else {
-        console.log("No session ID provided, skipping database record");
-      }
-    } catch (err) {
-      console.error("Failed to upload video to R2:", err);
-    }
-  });
-
-  ws.on("error", (err) => {
-    console.error("WebSocket error:", err);
-  });
-});
-
-server.listen(port, "0.0.0.0", () => {
+app.listen(port, "0.0.0.0", () => {
   console.log(`Server ${port} порт дээр ажиллаж байна`);
 });

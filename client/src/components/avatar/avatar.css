@@ -292,6 +292,22 @@
   background: rgba(255, 255, 255, 0.14);
 }
 
+.student-cam-status {
+  margin: -2px 0 0;
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.student-cam-status.is-ok {
+  color: #86efac;
+}
+
+.student-cam-status.is-error {
+  color: #fca5a5;
+}
+
 /* ===== Tutor Avatar — split layout ===== */
 
 /* Root: horizontal split inside session-right */
