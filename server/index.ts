@@ -3,7 +3,7 @@ import cors from "cors";
 import progressRouter from "./api/progress";
 import hintsRouter from "./api/hints";
 import recordingsRouter from "./api/recordings";
-import { normalizeForSpeech } from "./lib/mn-speech";
+import { normalizeForSpeech, sanitizeForChimegeTts } from "./lib/mn-speech";
 import { openai, MODELS, chatComplete } from "./lib/ai";
 
 const app = express();
@@ -325,14 +325,24 @@ function normalizeProblems(problems: any[]): any[] {
       else if (out.type === "comparison")
         out.answer = a < b ? -1 : a > b ? 1 : 0;
     }
-    if (out.type === "number_sequence" && (ops.length >= 2 || rawSequenceSlots.filter((v) => Number.isFinite(v)).length >= 2)) {
+    if (
+      out.type === "number_sequence" &&
+      (ops.length >= 2 ||
+        rawSequenceSlots.filter((v) => Number.isFinite(v)).length >= 2)
+    ) {
       const slots = Array.isArray(out.sequenceSlots)
-        ? out.sequenceSlots.map((v: any) => (v === null || v === undefined ? null : Number(v)))
+        ? out.sequenceSlots.map((v: any) =>
+            v === null || v === undefined ? null : Number(v),
+          )
         : rawSequenceSlots;
       const knownSlots = slots
         .map((value: number | null, index: number) => ({ value, index }))
         .filter((item: any) => Number.isFinite(item.value));
-      if (slots.length && knownSlots.length >= 2 && slots.some((v: number | null) => v === null)) {
+      if (
+        slots.length &&
+        knownSlots.length >= 2 &&
+        slots.some((v: number | null) => v === null)
+      ) {
         let step: number | null = null;
         for (let idx = 1; idx < knownSlots.length; idx++) {
           const gap = knownSlots[idx].index - knownSlots[idx - 1].index;
@@ -344,45 +354,58 @@ function normalizeProblems(problems: any[]): any[] {
         }
         if (step !== null) {
           const first = knownSlots[0].value - step * knownSlots[0].index;
-          const complete = slots.map((_: any, idx: number) => first + step! * idx);
-          const isConsistent = knownSlots.every((item: any) => complete[item.index] === item.value);
+          const complete = slots.map(
+            (_: any, idx: number) => first + step! * idx,
+          );
+          const isConsistent = knownSlots.every(
+            (item: any) => complete[item.index] === item.value,
+          );
           if (isConsistent) {
             out.sequenceSlots = slots;
             out.missingPositions = slots
-              .map((value: number | null, idx: number) => (value === null ? idx : -1))
+              .map((value: number | null, idx: number) =>
+                value === null ? idx : -1,
+              )
               .filter((idx: number) => idx >= 0);
             out.missingPosition = out.missingPositions[0] ?? null;
-            out.answer = out.missingPositions.map((idx: number) => complete[idx]);
+            out.answer = out.missingPositions.map(
+              (idx: number) => complete[idx],
+            );
             out.sequenceStep = step;
             out.answerCount = out.answer.length;
           }
         }
       } else {
         const step = ops[ops.length - 1] - ops[ops.length - 2];
-        const isArithmetic = ops.length < 3 || ops.every((n, idx) => idx === 0 || n - ops[idx - 1] === step);
-      if (isArithmetic) {
-        out.answer = [1, 2, 3].map((k) => ops[ops.length - 1] + step * k);
-        out.sequenceSlots = [...ops, null, null, null];
-        out.missingPositions = [ops.length, ops.length + 1, ops.length + 2];
-        out.missingPosition = ops.length;
-        out.sequenceStep = step;
-        out.answerCount = 3;
-      } else {
-        const prev = ops[ops.length - 2];
-        const ratio = prev !== 0 ? ops[ops.length - 1] / prev : null;
-        const isGeometric =
-          ratio !== null &&
-          Number.isFinite(ratio) &&
-          ops.every((n, idx) => idx === 0 || (ops[idx - 1] !== 0 && n / ops[idx - 1] === ratio));
-        if (isGeometric) {
-          out.answer = [1, 2, 3].map((k) => ops[ops.length - 1] * ratio ** k);
+        const isArithmetic =
+          ops.length < 3 ||
+          ops.every((n, idx) => idx === 0 || n - ops[idx - 1] === step);
+        if (isArithmetic) {
+          out.answer = [1, 2, 3].map((k) => ops[ops.length - 1] + step * k);
           out.sequenceSlots = [...ops, null, null, null];
           out.missingPositions = [ops.length, ops.length + 1, ops.length + 2];
           out.missingPosition = ops.length;
-          out.sequenceRatio = ratio;
+          out.sequenceStep = step;
           out.answerCount = 3;
+        } else {
+          const prev = ops[ops.length - 2];
+          const ratio = prev !== 0 ? ops[ops.length - 1] / prev : null;
+          const isGeometric =
+            ratio !== null &&
+            Number.isFinite(ratio) &&
+            ops.every(
+              (n, idx) =>
+                idx === 0 || (ops[idx - 1] !== 0 && n / ops[idx - 1] === ratio),
+            );
+          if (isGeometric) {
+            out.answer = [1, 2, 3].map((k) => ops[ops.length - 1] * ratio ** k);
+            out.sequenceSlots = [...ops, null, null, null];
+            out.missingPositions = [ops.length, ops.length + 1, ops.length + 2];
+            out.missingPosition = ops.length;
+            out.sequenceRatio = ratio;
+            out.answerCount = 3;
+          }
         }
-      }
       }
     }
     return out;
