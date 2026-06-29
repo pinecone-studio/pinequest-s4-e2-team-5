@@ -9,6 +9,7 @@ const TYPE_ICON = {
   comparison: '⚖️',
   missing_addend: '🔲',
   number_sequence: '🔢',
+  number_neighbor: '↔️',
   word: '📖',
 }
 

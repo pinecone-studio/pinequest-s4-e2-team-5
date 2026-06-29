@@ -2,10 +2,16 @@ import { useEffect, useMemo, useState } from 'react'
 import { CelebrationBurst } from './CelebrationBurst.jsx'
 
 function asNumberArray(value) {
-  if (Array.isArray(value)) return value.map(Number).filter(Number.isFinite)
+  if (Array.isArray(value)) return value.filter((item) => !isBlankToken(item)).map(Number).filter(Number.isFinite)
   if (typeof value === 'string') return value.match(/-?\d+/g)?.map(Number) ?? []
   if (Number.isFinite(Number(value))) return [Number(value)]
   return []
+}
+
+function isBlankToken(value) {
+  if (value === null || value === undefined) return true
+  if (typeof value !== 'string') return false
+  return /^(\s*|\.{2,}|…|_{1,}|□|▢|\?)$/.test(value)
 }
 
 function completeArithmeticSlots(slots) {
@@ -73,7 +79,11 @@ function inferNextValues(problem) {
 
 function buildSlots(problem, answers) {
   if (Array.isArray(problem.sequenceSlots) && problem.sequenceSlots.length) {
-    return problem.sequenceSlots.map((value) => (Number.isFinite(Number(value)) ? Number(value) : null))
+    return problem.sequenceSlots.map((value) => {
+      if (isBlankToken(value)) return null
+      const n = Number(value)
+      return Number.isFinite(n) ? n : null
+    })
   }
   const fromRaw = slotsFromRaw(problem.raw)
   if (fromRaw?.slots.length) return fromRaw.slots
