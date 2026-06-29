@@ -32,7 +32,7 @@ const AnimatedButton = ({
     <button
       className={`
         relative overflow-hidden 
-        min-[320px]:border-3 sm:border-4 border-neutral-900 
+        min-[320px]:border-3 sm:border-3 border-neutral-900 
         rounded-full font-bold 
         min-[320px]:text-lg md:text-xl 
         cursor-pointer w-fit
@@ -42,19 +42,19 @@ const AnimatedButton = ({
       onMouseLeave={handleMouseLeave}
       onClick={() => (onClick ? onClick() : handleButtonClick(text, router))}
     >
-      {/* Background fill on hover */}
+      
       <div
         ref={bgRef}
-        className="absolute inset-0 bg-neutral-900 translate-y-[101%] z-0"
+        className="absolute inset-0 bg-purple-200 translate-y-[101%] z-0"
       />
 
-      {/* Text layers */}
+   
       <div className="relative overflow-hidden">
         {textLayers.map(({ ref, z }, i) => (
           <span
             key={i}
             ref={ref}
-            className={`block uppercase font-holtwood leading-none tracking-wider ${z}`}
+            className={`block uppercase font-rubik leading-none tracking-wider ${z}`}
           >
             {text}
           </span>

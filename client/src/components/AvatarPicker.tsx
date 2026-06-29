@@ -11,90 +11,26 @@ export type AvatarOption = {
 
 export const AVATARS: AvatarOption[] = [
   { id: "sun-buddy", name: "Нархан", emoji: "☀️", available: true },
-  { id: "robot", name: "Жой", emoji: "🤖", available: true },
-  { id: "minecraft", name: "Майнкрафт", emoji: "🟩", available: true },
-  { id: "mcqueen", name: "Маккуин", emoji: "🏎️", available: true },
-  { id: "rocket", name: "Пуужин", emoji: "🚀", available: false },
-  { id: "dino", name: "Дино", emoji: "🦖", available: false },
+  { id: "robot", name: "Joy", emoji: "🤖", available: true },
+  { id: "minecraft", name: "Minecraft", emoji: "🟩", available: true },
+  { id: "mcqueen", name: "McQueen", emoji: "🏎️", available: true },
+  { id: "astronaut", name: "Сансрын нисгэгч", emoji: "🧑🏻‍🚀", available: true },
+  { id: "barbie", name: "Barbie", emoji: "🧚🏻‍♀️", available: true },
 ];
 
-/** Майнкрафт креепер царай (пиксел блок хэлбэр) — picker болон scene-д хуваалцана. */
+
 export function CreeperFace({ className }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 64 64"
-      width="100%"
-      height="100%"
-      className={className}
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <linearGradient id="apCreeper" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#7ac74f" />
-          <stop offset="100%" stopColor="#4e9b3a" />
-        </linearGradient>
-      </defs>
-      {/* толгой */}
-      <rect x="9" y="7" width="46" height="50" rx="4" fill="url(#apCreeper)" />
-      {/* пиксел хээ */}
-      <rect x="9" y="7" width="12" height="13" fill="#8ed15f" opacity="0.45" />
-      <rect x="43" y="34" width="12" height="13" fill="#3c8a2e" opacity="0.5" />
-      <rect x="30" y="11" width="9" height="9" fill="#6cbf45" opacity="0.4" />
-      <rect x="13" y="40" width="9" height="9" fill="#5fae3e" opacity="0.4" />
-      {/* царай */}
-      <g fill="#22381b">
-        <rect x="17" y="20" width="9" height="9" />
-        <rect x="38" y="20" width="9" height="9" />
-        <rect x="27" y="29" width="10" height="9" />
-        <rect x="22" y="38" width="9" height="14" />
-        <rect x="33" y="38" width="9" height="14" />
-      </g>
-    </svg>
+   <img src="Minecraft1.png" alt="Minecraft" />
   );
 }
 
-/** Custom-drawn mascot art (emoji-аас илүү гоё, бодит дүртэй) */
-/** Lightning McQueen маягийн улаан спорт машин (нүдтэй) — picker болон scene-д. */
+
 export function McQueenCar({ className }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 64 64"
-      width="100%"
-      height="100%"
-      className={className}
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <linearGradient id="apMcq" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#ff4133" />
-          <stop offset="100%" stopColor="#cf1d14" />
-        </linearGradient>
-      </defs>
-      {/* сүүдэр */}
-      <ellipse cx="32" cy="56" rx="24" ry="3.5" fill="rgba(0,0,0,0.16)" />
-      {/* бие */}
-      <rect x="7" y="22" width="50" height="30" rx="13" fill="url(#apMcq)" />
-      <rect x="12" y="25" width="40" height="9" rx="7" fill="#ff6a5c" opacity="0.55" />
-      {/* салхины шил + нүд */}
-      <rect x="17" y="13" width="30" height="18" rx="9" fill="#bfe8ff" stroke="#e6f3ff" strokeWidth="1.5" />
-      <circle cx="26" cy="22" r="5" fill="#fff" />
-      <circle cx="38" cy="22" r="5" fill="#fff" />
-      <circle cx="27.5" cy="23" r="2.6" fill="#27303d" />
-      <circle cx="39.5" cy="23" r="2.6" fill="#27303d" />
-      {/* аянга */}
-      <path d="M30 33 h6 l-3.5 4 h4 l-8 9 l2.5 -7 h-4 z" fill="#ffd633" stroke="#c79a00" strokeWidth="0.6" strokeLinejoin="round" />
-      {/* инээмсэглэл */}
-      <path d="M23 44 Q32 50 41 44" stroke="#7a1410" strokeWidth="2.4" fill="none" strokeLinecap="round" />
-      {/* гэрэл */}
-      <circle cx="15" cy="42" r="3" fill="#ffd84d" />
-      <circle cx="49" cy="42" r="3" fill="#ffd84d" />
-      {/* дугуй */}
-      <circle cx="18" cy="51" r="7" fill="#222834" />
-      <circle cx="46" cy="51" r="7" fill="#222834" />
-      <circle cx="18" cy="51" r="3" fill="#9aa3b2" />
-      <circle cx="46" cy="51" r="3" fill="#9aa3b2" />
-    </svg>
+     <img src="McQueen1.png" alt="McQueen" />
+   
+   
   );
 }
 
@@ -140,98 +76,80 @@ function AvatarArt({ id, className }: { id: string; className?: string }) {
 
   if (id === "robot") {
     return (
-      <svg {...common}>
-        <defs>
-          <linearGradient id="apRobot" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#A78BFA" />
-            <stop offset="100%" stopColor="#7C5FE6" />
-          </linearGradient>
-        </defs>
-        <line
-          x1="32"
-          y1="15"
-          x2="32"
-          y2="9"
-          stroke="#9CA3AF"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-        />
-        <circle cx="32" cy="7" r="3" fill="#FB7185" />
-        <rect x="9" y="28" width="5" height="9" rx="2.5" fill="#8B6FE0" />
-        <rect x="50" y="28" width="5" height="9" rx="2.5" fill="#8B6FE0" />
-        <rect x="14" y="15" width="36" height="34" rx="12" fill="url(#apRobot)" />
-        <rect x="19" y="22" width="26" height="20" rx="8" fill="#1F2937" />
-        <circle cx="27" cy="31" r="3" fill="#5EEAD4" />
-        <circle cx="37" cy="31" r="3" fill="#5EEAD4" />
-        <path
-          d="M27 37 Q32 40 37 37"
-          stroke="#5EEAD4"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
-      </svg>
+       <img src="Joy1.png" alt="Robot" />
+      // <svg {...common}>
+      //   <defs>
+      //     <linearGradient id="apRobot" x1="0" y1="0" x2="0" y2="1">
+      //       <stop offset="0%" stopColor="#A78BFA" />
+      //       <stop offset="100%" stopColor="#7C5FE6" />
+      //     </linearGradient>
+      //   </defs>
+      //   <line
+      //     x1="32"
+      //     y1="15"
+      //     x2="32"
+      //     y2="9"
+      //     stroke="#9CA3AF"
+      //     strokeWidth="2.5"
+      //     strokeLinecap="round"
+      //   />
+      //   <circle cx="32" cy="7" r="3" fill="#FB7185" />
+      //   <rect x="9" y="28" width="5" height="9" rx="2.5" fill="#8B6FE0" />
+      //   <rect x="50" y="28" width="5" height="9" rx="2.5" fill="#8B6FE0" />
+      //   <rect x="14" y="15" width="36" height="34" rx="12" fill="url(#apRobot)" />
+      //   <rect x="19" y="22" width="26" height="20" rx="8" fill="#1F2937" />
+      //   <circle cx="27" cy="31" r="3" fill="#5EEAD4" />
+      //   <circle cx="37" cy="31" r="3" fill="#5EEAD4" />
+      //   <path
+      //     d="M27 37 Q32 40 37 37"
+      //     stroke="#5EEAD4"
+      //     strokeWidth="2"
+      //     strokeLinecap="round"
+      //   />
+      // </svg>
     );
   }
 
-  if (id === "rocket") {
+  if (id === "astronaut") {
     return (
-      <svg {...common}>
-        <defs>
-          <linearGradient id="apRocket" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#F8FAFC" />
-            <stop offset="100%" stopColor="#CBD5E1" />
-          </linearGradient>
-        </defs>
-        <path d="M26 42 Q32 58 38 42 Q35 48 32 44 Q29 48 26 42 Z" fill="#FB923C" />
-        <path
-          d="M28.5 43 Q32 52 35.5 43 Q33.7 47 32 45 Q30.3 47 28.5 43 Z"
-          fill="#FACC15"
-        />
-        <path d="M22 34 L13 46 L23 42 Z" fill="#EF4444" strokeLinejoin="round" />
-        <path d="M42 34 L51 46 L41 42 Z" fill="#EF4444" strokeLinejoin="round" />
-        <path
-          d="M32 5 C41 13 43 28 42 42 L22 42 C21 28 23 13 32 5 Z"
-          fill="url(#apRocket)"
-          stroke="#94A3B8"
-          strokeWidth="1.5"
-          strokeLinejoin="round"
-        />
-        <circle
-          cx="32"
-          cy="24"
-          r="6.5"
-          fill="#38BDF8"
-          stroke="#0EA5E9"
-          strokeWidth="2.5"
-        />
-      </svg>
+       <img src="astronaut1.png" alt="Astronaut" />
+      
+   
     );
   }
 
-  if (id === "dino") {
-    return (
-      <svg {...common}>
-        <defs>
-          <linearGradient id="apDino" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#5FE08A" />
-            <stop offset="100%" stopColor="#34C46B" />
-          </linearGradient>
-        </defs>
-        <rect x="24" y="44" width="5" height="9" rx="2" fill="#2BA85A" />
-        <rect x="35" y="44" width="5" height="9" rx="2" fill="#2BA85A" />
-        <path
-          d="M8 44 Q10 36 18 37 Q19 26 31 25 Q33 16 44 20 Q53 24 49 35 Q54 37 51 44 Q46 50 36 49 L18 49 Q11 49 8 44 Z"
-          fill="url(#apDino)"
-          stroke="#2BA85A"
-          strokeWidth="1.5"
-          strokeLinejoin="round"
-        />
-        <path d="M22 36 l3 -5 l3 5 Z M31 31 l3 -5 l3 5 Z M40 28 l3 -4 l3 4 Z" fill="#2BA85A" />
-        <circle cx="43" cy="29" r="2.6" fill="#fff" />
-        <circle cx="43.6" cy="29" r="1.3" fill="#0F172A" />
-      </svg>
-    );
-  }
+  // if (id === "barbie") {
+  //   return (
+  //     <svg {...common}>
+  //       <defs>
+  //         <linearGradient id="apDino" x1="0" y1="0" x2="0" y2="1">
+  //           <stop offset="0%" stopColor="#5FE08A" />
+  //           <stop offset="100%" stopColor="#34C46B" />
+  //         </linearGradient>
+  //       </defs>
+  //       <rect x="24" y="44" width="5" height="9" rx="2" fill="#2BA85A" />
+  //       <rect x="35" y="44" width="5" height="9" rx="2" fill="#2BA85A" />
+  //       <path
+  //         d="M8 44 Q10 36 18 37 Q19 26 31 25 Q33 16 44 20 Q53 24 49 35 Q54 37 51 44 Q46 50 36 49 L18 49 Q11 49 8 44 Z"
+  //         fill="url(#apDino)"
+  //         stroke="#2BA85A"
+  //         strokeWidth="1.5"
+  //         strokeLinejoin="round"
+  //       />
+  //       <path d="M22 36 l3 -5 l3 5 Z M31 31 l3 -5 l3 5 Z M40 28 l3 -4 l3 4 Z" fill="#2BA85A" />
+  //       <circle cx="43" cy="29" r="2.6" fill="#fff" />
+  //       <circle cx="43.6" cy="29" r="1.3" fill="#0F172A" />
+  //     </svg>
+  //   );
+  // }
+
+  if (id === "barbie") {
+  return (
+   <img src="barbie1.png" alt="Barbie" />
+ 
+  );
+}
+
 
   if (id === "minecraft") {
     return <CreeperFace className={className} />;
@@ -292,17 +210,17 @@ export default function AvatarPicker({
         </button>
 
         <h2 className="text-center font-rubik text-2xl font-black tracking-tight text-neutral-900 sm:text-3xl">
-          Select Avatar
+          Найзаа сонгоорой
         </h2>
         <p className="mx-auto mt-2 mb-7 max-w-xs text-center text-sm leading-relaxed text-neutral-400">
-          Одоогоор{" "}
+          Өнөөдөр{" "}
           <span className="font-semibold text-[#8b3dff]">
-            Нархан болон Жой
+            хэнтэй хамт 
           </span>{" "}
-          бэлэн. Бусад найзууд тун удахгүй!
+           гэрийн даалгавараа хиймээр байна?
         </p>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-3 sm:gap-4">
           {AVATARS.map((a, i) => {
             const isSelected = selected === a.id;
             return (
