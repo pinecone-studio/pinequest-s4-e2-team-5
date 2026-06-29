@@ -6,12 +6,14 @@ import { RobotInteractive } from './RobotInteractive.jsx'
 import { ComparisonInteractive } from './ComparisonInteractive.jsx'
 import { MissingAddendInteractive } from './MissingAddendInteractive.jsx'
 import { NumberSequenceInteractive } from './NumberSequenceInteractive.jsx'
+import { NeighborNumberInteractive } from './NeighborNumberInteractive.jsx'
 import { ProblemList } from './ProblemList.jsx'
 import { CelebrationBurst } from './CelebrationBurst.jsx'
 import { JoyBackground, JoyRobot } from './JoyScene.jsx'
 import { MinecraftBackground } from './MinecraftScene.jsx'
 import { McQueenBackground } from './McQueenScene.jsx'
 import { extractProblemNumber } from './extractProblemNumber.js'
+import { normalizeHomeworkProblems } from './problemNormalizer.js'
 import '../lesson/lesson.css'
 import '../lesson/big-add-lesson.css'
 
@@ -51,6 +53,34 @@ function parseMath(ctx) {
   if (!s) s = ctx.match(/(\d+)\s*хасах\s*(\d+)/i)
   if (s) return { a: parseInt(s[1]), b: parseInt(s[2]), op: '-' }
   return null
+}
+
+function makeNeighborProblem(n, raw) {
+  return {
+    index: 1,
+    raw,
+    type: 'number_neighbor',
+    operator: null,
+    operands: [n],
+    neighborTarget: n,
+    missingPosition: null,
+    knownResult: null,
+    answer: [n - 1, n + 1],
+    promptMn: `${n} тооны өмнөх ба дараах хөрш тоог олоорой.`,
+  }
+}
+
+function parseNeighbor(ctx) {
+  if (!ctx) return null
+  const nums = ctx.match(/-?\d+/g)?.map(Number) ?? []
+  if (nums.length !== 1) return null
+  const n = nums[0]
+  if (!Number.isInteger(n) || n < 1 || n > 100) return null
+  const hasNeighborWord =
+    /х[өо]рш|өмн[өо]х|урд|хойно|neighbor|hursh|h[öo]rsh|(?:тооны|тооныхоо)\s+дараах/i.test(ctx)
+  const onlyNumber = /^-?\d+$/.test(ctx.trim())
+  if (!hasNeighborWord && !onlyNumber) return null
+  return makeNeighborProblem(n, ctx)
 }
 
 function parseSequence(ctx) {
@@ -151,6 +181,8 @@ function parseSequence(ctx) {
 }
 
 function fallbackProblem(ctx) {
+  const neighbor = parseNeighbor(ctx)
+  if (neighbor) return neighbor
   const seq = parseSequence(ctx)
   if (seq) return seq
   const m = parseMath(ctx)
@@ -323,6 +355,8 @@ function ProblemInteractive({ problem, isSpeaking, onCorrect, onWrong }) {
     return <MissingAddendInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
   if (problem.type === 'number_sequence')
     return <NumberSequenceInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+  if (problem.type === 'number_neighbor')
+    return <NeighborNumberInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
 
   const op = inferOperator(problem)
   if (op === '*' || op === '/')
@@ -396,9 +430,9 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
 
   // structured problems, эс бол хуучин нэг текстээс fallback
   const structuredProblems = useMemo(() => {
-    if (problems?.length) return problems
+    if (problems?.length) return normalizeHomeworkProblems(problems)
     const fb = fallbackProblem(homeworkContext)
-    return fb ? [fb] : []
+    return fb ? normalizeHomeworkProblems([fb]) : []
   }, [problems, homeworkContext])
 
   // Шинэ даалгавар орж ирэхэд сонголтыг цэвэрлэнэ
