@@ -1,5 +1,6 @@
 import { CreeperFace, McQueenCar } from './AvatarPicker.tsx'
 import { SplineScene } from './SplineScene.jsx'
+import { SplineSceneBarbie } from './SplineSceneBarbie.jsx'
 
 export function KidMascotScene({ className = '', mood = 'ready' }) {
   return (
@@ -68,15 +69,7 @@ export function MascotScene({ avatar = 'sun-buddy', className = '', mood = 'read
   }
 
   if (avatar === 'barbie') {
-    return (
-      <img
-        src="/barbie1.png"
-        alt="Barbie"
-        draggable="false"
-        className={className}
-        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-      />
-    )
+    return <SplineSceneBarbie className={className} />
   }
 
   if (avatar === 'minecraft') {

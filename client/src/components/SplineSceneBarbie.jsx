@@ -2,10 +2,10 @@ import { Suspense, lazy } from 'react'
 
 const Spline = lazy(() => import('@splinetool/react-spline'))
 
-export const ROBOT_SCENE_URL = 'https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode'
+export const BARBIE_SCENE_URL = 'https://prod.spline.design/EDTSfwQQP2KKuBn4/scene.splinecode'
 
 
-export function SplineScene({ scene = ROBOT_SCENE_URL, className = '' }) {
+export function SplineSceneBarbie({ scene = BARBIE_SCENE_URL, className = '' }) {
   if (!scene) return null
 
   return (

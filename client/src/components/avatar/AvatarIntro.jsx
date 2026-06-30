@@ -27,6 +27,7 @@ export function AvatarIntro({
   const isRobot = avatar === "robot";
   const isMinecraft = avatar === "minecraft";
   const isMcqueen = avatar === "mcqueen";
+  
 
   const introPlayedRef = useRef(false);
   const introPlayingRef = useRef(false);
@@ -35,11 +36,15 @@ export function AvatarIntro({
   const continuedRef = useRef(false);
 
   const mascotName = isRobot
-    ? "Жой"
+    ? "Joy"
     : avatar === "minecraft"
+ 157-minecraft-avatar
       ? "Стив"
+
+      ? "Minecraft"
+main
       : avatar === "mcqueen"
-        ? "Маккуин"
+        ? "McQueen"
         : avatar === "astronaut"
           ? "Сансрын нисгэгч"
           : avatar === "barbie"
