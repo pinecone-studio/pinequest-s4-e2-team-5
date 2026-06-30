@@ -37,7 +37,9 @@
   line-height: 1;
   cursor: pointer;
   backdrop-filter: blur(6px);
-  transition: background 0.2s ease, transform 0.2s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
 }
 .avatar-intro__back:hover {
   background: rgba(0, 0, 0, 0.6);
@@ -92,8 +94,15 @@
   animation: avatar-intro-pulse 1s ease-in-out infinite;
 }
 @keyframes avatar-intro-pulse {
-  0%, 100% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.4); opacity: 0.5; }
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.5;
+  }
 }
 
 .avatar-intro__input {
@@ -105,7 +114,9 @@
   font-size: 18px;
   color: #162b2a;
   outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 .avatar-intro__input:focus {
   border-color: #ffbd4a;
@@ -122,7 +133,9 @@
   font-size: 18px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease;
+  transition:
+    background 0.2s ease,
+    transform 0.1s ease;
 }
 .avatar-intro__submit:hover {
   background: #134c47;
@@ -143,8 +156,16 @@
    ════════════════════════════════════════════════════════════ */
 .avatar-intro--joy {
   background:
-    radial-gradient(120% 90% at 18% 8%, rgba(120, 224, 255, 0.4), transparent 58%),
-    radial-gradient(120% 95% at 85% 92%, rgba(190, 150, 255, 0.36), transparent 60%),
+    radial-gradient(
+      120% 90% at 18% 8%,
+      rgba(120, 224, 255, 0.4),
+      transparent 58%
+    ),
+    radial-gradient(
+      120% 95% at 85% 92%,
+      rgba(190, 150, 255, 0.36),
+      transparent 60%
+    ),
     linear-gradient(160deg, #f3fbff 0%, #eef1ff 52%, #f8f3ff 100%);
 }
 
@@ -177,13 +198,22 @@
   width: 64%;
   height: 70%;
   transform: translate(-50%, -50%);
-  background: radial-gradient(circle at center, rgba(120, 224, 255, 0.38), transparent 66%);
+  background: radial-gradient(
+    circle at center,
+    rgba(120, 224, 255, 0.38),
+    transparent 66%
+  );
   filter: blur(40px);
   animation: avatar-intro-glow 4.5s ease-in-out infinite;
 }
 @keyframes avatar-intro-glow {
-  0%, 100% { opacity: 0.65; }
-  50%      { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 /* Цайвар дэвсгэрт тохирох back товч */
@@ -206,8 +236,14 @@
   animation: avatar-intro-pop 0.5s cubic-bezier(0.22, 1.2, 0.4, 1) both;
 }
 @keyframes avatar-intro-pop {
-  from { opacity: 0; transform: translateY(18px) scale(0.96); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 .avatar-intro--joy .avatar-intro__title {
   background: linear-gradient(120deg, #2bb6c9 0%, #7c83ff 60%, #b06cff 100%);
@@ -216,10 +252,18 @@
   -webkit-text-fill-color: transparent;
   color: #5a55a0;
 }
-.avatar-intro--joy .avatar-intro__subtitle { color: #4a5074; }
-.avatar-intro--joy .avatar-intro__subtitle strong { color: #7c5fe6; }
-.avatar-intro--joy .avatar-intro__listening { color: #2b8fa6; }
-.avatar-intro--joy .avatar-intro__listening-dot { background: #2b8fa6; }
+.avatar-intro--joy .avatar-intro__subtitle {
+  color: #4a5074;
+}
+.avatar-intro--joy .avatar-intro__subtitle strong {
+  color: #7c5fe6;
+}
+.avatar-intro--joy .avatar-intro__listening {
+  color: #2b8fa6;
+}
+.avatar-intro--joy .avatar-intro__listening-dot {
+  background: #2b8fa6;
+}
 
 /* Интерактив хэсэг — өнгөөр тод ялгарна */
 .avatar-intro--joy .avatar-intro__input {
@@ -241,26 +285,95 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .avatar-intro__joy, .avatar-intro__joy-glow, .avatar-intro--joy .avatar-intro__panel {
+  .avatar-intro__joy,
+  .avatar-intro__joy-glow,
+  .avatar-intro--joy .avatar-intro__panel {
     animation: none !important;
   }
 }
 
 /* ════════════════════════════════════════════════════════════
-   Minecraft (/start) — maynkrap.png + хөөрхөн блок ертөнцийн дэвсгэр
+   Minecraft (/start) — R3F Steve scene + block world
    ════════════════════════════════════════════════════════════ */
 .avatar-intro--mc {
-  background: linear-gradient(180deg, #8ecbff 0%, #b7e4ff 52%, #d8f3ff 100%);
+  background:
+    radial-gradient(
+      circle at 72% 18%,
+      rgba(255, 231, 86, 0.38),
+      transparent 16%
+    ),
+    linear-gradient(180deg, #8ecbff 0%, #b7e4ff 52%, #d8f3ff 100%);
 }
 
-.mc-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.avatar-intro--mc .avatar-intro__scene {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(56, 146, 64, 0.06)),
+    radial-gradient(
+      circle at 50% 42%,
+      rgba(255, 255, 255, 0.3),
+      transparent 38%
+    );
+}
+
+.minecraft-steve-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.minecraft-steve-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      transparent 0 70%,
+      rgba(41, 96, 33, 0.1) 86%,
+      rgba(103, 64, 34, 0.28) 100%
+    ),
+    radial-gradient(
+      circle at 52% 52%,
+      rgba(255, 255, 255, 0.24),
+      transparent 35%
+    );
+  mix-blend-mode: soft-light;
+}
+
+.minecraft-steve-stage::after {
+  display: none;
+}
+
+.minecraft-steve-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+.mc-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
 
 /* Пиксел нар */
 .mc-sun {
-  position: absolute; top: 8%; right: 9%;
-  width: 60px; height: 60px;
-  background: #ffe14d; border-radius: 8px;
-  box-shadow: 0 0 0 6px rgba(255, 225, 77, 0.3), 0 0 44px rgba(255, 225, 77, 0.55);
+  position: absolute;
+  top: 8%;
+  right: 9%;
+  width: 60px;
+  height: 60px;
+  background: #ffe14d;
+  border-radius: 8px;
+  box-shadow:
+    0 0 0 6px rgba(255, 225, 77, 0.3),
+    0 0 44px rgba(255, 225, 77, 0.55);
 }
 
 /* Үүлс — сэвсгэр (доод хавтгай + дээр нь товгор) */
@@ -272,17 +385,32 @@
   opacity: 0.96;
   animation: mc-cloud-drift linear infinite alternate;
 }
-.mc-cloud::before, .mc-cloud::after {
+.mc-cloud::before,
+.mc-cloud::after {
   content: "";
   position: absolute;
   background: #ffffff;
   border-radius: 50%;
 }
-.mc-cloud::before { width: 52%; height: 155%; left: 13%; bottom: 28%; }
-.mc-cloud::after  { width: 40%; height: 128%; right: 15%; bottom: 24%; }
+.mc-cloud::before {
+  width: 52%;
+  height: 155%;
+  left: 13%;
+  bottom: 28%;
+}
+.mc-cloud::after {
+  width: 40%;
+  height: 128%;
+  right: 15%;
+  bottom: 24%;
+}
 @keyframes mc-cloud-drift {
-  from { transform: translateX(0); }
-  to   { transform: translateX(34px); }
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(34px);
+  }
 }
 
 /* Дэлгэцийн арын чимэглэл — Майнкрафт байшин (газар дээр) */
@@ -298,8 +426,13 @@
   -webkit-user-drag: none;
 }
 @keyframes mc-house-float {
-  0%, 100% { transform: translateY(0) rotate(-1.2deg); }
-  50%      { transform: translateY(-8px) rotate(1.2deg); }
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1.2deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(1.2deg);
+  }
 }
 
 /* Хөвөгч эд зүйлс (блок, дэнлүү, pickaxe, зуух г.м.) */
@@ -325,95 +458,160 @@
   -webkit-user-drag: none;
 }
 @keyframes mc-mob-idle {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-4px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
 }
 
 /* Газар — өвс + шороо */
 .mc-ground {
-  position: absolute; left: 0; right: 0; bottom: 0;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
   height: 16%;
   background: linear-gradient(#74bd3f 0 22%, #8a5a32 22% 100%);
   box-shadow: inset 0 8px 0 rgba(0, 0, 0, 0.07);
 }
 .mc-ground::before {
-  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 12px;
-  background: repeating-linear-gradient(90deg, #74bd3f 0 20px, #66a836 20px 40px);
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 12px;
+  background: repeating-linear-gradient(
+    90deg,
+    #74bd3f 0 20px,
+    #66a836 20px 40px
+  );
 }
 
 /* Хөвөгч Майнкрафт блокууд (block.png зураг) */
 @keyframes mc-float {
-  0%, 100% { transform: translateY(0) rotate(-3deg); }
-  50%      { transform: translateY(-16px) rotate(3deg); }
+  0%,
+  100% {
+    transform: translateY(0) rotate(-3deg);
+  }
+  50% {
+    transform: translateY(-16px) rotate(3deg);
+  }
 }
 
 /* maynkrap.png найз — голлуулж хөвүүлнэ (1024×1024) */
 .avatar-intro__mc-wrap {
   position: absolute;
-  left: 50%; top: 43%;
+  left: 50%;
+  top: 43%;
   transform: translate(-50%, -50%);
-  width: min(56vh, 480px); height: min(56vh, 480px);
+  width: min(56vh, 480px);
+  height: min(56vh, 480px);
   max-width: 88vw;
-  display: flex; align-items: center; justify-content: center;
-  z-index: 1; pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  pointer-events: none;
 }
-.avatar-intro__mc { width: 100%; height: 100%; }
+.avatar-intro__mc {
+  width: 100%;
+  height: 100%;
+}
 /* Гол avatar зураг (hun.png зомби) — голлуулж зөөлөн хөвүүлнэ */
 .mc-main-img {
-  width: 100%; height: 100%;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   filter: drop-shadow(0 18px 26px rgba(40, 80, 30, 0.3));
   animation: mc-bob 5s ease-in-out infinite;
-  user-select: none; -webkit-user-drag: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 .mc-buddy {
-  --gx: 0; --gy: 0;
+  --gx: 0;
+  --gy: 0;
   position: relative;
-  width: 100%; height: 100%;
+  width: 100%;
+  height: 100%;
   animation: mc-bob 5s ease-in-out infinite;
 }
 .mc-buddy-img {
-  width: 100%; height: 100%;
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   filter: drop-shadow(0 18px 26px rgba(40, 80, 30, 0.3));
-  user-select: none; -webkit-user-drag: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 @keyframes mc-bob {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-14px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-14px);
+  }
 }
 
 /* Нүд — жинхэнэ зурсан нүдийг таглаж, дотор нь хөдөлдөг хүүхэн хараа.
    maynkrap.png (1024×1024) нүдний байрлалд тааруулсан хувиуд. */
 .mc-eye {
   position: absolute;
-  width: 10%; height: 12.4%;
+  width: 10%;
+  height: 12.4%;
   border-radius: 50%;
-  background: radial-gradient(circle at 42% 32%, #45301f 0%, #2a1c12 52%, #160d07 100%);
-  box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.4), inset 0 2px 3px rgba(255, 255, 255, 0.12);
+  background: radial-gradient(
+    circle at 42% 32%,
+    #45301f 0%,
+    #2a1c12 52%,
+    #160d07 100%
+  );
+  box-shadow:
+    inset 0 -2px 4px rgba(0, 0, 0, 0.4),
+    inset 0 2px 3px rgba(255, 255, 255, 0.12);
   overflow: hidden;
 }
-.mc-eye--l { left: 33.5%; top: 34.8%; }
-.mc-eye--r { left: 52.5%; top: 34.8%; }
+.mc-eye--l {
+  left: 33.5%;
+  top: 34.8%;
+}
+.mc-eye--r {
+  left: 52.5%;
+  top: 34.8%;
+}
 .mc-pupil {
-  position: absolute; left: 50%; top: 50%;
-  width: 52%; height: 52%;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 52%;
+  height: 52%;
   border-radius: 50%;
   background: #0f0a06;
-  transform: translate(-50%, -50%) translate(calc(var(--gx) * 26%), calc(var(--gy) * 22%));
+  transform: translate(-50%, -50%)
+    translate(calc(var(--gx) * 26%), calc(var(--gy) * 22%));
   transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.5, 1);
 }
 .mc-pupil::after {
   content: "";
   position: absolute;
-  top: 12%; left: 16%;
-  width: 38%; height: 32%;
+  top: 12%;
+  left: 16%;
+  width: 38%;
+  height: 32%;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.95);
 }
 @media (prefers-reduced-motion: reduce) {
-  .mc-buddy { animation: none !important; }
-  .mc-pupil { transition: none !important; }
+  .mc-buddy {
+    animation: none !important;
+  }
+  .mc-pupil {
+    transition: none !important;
+  }
 }
 
 /* Back товч */
@@ -422,87 +620,172 @@
   background: rgba(255, 255, 255, 0.75);
   color: #3a6d22;
 }
-.avatar-intro--mc .avatar-intro__back:hover { background: rgba(255, 255, 255, 0.95); }
+.avatar-intro--mc .avatar-intro__back:hover {
+  background: rgba(255, 255, 255, 0.95);
+}
 
 /* Нэр оруулах карт — хөөрхөн ногоон аяс */
 .avatar-intro--mc .avatar-intro__panel {
   background: linear-gradient(165deg, #ffffff 0%, #eefce2 100%);
   border-radius: 30px;
-  box-shadow: 0 26px 60px rgba(60, 120, 40, 0.3), inset 0 0 0 4px rgba(120, 200, 90, 0.18);
+  box-shadow:
+    0 26px 60px rgba(60, 120, 40, 0.3),
+    inset 0 0 0 4px rgba(120, 200, 90, 0.18);
   animation: avatar-intro-pop 0.5s cubic-bezier(0.22, 1.2, 0.4, 1) both;
 }
 .avatar-intro--mc .avatar-intro__title {
   background: linear-gradient(120deg, #4aa12e 0%, #2f7d1f 60%, #8a5a32 100%);
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent; color: #3a7d22;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: #3a7d22;
 }
-.avatar-intro--mc .avatar-intro__subtitle { color: #43603a; }
-.avatar-intro--mc .avatar-intro__subtitle strong { color: #4a9c2e; }
-.avatar-intro--mc .avatar-intro__listening { color: #3a8c2a; }
-.avatar-intro--mc .avatar-intro__listening-dot { background: #3a8c2a; }
-.avatar-intro--mc .avatar-intro__input { border-color: #cde9bd; background: #fcfff8; color: #243a1a; }
+.avatar-intro--mc .avatar-intro__subtitle {
+  color: #43603a;
+}
+.avatar-intro--mc .avatar-intro__subtitle strong {
+  color: #4a9c2e;
+}
+.avatar-intro--mc .avatar-intro__listening {
+  color: #3a8c2a;
+}
+.avatar-intro--mc .avatar-intro__listening-dot {
+  background: #3a8c2a;
+}
+.avatar-intro--mc .avatar-intro__input {
+  border-color: #cde9bd;
+  background: #fcfff8;
+  color: #243a1a;
+}
 .avatar-intro--mc .avatar-intro__input:focus {
-  border-color: #6cae3a; box-shadow: 0 0 0 4px rgba(108, 174, 58, 0.25);
+  border-color: #6cae3a;
+  box-shadow: 0 0 0 4px rgba(108, 174, 58, 0.25);
 }
 .avatar-intro--mc .avatar-intro__submit {
   background: linear-gradient(135deg, #7ec850 0%, #4a9c2e 100%);
   box-shadow: 0 12px 26px rgba(74, 156, 46, 0.36);
 }
-.avatar-intro--mc .avatar-intro__submit:hover { filter: brightness(1.06); transform: translateY(-2px); }
+.avatar-intro--mc .avatar-intro__submit:hover {
+  filter: brightness(1.06);
+  transform: translateY(-2px);
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .mc-deco, .mc-mob, .mc-cloud, .mc-house, .mc-main-img, .avatar-intro__mc, .avatar-intro--mc .avatar-intro__panel { animation: none !important; }
+  .mc-deco,
+  .mc-mob,
+  .mc-cloud,
+  .mc-house,
+  .mc-main-img,
+  .avatar-intro__mc,
+  .avatar-intro--mc .avatar-intro__panel {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .minecraft-steve-stage {
+    transform: translateY(-5vh);
+  }
+
+  .avatar-intro--mc .avatar-intro__panel {
+    margin-bottom: 4vh;
+  }
 }
 
 /* ════════════════════════════════════════════════════════════
    McQueen (/start) — McQueen.png + хурдны зам, Cars ертөнцийн дэвсгэр
    ════════════════════════════════════════════════════════════ */
 .avatar-intro--mcq {
-  background: linear-gradient(180deg, #3f9be0 0%, #7ec8f3 38%, #ffd9a8 72%, #ffb877 100%);
+  background: linear-gradient(
+    180deg,
+    #3f9be0 0%,
+    #7ec8f3 38%,
+    #ffd9a8 72%,
+    #ffb877 100%
+  );
 }
 
-.mcq-bg { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.mcq-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
 
 /* Нар */
 .mcq-sun {
-  position: absolute; top: 9%; right: 11%;
-  width: 66px; height: 66px; border-radius: 50%;
+  position: absolute;
+  top: 9%;
+  right: 11%;
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
   background: radial-gradient(circle at 40% 35%, #fff3b0, #ffd23a 58%, #ffb02e);
   box-shadow: 0 0 50px rgba(255, 200, 80, 0.6);
 }
 
 /* Cars лого — дээд талд хөвөгч тэмдэг */
 .mcq-logo {
-  position: absolute; top: 4%; left: 50%;
+  position: absolute;
+  top: 4%;
+  left: 50%;
   width: min(48vw, 300px);
   transform: translateX(-50%);
   filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.32));
   animation: mcq-logo-bob 4s ease-in-out infinite;
-  user-select: none; -webkit-user-drag: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 @keyframes mcq-logo-bob {
-  0%, 100% { transform: translateX(-50%) translateY(0) rotate(-1deg); }
-  50%      { transform: translateX(-50%) translateY(-8px) rotate(1deg); }
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-8px) rotate(1deg);
+  }
 }
 
 /* Шатрын даавуун туг (хурдны уралдааны эхлэл/төгсгөл) */
 .mcq-flag {
   position: absolute;
-  width: 58px; height: 40px;
-  background: repeating-conic-gradient(#1b1b1b 0 25%, #fff 0 50%) 0 0 / 16px 16px;
+  width: 58px;
+  height: 40px;
+  background: repeating-conic-gradient(#1b1b1b 0 25%, #fff 0 50%) 0 0 / 16px
+    16px;
   border-radius: 4px;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
   animation: mcq-flag-wave 2.4s ease-in-out infinite;
 }
 .mcq-flag::before {
-  content: ""; position: absolute; left: -4px; top: -10px;
-  width: 4px; height: 62px; background: #d4d4d4; border-radius: 2px;
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: -10px;
+  width: 4px;
+  height: 62px;
+  background: #d4d4d4;
+  border-radius: 2px;
 }
-.mcq-flag--l { top: 22%; left: 5%; transform: rotate(-6deg); }
-.mcq-flag--r { top: 17%; right: 6%; transform: rotate(6deg); }
+.mcq-flag--l {
+  top: 22%;
+  left: 5%;
+  transform: rotate(-6deg);
+}
+.mcq-flag--r {
+  top: 17%;
+  right: 6%;
+  transform: rotate(6deg);
+}
 @keyframes mcq-flag-wave {
-  0%, 100% { transform: skewX(0deg) rotate(-5deg); }
-  50%      { transform: skewX(-8deg) rotate(-5deg); }
+  0%,
+  100% {
+    transform: skewX(0deg) rotate(-5deg);
+  }
+  50% {
+    transform: skewX(-8deg) rotate(-5deg);
+  }
 }
 
 /* Хөвөгч аянга */
@@ -517,72 +800,121 @@
 
 /* Хурдны зам (асфальт) */
 .mcq-road {
-  position: absolute; left: 0; right: 0; bottom: 0;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
   height: 22%;
   background: linear-gradient(#3c424c 0%, #262a31 100%);
   box-shadow: inset 0 8px 16px rgba(0, 0, 0, 0.25);
 }
 .mcq-road::before {
-  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 10px;
-  background: repeating-linear-gradient(90deg, #e23b3b 0 24px, #f5f5f5 24px 48px);
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 10px;
+  background: repeating-linear-gradient(
+    90deg,
+    #e23b3b 0 24px,
+    #f5f5f5 24px 48px
+  );
 }
 /* Хөдөлгөөнтэй шар зураас — хурдны мэдрэмж */
 .mcq-lane {
-  position: absolute; left: 0; right: 0; top: 56%;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 56%;
   height: 9px;
-  background: repeating-linear-gradient(90deg, #ffd33a 0 46px, transparent 46px 88px);
+  background: repeating-linear-gradient(
+    90deg,
+    #ffd33a 0 46px,
+    transparent 46px 88px
+  );
   animation: mcq-lane-move 0.7s linear infinite;
 }
 @keyframes mcq-lane-move {
-  from { background-position: 0 0; }
-  to   { background-position: 134px 0; }
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 134px 0;
+  }
 }
 
 /* Замын конус */
 .mcq-cone {
-  position: absolute; bottom: 3.5%;
-  width: 34px; height: 46px;
+  position: absolute;
+  bottom: 3.5%;
+  width: 34px;
+  height: 46px;
   background: linear-gradient(#ff8a1f, #e85d00);
   clip-path: polygon(50% 0, 80% 100%, 20% 100%);
   filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.3));
 }
 .mcq-cone::before {
-  content: ""; position: absolute; top: 44%; left: 14%; right: 14%; height: 17%;
+  content: "";
+  position: absolute;
+  top: 44%;
+  left: 14%;
+  right: 14%;
+  height: 17%;
   background: #fff;
 }
 
 /* Хажуугийн хөөрхөн машин (Queen.png) */
 .mcq-buddy-car {
-  position: absolute; bottom: 4%; right: 4%;
+  position: absolute;
+  bottom: 4%;
+  right: 4%;
   width: min(26vw, 196px);
   filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.35));
   animation: mcq-drive 4.5s ease-in-out infinite;
-  user-select: none; -webkit-user-drag: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 @keyframes mcq-drive {
-  0%, 100% { transform: translateX(0) translateY(0); }
-  50%      { transform: translateX(-14px) translateY(-3px); }
+  0%,
+  100% {
+    transform: translateX(0) translateY(0);
+  }
+  50% {
+    transform: translateX(-14px) translateY(-3px);
+  }
 }
 
 /* Үндсэн McQueen аватар — голд хөвүүлнэ (1513×787, өргөн) */
 .avatar-intro__mcq-wrap {
   position: absolute;
-  left: 50%; top: 44%;
+  left: 50%;
+  top: 44%;
   transform: translate(-50%, -50%);
   width: min(80vw, 640px);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 1; pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  pointer-events: none;
 }
 .mcq-main-img {
-  width: 100%; height: auto;
+  width: 100%;
+  height: auto;
   object-fit: contain;
   filter: drop-shadow(0 20px 26px rgba(150, 25, 12, 0.42));
   animation: mcq-bob 4.5s ease-in-out infinite;
-  user-select: none; -webkit-user-drag: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 @keyframes mcq-bob {
-  0%, 100% { transform: translateY(0) rotate(-1deg); }
-  50%      { transform: translateY(-12px) rotate(1deg); }
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(1deg);
+  }
 }
 
 /* Back товч */
@@ -591,34 +923,64 @@
   background: rgba(255, 255, 255, 0.78);
   color: #c0271a;
 }
-.avatar-intro--mcq .avatar-intro__back:hover { background: rgba(255, 255, 255, 0.96); }
+.avatar-intro--mcq .avatar-intro__back:hover {
+  background: rgba(255, 255, 255, 0.96);
+}
 
 /* Нэр оруулах карт — улаан уралдааны аяс */
 .avatar-intro--mcq .avatar-intro__panel {
   background: linear-gradient(165deg, #ffffff 0%, #fff0ed 100%);
   border-radius: 30px;
-  box-shadow: 0 26px 60px rgba(180, 30, 20, 0.32), inset 0 0 0 4px rgba(255, 90, 70, 0.18);
+  box-shadow:
+    0 26px 60px rgba(180, 30, 20, 0.32),
+    inset 0 0 0 4px rgba(255, 90, 70, 0.18);
   animation: avatar-intro-pop 0.5s cubic-bezier(0.22, 1.2, 0.4, 1) both;
 }
 .avatar-intro--mcq .avatar-intro__title {
   background: linear-gradient(120deg, #ff4133 0%, #e01d14 55%, #ffb02e 100%);
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent; color: #e01d14;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: #e01d14;
 }
-.avatar-intro--mcq .avatar-intro__subtitle { color: #5a3530; }
-.avatar-intro--mcq .avatar-intro__subtitle strong { color: #e0281a; }
-.avatar-intro--mcq .avatar-intro__listening { color: #d62b1a; }
-.avatar-intro--mcq .avatar-intro__listening-dot { background: #d62b1a; }
-.avatar-intro--mcq .avatar-intro__input { border-color: #ffd3cc; background: #fffaf9; color: #3a1f1b; }
+.avatar-intro--mcq .avatar-intro__subtitle {
+  color: #5a3530;
+}
+.avatar-intro--mcq .avatar-intro__subtitle strong {
+  color: #e0281a;
+}
+.avatar-intro--mcq .avatar-intro__listening {
+  color: #d62b1a;
+}
+.avatar-intro--mcq .avatar-intro__listening-dot {
+  background: #d62b1a;
+}
+.avatar-intro--mcq .avatar-intro__input {
+  border-color: #ffd3cc;
+  background: #fffaf9;
+  color: #3a1f1b;
+}
 .avatar-intro--mcq .avatar-intro__input:focus {
-  border-color: #ff5a45; box-shadow: 0 0 0 4px rgba(255, 90, 69, 0.25);
+  border-color: #ff5a45;
+  box-shadow: 0 0 0 4px rgba(255, 90, 69, 0.25);
 }
 .avatar-intro--mcq .avatar-intro__submit {
   background: linear-gradient(135deg, #ff5a45 0%, #e01d14 100%);
   box-shadow: 0 12px 26px rgba(210, 40, 28, 0.38);
 }
-.avatar-intro--mcq .avatar-intro__submit:hover { filter: brightness(1.06); transform: translateY(-2px); }
+.avatar-intro--mcq .avatar-intro__submit:hover {
+  filter: brightness(1.06);
+  transform: translateY(-2px);
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .mcq-logo, .mcq-flag, .mcq-bolt, .mcq-lane, .mcq-buddy-car, .mcq-main-img, .avatar-intro--mcq .avatar-intro__panel { animation: none !important; }
+  .mcq-logo,
+  .mcq-flag,
+  .mcq-bolt,
+  .mcq-lane,
+  .mcq-buddy-car,
+  .mcq-main-img,
+  .avatar-intro--mcq .avatar-intro__panel {
+    animation: none !important;
+  }
 }
