@@ -93,7 +93,6 @@ function useSteveMaterials() {
         emissive: "#1bbab6",
         emissiveIntensity: 0.12,
       }),
-      // Шинээр нэмэгдсэн материалууд
       flowerRed: new THREE.MeshStandardMaterial({
         color: "#b92e2e",
         roughness: 0.85,
@@ -261,12 +260,24 @@ function SteveCharacter({ reducedMotion = false, mood = "speaking" }) {
 
     if (rightArmRef.current) {
       if (mood === "listening") {
-        rightArmRef.current.rotation.z = -0.15 + Math.sin(t * 1.5) * 0.05;
-        rightArmRef.current.rotation.x = Math.sin(t * 1.2) * 0.05;
+        rightArmRef.current.rotation.z = 0;
+        rightArmRef.current.rotation.x = Math.sin(t * 1.5) * 0.08;
       } else {
-        rightArmRef.current.rotation.z =
-          -Math.PI / 2.8 + Math.sin(t * 5.5) * 0.22;
-        rightArmRef.current.rotation.x = 0.15 + Math.cos(t * 5.5) * 0.1;
+        // Хурдыг 4.5 болгож ихэсгэн, далайцыг 0.25 болгож илүү тод, огцом урагш хойш хөдөлгөв
+        rightArmRef.current.rotation.z = -0.12;
+        rightArmRef.current.rotation.x =
+          -Math.PI / 4.5 + Math.sin(t * 4.5) * 0.25;
+      }
+    }
+    if (leftArmRef.current) {
+      if (mood === "listening") {
+        leftArmRef.current.rotation.z = 0;
+        leftArmRef.current.rotation.x = -Math.sin(t * 1.5) * 0.08;
+      } else {
+        // Баруун гартай яг эсрэг фазаар (Math.PI зөрүүтэй) маш хурдтай урагш хойш зөрнө
+        leftArmRef.current.rotation.z = 0.12;
+        leftArmRef.current.rotation.x =
+          -Math.PI / 4.5 + Math.sin(t * 4.5 + Math.PI) * 0.25;
       }
     }
 
@@ -521,6 +532,78 @@ function MiniTree({ position }) {
   );
 }
 
+// ШИНЭ: Том навчит царс мод (Oak Tree)
+function BigOakTree({ position, scale = [1, 1, 1] }) {
+  const materials = useSteveMaterials();
+  return (
+    <group position={position} scale={scale}>
+      <BoxPart
+        args={[0.45, 2.2, 0.45]}
+        position={[0, 1.1, 0]}
+        material={materials.wood}
+        radius={0.02}
+      />
+      <BoxPart
+        args={[1.8, 1.0, 1.8]}
+        position={[0, 2.4, 0]}
+        material={materials.leaf}
+        radius={0.04}
+      />
+      <BoxPart
+        args={[1.4, 0.8, 1.4]}
+        position={[0, 3.1, 0]}
+        material={materials.leaf}
+        radius={0.04}
+      />
+      <BoxPart
+        args={[0.9, 0.6, 0.9]}
+        position={[0, 3.6, 0]}
+        material={materials.leaf}
+        radius={0.03}
+      />
+    </group>
+  );
+}
+
+// ШИНЭ: Өндөр нарс мод (Spruce Tree)
+function TallSpruceTree({ position, scale = [1, 1, 1] }) {
+  const materials = useSteveMaterials();
+  return (
+    <group position={position} scale={scale}>
+      <BoxPart
+        args={[0.35, 3.2, 0.35]}
+        position={[0, 1.6, 0]}
+        material={materials.wood}
+        radius={0.02}
+      />
+      <BoxPart
+        args={[1.6, 0.6, 1.6]}
+        position={[0, 1.8, 0]}
+        material={materials.leaf}
+        radius={0.04}
+      />
+      <BoxPart
+        args={[1.2, 0.6, 1.2]}
+        position={[0, 2.4, 0]}
+        material={materials.leaf}
+        radius={0.03}
+      />
+      <BoxPart
+        args={[0.8, 0.6, 0.8]}
+        position={[0, 3.0, 0]}
+        material={materials.leaf}
+        radius={0.03}
+      />
+      <BoxPart
+        args={[0.4, 0.5, 0.4]}
+        position={[0, 3.5, 0]}
+        material={materials.leaf}
+        radius={0.02}
+      />
+    </group>
+  );
+}
+
 function DiamondOre({ position }) {
   const materials = useSteveMaterials();
   return (
@@ -586,7 +669,6 @@ function CloudPuff({ position, scale = 1 }) {
   );
 }
 
-// ШИНЭ: Куб хэлбэрийн Цэцэг (Улаан / Шар)
 function Flower({ position, type = "red" }) {
   const materials = useSteveMaterials();
   const petalMaterial =
@@ -594,14 +676,12 @@ function Flower({ position, type = "red" }) {
 
   return (
     <group position={position}>
-      {/* Иш */}
       <BoxPart
         args={[0.05, 0.3, 0.05]}
         position={[0, 0.15, 0]}
         material={materials.flowerStem}
         radius={0.005}
       />
-      {/* Дэлбээ */}
       <BoxPart
         args={[0.15, 0.12, 0.15]}
         position={[0, 0.34, 0]}
@@ -618,7 +698,6 @@ function Flower({ position, type = "red" }) {
   );
 }
 
-// ШИНЭ: Minecraft деталь өвс
 function GrassDetail({ position, scale = [1, 1, 1] }) {
   const materials = useSteveMaterials();
   return (
@@ -639,26 +718,22 @@ function GrassDetail({ position, scale = [1, 1, 1] }) {
   );
 }
 
-// ШИНЭ: Модон хашаа (Fence)
 function WoodFence({ position, rotation = [0, 0, 0] }) {
   const materials = useSteveMaterials();
   return (
     <group position={position} rotation={rotation}>
-      {/* Зүүн Багана */}
       <BoxPart
         args={[0.12, 0.85, 0.12]}
         position={[-0.4, 0.425, 0]}
         material={materials.fenceWood}
         radius={0.01}
       />
-      {/* Баруун Багана */}
       <BoxPart
         args={[0.12, 0.85, 0.12]}
         position={[0.4, 0.425, 0]}
         material={materials.fenceWood}
         radius={0.01}
       />
-      {/* Хөндлөн модод */}
       <BoxPart
         args={[0.76, 0.08, 0.06]}
         position={[0, 0.62, 0]}
@@ -711,7 +786,6 @@ function MinecraftWorld({ reducedMotion, mood }) {
         float={!reducedMotion}
       />
 
-      {/* Хөвж буй зүлгэн блок дээр улаан цэцэг суулгах */}
       <group position={[3.1, 1.1, -1.4]}>
         <GrassBlock
           position={[0, 0, 0]}
@@ -728,27 +802,29 @@ function MinecraftWorld({ reducedMotion, mood }) {
       />
 
       <DiamondOre position={[-2.65, -0.85, 1.5]} />
-      <MiniTree position={[3.35, -0.95, -0.7]} />
       <CloudPuff position={[-2.55, 2.55, -2.2]} scale={0.78} />
       <CloudPuff position={[2.15, 2.78, -2.8]} scale={0.92} />
 
-      {/* --- Үндсэн зүлгэн дээрх шинэ детал хэсгүүд --- */}
-      {/* Модон хашаанууд */}
+      {/* --- МОДНУУД --- */}
+      <MiniTree position={[3.35, -1.55, -0.7]} />
+      <BigOakTree position={[-3.8, -1.55, -2.5]} scale={[1.2, 1.2, 1.2]} />
+      <TallSpruceTree position={[3.6, -1.55, -3.0]} scale={[1.1, 1.3, 1.1]} />
+      <BigOakTree position={[-1.2, -1.55, -3.5]} scale={[0.8, 0.8, 0.8]} />
+
+      {/* --- ДЕТАЛ ХЭСГҮҮД --- */}
       <WoodFence position={[-1.8, -1.55, -1]} rotation={[0, 0.4, 0]} />
       <WoodFence position={[1.6, -1.55, 1.3]} rotation={[0, -0.3, 0]} />
 
-      {/* Газар дээрх цэцэгс */}
       <Flower position={[-0.8, -1.55, 1.2]} type="yellow" />
       <Flower position={[1.1, -1.55, 0.7]} type="red" />
       <Flower position={[-2.3, -1.55, 0.4]} type="red" />
 
-      {/* Жижиг деталь өвснүүд */}
       <GrassDetail position={[-0.4, -1.55, 1.5]} scale={[1.2, 1.4, 1.2]} />
       <GrassDetail position={[0.7, -1.55, 1.8]} />
       <GrassDetail position={[-1.4, -1.55, -0.4]} />
       <GrassDetail position={[2.1, -1.55, -0.1]} scale={[1, 1.2, 1]} />
 
-      {/* Үндсэн Дэлхийн Гадаргуу */}
+      {/* Үндсэн Гадаргуу */}
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, -1.55, 0]}
