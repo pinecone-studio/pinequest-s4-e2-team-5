@@ -256,7 +256,7 @@ export function AvatarIntro({
         onSubmit={handleSubmit}
         onFocusCapture={playIntro}
       >
-        <h1 className="avatar-intro__title">Сайн уу! 👋</h1>
+        <h1 className="avatar-intro__title">Сайн уу!</h1>
         <p className="avatar-intro__subtitle">
           Намайг <strong>{mascotName}</strong> гэдэг. Чиний нэр хэн бэ?
         </p>
