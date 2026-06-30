@@ -27,7 +27,6 @@ export function AvatarIntro({
   const isRobot = avatar === "robot";
   const isMinecraft = avatar === "minecraft";
   const isMcqueen = avatar === "mcqueen";
-  
 
   const introPlayedRef = useRef(false);
   const introPlayingRef = useRef(false);
@@ -35,14 +34,11 @@ export function AvatarIntro({
   const audioUrlRef = useRef("");
   const continuedRef = useRef(false);
 
+  // ЗАССАН: Конфликт болон синтаксын алдааг арилгаж, тернари операторыг цэгцэлсэн
   const mascotName = isRobot
     ? "Joy"
-    : avatar === "minecraft"
- 157-minecraft-avatar
+    : isMinecraft
       ? "Стив"
-
-      ? "Minecraft"
-main
       : avatar === "mcqueen"
         ? "McQueen"
         : avatar === "astronaut"
@@ -177,7 +173,6 @@ main
             </div>
           </>
         ) : isMinecraft ? (
-          /* ЗАССАН: Стив рүү mood пропсыг дамжуулдаг болгов */
           <MinecraftSteveScene mood={listening ? "listening" : "speaking"} />
         ) : isMcqueen ? (
           <>
@@ -284,7 +279,7 @@ main
           autoFocus
         />
         <button type="submit" className="avatar-intro__submit">
-          Үргэлжлүүлэх →
+          Үгрелжлүүлэх →
         </button>
       </form>
     </div>
