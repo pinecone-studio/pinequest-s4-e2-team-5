@@ -15,6 +15,7 @@ function normalizeAvatar(avatar) {
   if (avatar === "robot" || avatar === "hero") return "robot";
   if (avatar === "minecraft") return "minecraft";
   if (avatar === "mcqueen") return "mcqueen";
+  if (avatar === "barbie") return "barbie";
   return "sun-buddy";
 }
 
@@ -97,7 +98,7 @@ function App() {
     );
   }
 
-  // Үндсэн landing хуудас (өмнө нь Next.js project байсныг энд оруулсан).
+
   return <Landing />;
 }
 

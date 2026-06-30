@@ -37,6 +37,7 @@ export function AvatarIntro({ onContinue, onBack, avatar = DEFAULT_MASCOT.id }) 
   const isRobot = avatar === "robot";
   const isMinecraft = avatar === "minecraft";
   const isMcqueen = avatar === "mcqueen";
+  
 
   const introPlayedRef = useRef(false);
   const introPlayingRef = useRef(false);
