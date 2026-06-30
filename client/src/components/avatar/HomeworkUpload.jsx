@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { API_BASE } from '../../lib/config.js'
+import { normalizeHomeworkProblems } from './problemNormalizer.js'
 
 // Vision API нь зөвхөн JPEG/PNG/WEBP дэмждэг (HEIC ❌). Утасны зураг ч хэт хүнд.
 // Тиймээс илгээхээс өмнө canvas дээр зурж, багасгаад JPEG болгож хувиргана.
@@ -32,6 +33,13 @@ async function normalizeImage(dataUrl) {
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+
+function buildContext(problems, fallback = '') {
+  if (!problems.length) return fallback
+  return problems
+    .map((problem) => `${problem.index}. ${problem.raw ?? problem.promptMn ?? ''}`)
+    .join('\n')
+}
 
 // Render free tier унтсан байвал эхний хүсэлт сэрээх зуур алдаа өгдөг тул дахин оролдоно.
 async function analyzeWithRetry(base64, attempts = 3) {
@@ -89,7 +97,8 @@ export function HomeworkUpload({ onHomeworkLoaded, onAnalyzingChange }) {
         // HEIC/том зургийг дэмжигдэх JPEG болгож багасгана.
         const base64 = await normalizeImage(dataUrl)
         const { context, problems = [] } = await analyzeWithRetry(base64)
-        onHomeworkLoaded(context, problems)
+        const normalizedProblems = normalizeHomeworkProblems(problems)
+        onHomeworkLoaded(buildContext(normalizedProblems, context), normalizedProblems)
         setDone(true)
       } catch (err) {
         // Серверийн жинхэнэ алдааг харуулна (зүгээр л "алдаа" биш).

@@ -5,7 +5,7 @@ import { getPageFromPath } from "./navigation.js";
 import { AvatarSession } from "./components/avatar/AvatarSession.jsx";
 import { AvatarIntro } from "./components/avatar/AvatarIntro.jsx";
 import { WarpTransition } from "./components/avatar/WarpTransition.jsx";
-import { MathLesson } from "./components/lesson/MathLesson.jsx";
+import { MathLesson } from "./components/lesson/components/MathLesson.jsx";
 import { TypingLesson } from "./components/lesson/TypingLesson.jsx";
 import { BigAddLesson } from "./components/lesson/BigAddLesson.jsx";
 import Landing from "./components/Landing.jsx";

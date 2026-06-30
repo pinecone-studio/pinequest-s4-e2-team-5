@@ -1,4 +1,5 @@
 import { CreeperFace, McQueenCar } from './AvatarPicker.tsx'
+import { SplineScene } from './SplineScene.jsx'
 
 export function KidMascotScene({ className = '', mood = 'ready' }) {
   return (
@@ -48,6 +49,10 @@ export function KidMascotScene({ className = '', mood = 'ready' }) {
 }
 
 export function MascotScene({ avatar = 'sun-buddy', className = '', mood = 'ready' }) {
+  if (avatar === 'astronaut') {
+    return <SplineScene className={className} />
+  }
+
   if (avatar === 'robot') {
     // robot.png устсан тул Жойг joy.png зургаар үзүүлнэ (хөдөлдөг нүдтэй
     // JoyRobot нь robot.png-д тулгуурладаг байсан тул түр идэвхгүй).
@@ -55,6 +60,18 @@ export function MascotScene({ avatar = 'sun-buddy', className = '', mood = 'read
       <img
         src="/joy.png"
         alt="Жой робот"
+        draggable="false"
+        className={className}
+        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+      />
+    )
+  }
+
+  if (avatar === 'barbie') {
+    return (
+      <img
+        src="/barbie1.png"
+        alt="Barbie"
         draggable="false"
         className={className}
         style={{ width: '100%', height: '100%', objectFit: 'contain' }}
