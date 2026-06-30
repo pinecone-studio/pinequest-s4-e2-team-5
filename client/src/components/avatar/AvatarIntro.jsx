@@ -44,11 +44,11 @@ export function AvatarIntro({ onContinue, onBack, avatar = DEFAULT_MASCOT.id }) 
   const audioUrlRef = useRef("");
   const continuedRef = useRef(false);
   const mascotName = isRobot
-    ? "Жой"
+    ? "Joy"
     : avatar === "minecraft"
-      ? "Крийпер"
+      ? "Minecraft"
       : avatar === "mcqueen"
-        ? "Маккуин"
+        ? "McQueen"
         : avatar === "astronaut"
           ? "Сансрын нисгэгч"
           : avatar === "barbie"

@@ -102,7 +102,7 @@ export function HomeworkUpload({ onHomeworkLoaded, onAnalyzingChange }) {
         setDone(true)
       } catch (err) {
         // Серверийн жинхэнэ алдааг харуулна (зүгээр л "алдаа" биш).
-        setError(`Зурагыг шинжлэхэд алдаа гарлаа: ${err.message}`)
+        setError(`Зургийг шинжлэхэд алдаа гарлаа: ${err.message}`)
         onHomeworkLoaded('', [])
       } finally {
         setAnalyzingState(false)
