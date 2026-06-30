@@ -93,6 +93,23 @@ function useSteveMaterials() {
         emissive: "#1bbab6",
         emissiveIntensity: 0.12,
       }),
+      // Шинээр нэмэгдсэн материалууд
+      flowerRed: new THREE.MeshStandardMaterial({
+        color: "#b92e2e",
+        roughness: 0.85,
+      }),
+      flowerYellow: new THREE.MeshStandardMaterial({
+        color: "#edd039",
+        roughness: 0.85,
+      }),
+      flowerStem: new THREE.MeshStandardMaterial({
+        color: "#4d8a2b",
+        roughness: 0.9,
+      }),
+      fenceWood: new THREE.MeshStandardMaterial({
+        color: "#5a3a22",
+        roughness: 0.85,
+      }),
     }),
     [],
   );
@@ -167,7 +184,7 @@ function SteveCharacter({ reducedMotion = false, mood = "speaking" }) {
     tl.to(
       rootRef.current.position,
       {
-        y: -0.6,
+        y: -1.05,
         z: 0,
         duration: 1.5,
         ease: "power4.out",
@@ -210,9 +227,9 @@ function SteveCharacter({ reducedMotion = false, mood = "speaking" }) {
       tl.kill();
     };
   }, [reducedMotion]);
+
   useFrame(({ clock, pointer }) => {
     if (!introFinishedRef.current) return;
-
     if (reducedMotion) return;
 
     const t = clock.getElapsedTime();
@@ -569,6 +586,95 @@ function CloudPuff({ position, scale = 1 }) {
   );
 }
 
+// ШИНЭ: Куб хэлбэрийн Цэцэг (Улаан / Шар)
+function Flower({ position, type = "red" }) {
+  const materials = useSteveMaterials();
+  const petalMaterial =
+    type === "red" ? materials.flowerRed : materials.flowerYellow;
+
+  return (
+    <group position={position}>
+      {/* Иш */}
+      <BoxPart
+        args={[0.05, 0.3, 0.05]}
+        position={[0, 0.15, 0]}
+        material={materials.flowerStem}
+        radius={0.005}
+      />
+      {/* Дэлбээ */}
+      <BoxPart
+        args={[0.15, 0.12, 0.15]}
+        position={[0, 0.34, 0]}
+        material={petalMaterial}
+        radius={0.01}
+      />
+      <BoxPart
+        args={[0.22, 0.06, 0.06]}
+        position={[0, 0.32, 0]}
+        material={petalMaterial}
+        radius={0.005}
+      />
+    </group>
+  );
+}
+
+// ШИНЭ: Minecraft деталь өвс
+function GrassDetail({ position, scale = [1, 1, 1] }) {
+  const materials = useSteveMaterials();
+  return (
+    <group position={position} scale={scale}>
+      <BoxPart
+        args={[0.04, 0.28, 0.08]}
+        position={[0, 0.14, 0]}
+        material={materials.grass}
+        radius={0.005}
+      />
+      <BoxPart
+        args={[0.05, 0.18, 0.04]}
+        position={[0.03, 0.09, 0.03]}
+        material={materials.grass}
+        radius={0.005}
+      />
+    </group>
+  );
+}
+
+// ШИНЭ: Модон хашаа (Fence)
+function WoodFence({ position, rotation = [0, 0, 0] }) {
+  const materials = useSteveMaterials();
+  return (
+    <group position={position} rotation={rotation}>
+      {/* Зүүн Багана */}
+      <BoxPart
+        args={[0.12, 0.85, 0.12]}
+        position={[-0.4, 0.425, 0]}
+        material={materials.fenceWood}
+        radius={0.01}
+      />
+      {/* Баруун Багана */}
+      <BoxPart
+        args={[0.12, 0.85, 0.12]}
+        position={[0.4, 0.425, 0]}
+        material={materials.fenceWood}
+        radius={0.01}
+      />
+      {/* Хөндлөн модод */}
+      <BoxPart
+        args={[0.76, 0.08, 0.06]}
+        position={[0, 0.62, 0]}
+        material={materials.fenceWood}
+        radius={0.005}
+      />
+      <BoxPart
+        args={[0.76, 0.08, 0.06]}
+        position={[0, 0.32, 0]}
+        material={materials.fenceWood}
+        radius={0.005}
+      />
+    </group>
+  );
+}
+
 function MinecraftWorld({ reducedMotion, mood }) {
   const { size } = useThree();
   const narrow = size.width < 720;
@@ -598,26 +704,51 @@ function MinecraftWorld({ reducedMotion, mood }) {
         <SteveCharacter reducedMotion={reducedMotion} mood={mood} />
       </group>
 
+      {/* Дэлхийн Блокууд */}
       <GrassBlock
         position={[-3.25, 0.15, -1.25]}
         scale={[0.62, 0.62, 0.62]}
         float={!reducedMotion}
       />
-      <GrassBlock
-        position={[3.1, 1.1, -1.4]}
-        scale={[0.54, 0.54, 0.54]}
-        float={!reducedMotion}
-      />
+
+      {/* Хөвж буй зүлгэн блок дээр улаан цэцэг суулгах */}
+      <group position={[3.1, 1.1, -1.4]}>
+        <GrassBlock
+          position={[0, 0, 0]}
+          scale={[0.54, 0.54, 0.54]}
+          float={!reducedMotion}
+        />
+        <Flower position={[0, 0.15, 0]} type="red" />
+      </group>
+
       <GrassBlock
         position={[2.9, -0.76, 1.05]}
         scale={[0.5, 0.5, 0.5]}
         float={!reducedMotion}
       />
+
       <DiamondOre position={[-2.65, -0.85, 1.5]} />
       <MiniTree position={[3.35, -0.95, -0.7]} />
       <CloudPuff position={[-2.55, 2.55, -2.2]} scale={0.78} />
       <CloudPuff position={[2.15, 2.78, -2.8]} scale={0.92} />
 
+      {/* --- Үндсэн зүлгэн дээрх шинэ детал хэсгүүд --- */}
+      {/* Модон хашаанууд */}
+      <WoodFence position={[-1.8, -1.55, -1]} rotation={[0, 0.4, 0]} />
+      <WoodFence position={[1.6, -1.55, 1.3]} rotation={[0, -0.3, 0]} />
+
+      {/* Газар дээрх цэцэгс */}
+      <Flower position={[-0.8, -1.55, 1.2]} type="yellow" />
+      <Flower position={[1.1, -1.55, 0.7]} type="red" />
+      <Flower position={[-2.3, -1.55, 0.4]} type="red" />
+
+      {/* Жижиг деталь өвснүүд */}
+      <GrassDetail position={[-0.4, -1.55, 1.5]} scale={[1.2, 1.4, 1.2]} />
+      <GrassDetail position={[0.7, -1.55, 1.8]} />
+      <GrassDetail position={[-1.4, -1.55, -0.4]} />
+      <GrassDetail position={[2.1, -1.55, -0.1]} scale={[1, 1.2, 1]} />
+
+      {/* Үндсэн Дэлхийн Гадаргуу */}
       <mesh
         rotation={[-Math.PI / 2, 0, 0]}
         position={[0, -1.55, 0]}
@@ -626,14 +757,6 @@ function MinecraftWorld({ reducedMotion, mood }) {
         <planeGeometry args={[200, 200]} />
         <meshStandardMaterial color="#6DBB45" roughness={1} />
       </mesh>
-
-      {/* <ContactShadows
-        position={[0, -1.28, 0]}
-        opacity={0.45}
-        scale={8.5}
-        blur={2.7}
-        far={4.2}
-      /> */}
 
       {!reducedMotion && (
         <Sparkles
