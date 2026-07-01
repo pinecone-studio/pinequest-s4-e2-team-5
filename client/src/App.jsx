@@ -42,6 +42,9 @@ function App() {
   const navigate = (path, state = {}) => {
     stopAllAudio();
     window.history.pushState(state, "", path);
+    // next/navigation шимийн usePathname-г синк байлгана. Үгүй бол PageTransition-ий
+    // overlay буцаж хаагдахгүй үлдэж, дараагийн шилжилтэд дэлгэц харанхуйлж гацна.
+    window.dispatchEvent(new Event("pushstate-internal"));
     setPage(getPageFromPath(path));
   };
 
