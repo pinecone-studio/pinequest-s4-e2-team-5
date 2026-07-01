@@ -401,24 +401,28 @@ function trimBubble(text) {
   return first.length > 60 ? first.slice(0, 57) + '…' : first
 }
 
-function SpeechBubble({ text, isThinking }) {
+// Typewriter эффектийг тусад нь салгав: shortText солигдоход key-ээр дахин mount
+// хийгдэж, дотоод state автоматаар reset болно (effect дотор синхрон setState хэрэггүй).
+function Typewriter({ text }) {
   const [displayed, setDisplayed] = useState('')
-  const shortText = trimBubble(text)
   const idxRef = useRef(0)
-  const timerRef = useRef(null)
 
   useEffect(() => {
-    if (!shortText) return
-    setDisplayed('')
+    if (!text) return
     idxRef.current = 0
-    clearInterval(timerRef.current)
-    timerRef.current = setInterval(() => {
+    const timer = setInterval(() => {
       idxRef.current++
-      setDisplayed(shortText.slice(0, idxRef.current))
-      if (idxRef.current >= shortText.length) clearInterval(timerRef.current)
+      setDisplayed(text.slice(0, idxRef.current))
+      if (idxRef.current >= text.length) clearInterval(timer)
     }, 25)
-    return () => clearInterval(timerRef.current)
-  }, [shortText])
+    return () => clearInterval(timer)
+  }, [text])
+
+  return <p className="sb-text">{displayed}</p>
+}
+
+function SpeechBubble({ text, isThinking }) {
+  const shortText = trimBubble(text)
 
   if (!text && !isThinking) return null
 
@@ -428,7 +432,7 @@ function SpeechBubble({ text, isThinking }) {
         {isThinking && !shortText ? (
           <span className="sb-dots"><span /><span /><span /></span>
         ) : (
-          <p className="sb-text">{displayed}</p>
+          <Typewriter key={shortText} text={shortText} />
         )}
       </div>
     </div>
@@ -465,10 +469,16 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
     return fb ? normalizeHomeworkProblems([fb]) : []
   }, [problems, homeworkContext])
 
-  // Шинэ даалгавар орж ирэхэд эхний бодлогоос эхэлнэ
-  useEffect(() => {
+  // Шинэ даалгавар орж ирэхэд эхний бодлогоос эхэлнэ.
+  // State-ийг render үед өмнөх утгатай харьцуулж reset хийнэ (effect дотор setState хийхээс зайлсхийв).
+  const [prevProblems, setPrevProblems] = useState(structuredProblems)
+  if (prevProblems !== structuredProblems) {
+    setPrevProblems(structuredProblems)
     setSelectedIndex(0)
     setShowListView(false)
+  }
+  // Ref-үүдийг зөвхөн effect дотор reset хийнэ (render үед ref өөрчилж болохгүй).
+  useEffect(() => {
     askedRef.current = false
     lastExplainedRef.current = ''
   }, [structuredProblems])
