@@ -136,15 +136,8 @@ export function StudentCamera({ childId = "хүүхэд", sessionCode }) {
       if (sessionCode && navigator.mediaDevices?.getDisplayMedia) {
         try {
           const screenStream = await navigator.mediaDevices.getDisplayMedia({
-            video: { 
-              displaySurface: "monitor", // Эсвэл "window" / "browser"
-              frameRate: 5, 
-              cursor: "always" 
-            },
+            video: { displaySurface: "window", frameRate: 5, cursor: "always" },
             audio: false,
-            // Гогцоо үүсэхээс сэргийлэх нэмэлт тохиргоонууд:
-            selfBrowserSurface: "exclude", // Одоогийн байгаа энэ таб-ыг жагсаалтаас хасна
-            preferCurrentTab: false       // Одоогийн таб-ыг хуваалцахыг санал болгохгүй
           });
           
           screenStreamRef.current = screenStream;
