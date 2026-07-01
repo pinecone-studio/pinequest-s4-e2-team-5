@@ -10,6 +10,7 @@ export function useTutor({ nickname, homeworkContext, interpretCommand }) {
   const [isThinking, setIsThinking] = useState(false);
   const [error, setError] = useState(null);
   const [lastText, setLastText] = useState("");
+  const [lastChildText, setLastChildText] = useState("");
 
   const messagesRef = useRef([]);
   const nicknameRef = useRef(nickname);
@@ -195,6 +196,7 @@ export function useTutor({ nickname, homeworkContext, interpretCommand }) {
         const { text } = await res.json();
         setIsThinking(false);
         const cleaned = text?.trim();
+        if (cleaned) setLastChildText(cleaned);
         // Эхлээд команд (ж: "хоёр дахь бодлого") эсэхийг шалгана. Хэрэв команд
         // боловсруулагдвал TutorAvatar тухайн бодлогыг өөрөө тайлбарлаж эхэлнэ
         // (ярих/busy-г өөрөө удирдана), тиймээс энд chat руу дамжуулахгүй.
@@ -342,6 +344,7 @@ export function useTutor({ nickname, homeworkContext, interpretCommand }) {
     isThinking,
     error,
     lastText,
+    lastChildText,
     greet,
     announceHomework,
     explainProblem,

@@ -416,7 +416,7 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
 
   const {
     isSpeaking, isListening, isThinking, error,
-    lastText, greet, chat, explainProblem, speak,
+    lastText, lastChildText, greet, chat, explainProblem, speak,
     startAlwaysListen, stopAlwaysListen, stopCurrentAudio,
   } = useTutor({ nickname, homeworkContext, interpretCommand })
 
@@ -615,6 +615,12 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
           {isListening && <span className="tutor-listen-dot" />}
           <span className={`tutor-status${statusCls ? ` ${statusCls}` : ''}`}>{statusText}</span>
         </div>
+        {lastChildText && (
+          <div className="ta-child-speech">
+            <span className="ta-child-speech-label">Чи:</span>
+            <span className="ta-child-speech-text">{lastChildText}</span>
+          </div>
+        )}
         {error && <p className="tutor-error">{error}</p>}
       </div>
     </div>
