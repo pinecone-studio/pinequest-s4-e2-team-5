@@ -435,6 +435,25 @@ function SpeechBubble({ text, isThinking }) {
   )
 }
 
+/* ── Chat log ── */
+function ChatLog({ messages }) {
+  const bottomRef = useRef(null)
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+  if (!messages.length) return null
+  return (
+    <div className="ta-chat-log">
+      {messages.map((msg, i) => (
+        <div key={i} className={`ta-chat-msg ta-chat-msg--${msg.role}`}>
+          <span className="ta-chat-text">{msg.text}</span>
+        </div>
+      ))}
+      <div ref={bottomRef} />
+    </div>
+  )
+}
+
 /* ── Main TutorAvatar ── */
 export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzing = false, avatar = 'robot' }) {
   // interpretCommand-ийг тогтвортой реф-ээр useTutor руу дамжуулна (доор шинэчилнэ).
@@ -443,9 +462,23 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
 
   const {
     isSpeaking, isListening, isThinking, error,
-    lastText, greet, chat, explainProblem, speak,
+    lastText, chatMessages, greet, chat, explainProblem, speak,
     startAlwaysListen, stopAlwaysListen, stopCurrentAudio,
   } = useTutor({ nickname, homeworkContext, interpretCommand })
+
+  const isJoy  = avatar === 'robot'
+  const isMc   = avatar === 'minecraft'
+  const isMcq  = avatar === 'mcqueen'
+  const isAstro = avatar === 'astronaut'
+
+  const [inputText, setInputText] = useState('')
+
+  const handleSendText = useCallback(() => {
+    const text = inputText.trim()
+    if (!text || isThinking) return
+    setInputText('')
+    chat(text)
+  }, [inputText, isThinking, chat])
 
   const greetedRef = useRef(false)
   const askedRef = useRef(false)
@@ -581,10 +614,6 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
 
   // Бодлого бүрд background-ийн өнгө аяс өөр болгоно (5 палитр эргэлдэнэ)
   const themeIndex = ((effectiveIndex ?? 0) % 5 + 5) % 5
-  const isJoy = avatar === 'robot'
-  const isMc = avatar === 'minecraft'
-  const isMcq = avatar === 'mcqueen'
-  const isAstro = avatar === 'astronaut'
 
   return (
     <div
@@ -661,6 +690,25 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
         <div className="ta-status-row">
           {isListening && <span className="tutor-listen-dot" />}
           <span className={`tutor-status${statusCls ? ` ${statusCls}` : ''}`}>{statusText}</span>
+        </div>
+        <ChatLog messages={chatMessages} />
+        <div className="ta-text-input-row">
+          <input
+            className="ta-text-input"
+            type="text"
+            value={inputText}
+            onChange={e => setInputText(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleSendText()}
+            placeholder="Бич эсвэл яриарай..."
+            disabled={isThinking}
+          />
+          <button
+            className="ta-text-send-btn"
+            onClick={handleSendText}
+            disabled={!inputText.trim() || isThinking}
+          >
+            ➤
+          </button>
         </div>
         {error && <p className="tutor-error">{error}</p>}
       </div>

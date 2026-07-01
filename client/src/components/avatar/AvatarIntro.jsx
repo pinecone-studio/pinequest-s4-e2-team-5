@@ -10,8 +10,12 @@ import { extractName } from "./extractName.js";
 import { registerAudio, getNavEpoch } from "./audioBus.js";
 import "./avatar-intro.css";
 
-const ROBOT_INTRO_TEXT =
-  "Сайн байна уу? Таны нэрийг хэн гэдэг вэ? Намайг Жой гэдэг.";
+const AVATAR_INTRO_TEXT = {
+  robot:      "Сайн байна уу? Таны нэрийг хэн гэдэг вэ? Намайг Жой гэдэг.",
+  minecraft:  "Сайн уу! Намайг Стив гэдэг. Чи хэн бэ?",
+  mcqueen:    "Сайн уу! Намайг Маккуин гэдэг. Чиний нэр юу вэ?",
+  astronaut:  "Сайн уу! Би сансрын нисгэгч. Чи хэн бэ?",
+};
 const MCQ_BOLTS = [
   { top: "20%", left: "12%", s: 30, dur: "6.5s" },
   { top: "30%", left: "84%", s: 38, dur: "8s" },
@@ -115,23 +119,24 @@ export function AvatarIntro({
     stopRef.current = stop;
   });
 
+  const introText = AVATAR_INTRO_TEXT[avatar] ?? AVATAR_INTRO_TEXT.robot;
+
   const playIntro = useCallback(async () => {
-    if (!isRobot || introPlayedRef.current || introPlayingRef.current) return;
+    if (introPlayedRef.current || introPlayingRef.current) return;
     introPlayingRef.current = true;
     pause();
     try {
-      await playTts(ROBOT_INTRO_TEXT);
+      await playTts(introText);
       introPlayedRef.current = true;
     } catch (error) {
-      console.warn("Robot intro voice could not play:", error);
+      console.warn("Avatar intro voice could not play:", error);
     } finally {
       introPlayingRef.current = false;
       if (!continuedRef.current) resume();
     }
-  }, [isRobot, playTts, pause, resume]);
+  }, [introText, playTts, pause, resume]);
 
   useEffect(() => {
-    if (!isRobot) return;
     pause();
     start();
     playIntro();
@@ -139,7 +144,7 @@ export function AvatarIntro({
       stop();
       cleanupAudio();
     };
-  }, [isRobot]);
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
