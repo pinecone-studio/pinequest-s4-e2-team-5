@@ -10,10 +10,8 @@ export type AvatarOption = {
 };
 
 export const AVATARS: AvatarOption[] = [
-  { id: "sun-buddy", name: "Нархан", emoji: "☀️", available: true },
   { id: "robot", name: "Joy", emoji: "🤖", available: true },
   { id: "minecraft", name: "Minecraft", emoji: "🟩", available: true },
-  { id: "mcqueen", name: "McQueen", emoji: "🏎️", available: true },
   { id: "astronaut", name: "Сансрын нисгэгч", emoji: "🧑🏻‍🚀", available: true },
   { id: "barbie", name: "Barbie", emoji: "🧚🏻‍♀️", available: true },
 ];
