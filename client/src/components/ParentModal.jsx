@@ -4,17 +4,14 @@ import { WS_BASE } from "../lib/config.js";
 export default function ParentModal({ onClose }) {
   const [step, setStep] = useState("input"); // 'input' | 'viewing'
   const [digits, setDigits] = useState(["", "", "", "", "", ""]);
-  const [status, setStatus] = useState("idle"); // 'idle' | 'connecting' | 'waiting' | 'live' | 'offline' | 'error'
+  const [status, setStatus] = useState("idle"); // 'idle'|'connecting'|'waiting'|'live'|'offline'|'error'
   const inputRefs = useRef([]);
   const wsRef = useRef(null);
   const cameraCanvasRef = useRef(null);
 
   const code = digits.join("");
 
-  // Focus first input on mount
-  useEffect(() => {
-    inputRefs.current[0]?.focus();
-  }, []);
+  useEffect(() => { inputRefs.current[0]?.focus(); }, []);
 
   const handleDigit = (i, val) => {
     const v = val.replace(/\D/g, "").slice(-1);
@@ -25,9 +22,7 @@ export default function ParentModal({ onClose }) {
   };
 
   const handleKeyDown = (i, e) => {
-    if (e.key === "Backspace" && !digits[i] && i > 0) {
-      inputRefs.current[i - 1]?.focus();
-    }
+    if (e.key === "Backspace" && !digits[i] && i > 0) inputRefs.current[i - 1]?.focus();
     if (e.key === "Enter" && code.length === 6) connect();
   };
 
@@ -46,7 +41,6 @@ export default function ParentModal({ onClose }) {
     setStatus("connecting");
   }, [code]);
 
-  // WebSocket connection when viewing
   useEffect(() => {
     if (step !== "viewing") return;
 
@@ -58,10 +52,7 @@ export default function ParentModal({ onClose }) {
     ws.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data);
-        if (msg.type === "child-disconnected") {
-          setStatus("offline");
-          return;
-        }
+        if (msg.type === "child-disconnected") { setStatus("offline"); return; }
         if (msg.type === "camera" && msg.data) {
           setStatus("live");
           const canvas = cameraCanvasRef.current;
@@ -78,16 +69,10 @@ export default function ParentModal({ onClose }) {
       } catch {}
     };
 
-    ws.onclose = () => {
-      if (status !== "offline") setStatus("idle");
-    };
+    ws.onclose = () => setStatus((s) => s === "offline" ? s : "idle");
     ws.onerror = () => setStatus("error");
 
-    return () => {
-      ws.close();
-      wsRef.current = null;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => { ws.close(); wsRef.current = null; };
   }, [step, code]);
 
   const goBack = () => {
@@ -99,19 +84,14 @@ export default function ParentModal({ onClose }) {
   return (
     <div style={overlay}>
       <div style={modal}>
-        {/* Header */}
         <div style={header}>
-          <span style={title}>
-            {step === "input" ? "Эцэг эхийн хяналт" : `Код: ${code}`}
-          </span>
+          <span style={title}>{step === "input" ? "Эцэг эхийн хяналт" : `Код: ${code}`}</span>
           <button style={closeBtn} onClick={onClose} aria-label="Хаах">✕</button>
         </div>
 
-        {/* Step 1: Code input */}
         {step === "input" && (
           <div style={inputStep}>
             <p style={desc}>Хүүхдийн дэлгэцэн дээрх 6 оронтой кодыг оруулна уу</p>
-
             <div style={digitRow} onPaste={handlePaste}>
               {digits.map((d, i) => (
                 <input
@@ -123,15 +103,10 @@ export default function ParentModal({ onClose }) {
                   value={d}
                   onChange={(e) => handleDigit(i, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(i, e)}
-                  style={{
-                    ...digitInput,
-                    borderColor: d ? "#185d56" : "rgba(22,43,42,0.2)",
-                    background: d ? "#f0faf8" : "#fff",
-                  }}
+                  style={{ ...digitInput, borderColor: d ? "#185d56" : "rgba(22,43,42,0.2)", background: d ? "#f0faf8" : "#fff" }}
                 />
               ))}
             </div>
-
             <button
               style={{ ...actionBtn, opacity: code.length === 6 ? 1 : 0.45 }}
               disabled={code.length !== 6}
@@ -142,29 +117,19 @@ export default function ParentModal({ onClose }) {
           </div>
         )}
 
-        {/* Step 2: Live view */}
         {step === "viewing" && (
           <div style={viewStep}>
-            {/* Status bar */}
             <div style={statusBar}>
               <div style={{ ...statusDot, background: dotColor(status) }} />
               <span style={statusLabel}>{statusText(status)}</span>
               <button style={backBtn} onClick={goBack}>← Буцах</button>
             </div>
-
-            {/* Camera feed */}
             <div style={feedSection}>
               <p style={feedLabel}>КАМЕР</p>
               <div style={feedBox}>
                 <canvas
                   ref={cameraCanvasRef}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "contain",
-                    display: status === "live" ? "block" : "none",
-                    transform: "scaleX(-1)",
-                  }}
+                  style={{ width: "100%", height: "100%", objectFit: "contain", display: status === "live" ? "block" : "none", transform: "scaleX(-1)" }}
                 />
                 {status !== "live" && (
                   <div style={feedPlaceholder}>
@@ -199,170 +164,22 @@ function statusText(s) {
   return "";
 }
 
-// Styles
-const overlay = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(0,0,0,0.55)",
-  backdropFilter: "blur(4px)",
-  zIndex: 9999,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: "16px",
-};
-
-const modal = {
-  background: "#fff",
-  borderRadius: "18px",
-  width: "100%",
-  maxWidth: "480px",
-  boxShadow: "0 24px 60px rgba(0,0,0,0.22)",
-  overflow: "hidden",
-  fontFamily: "inherit",
-};
-
-const header = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  padding: "20px 24px 16px",
-  borderBottom: "1px solid rgba(22,43,42,0.08)",
-};
-
-const title = {
-  fontSize: "17px",
-  fontWeight: 700,
-  color: "#162b2a",
-};
-
-const closeBtn = {
-  width: 32,
-  height: 32,
-  borderRadius: "50%",
-  border: "none",
-  background: "rgba(22,43,42,0.07)",
-  color: "#162b2a",
-  cursor: "pointer",
-  fontSize: 14,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
-
-const inputStep = {
-  padding: "28px 24px 32px",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  gap: "24px",
-};
-
-const desc = {
-  fontSize: "14px",
-  color: "#6d7d79",
-  textAlign: "center",
-  margin: 0,
-  lineHeight: 1.5,
-};
-
-const digitRow = {
-  display: "flex",
-  gap: "10px",
-  alignItems: "center",
-};
-
-const digitInput = {
-  width: "52px",
-  height: "60px",
-  borderRadius: "12px",
-  border: "2px solid rgba(22,43,42,0.2)",
-  fontSize: "26px",
-  fontWeight: 700,
-  textAlign: "center",
-  color: "#162b2a",
-  outline: "none",
-  transition: "border-color 0.15s, background 0.15s",
-  caretColor: "transparent",
-};
-
-const actionBtn = {
-  padding: "14px 36px",
-  borderRadius: "12px",
-  border: "none",
-  background: "#185d56",
-  color: "#fff",
-  fontSize: "15px",
-  fontWeight: 700,
-  cursor: "pointer",
-  transition: "opacity 0.15s",
-};
-
-const viewStep = {
-  padding: "16px 24px 24px",
-  display: "flex",
-  flexDirection: "column",
-  gap: "14px",
-};
-
-const statusBar = {
-  display: "flex",
-  alignItems: "center",
-  gap: "8px",
-};
-
-const statusDot = {
-  width: 8,
-  height: 8,
-  borderRadius: "50%",
-  flexShrink: 0,
-};
-
-const statusLabel = {
-  fontSize: "13px",
-  color: "#6d7d79",
-  flex: 1,
-};
-
-const backBtn = {
-  border: "none",
-  background: "none",
-  color: "#185d56",
-  fontSize: "13px",
-  cursor: "pointer",
-  padding: "4px 0",
-  fontWeight: 600,
-};
-
-const feedSection = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "8px",
-};
-
-const feedLabel = {
-  fontSize: "11px",
-  fontWeight: 700,
-  letterSpacing: "1px",
-  color: "#9ca3af",
-  margin: 0,
-};
-
-const feedBox = {
-  width: "100%",
-  aspectRatio: "4/3",
-  background: "#0f0f0f",
-  borderRadius: "12px",
-  overflow: "hidden",
-  position: "relative",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
-
-const feedPlaceholder = {
-  color: "#4b5563",
-  fontSize: "14px",
-  textAlign: "center",
-  padding: "16px",
-};
+const overlay = { position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" };
+const modal = { background: "#fff", borderRadius: "18px", width: "100%", maxWidth: "480px", boxShadow: "0 24px 60px rgba(0,0,0,0.22)", overflow: "hidden", fontFamily: "inherit" };
+const header = { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "20px 24px 16px", borderBottom: "1px solid rgba(22,43,42,0.08)" };
+const title = { fontSize: "17px", fontWeight: 700, color: "#162b2a" };
+const closeBtn = { width: 32, height: 32, borderRadius: "50%", border: "none", background: "rgba(22,43,42,0.07)", color: "#162b2a", cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" };
+const inputStep = { padding: "28px 24px 32px", display: "flex", flexDirection: "column", alignItems: "center", gap: "24px" };
+const desc = { fontSize: "14px", color: "#6d7d79", textAlign: "center", margin: 0, lineHeight: 1.5 };
+const digitRow = { display: "flex", gap: "10px", alignItems: "center" };
+const digitInput = { width: "52px", height: "60px", borderRadius: "12px", border: "2px solid rgba(22,43,42,0.2)", fontSize: "26px", fontWeight: 700, textAlign: "center", color: "#162b2a", outline: "none", transition: "border-color 0.15s, background 0.15s", caretColor: "transparent" };
+const actionBtn = { padding: "14px 36px", borderRadius: "12px", border: "none", background: "#185d56", color: "#fff", fontSize: "15px", fontWeight: 700, cursor: "pointer", transition: "opacity 0.15s" };
+const viewStep = { padding: "16px 24px 24px", display: "flex", flexDirection: "column", gap: "14px" };
+const statusBar = { display: "flex", alignItems: "center", gap: "8px" };
+const statusDot = { width: 8, height: 8, borderRadius: "50%", flexShrink: 0 };
+const statusLabel = { fontSize: "13px", color: "#6d7d79", flex: 1 };
+const backBtn = { border: "none", background: "none", color: "#185d56", fontSize: "13px", cursor: "pointer", padding: "4px 0", fontWeight: 600 };
+const feedSection = { display: "flex", flexDirection: "column", gap: "8px" };
+const feedLabel = { fontSize: "11px", fontWeight: 700, letterSpacing: "1px", color: "#9ca3af", margin: 0 };
+const feedBox = { width: "100%", aspectRatio: "4/3", background: "#0f0f0f", borderRadius: "12px", overflow: "hidden", position: "relative", display: "flex", alignItems: "center", justifyContent: "center" };
+const feedPlaceholder = { color: "#4b5563", fontSize: "14px", textAlign: "center", padding: "16px" };

@@ -20,7 +20,6 @@ export function StudentCamera({ childId = "хүүхэд", sessionCode }) {
   const [on, setOn] = useState(false);
   const [err, setErr] = useState(false);
   const [recordStatus, setRecordStatus] = useState("idle");
-  // Live streaming to parent
   const streamWsRef = useRef(null);
   const streamCanvasRef = useRef(null);
   const streamIntervalRef = useRef(null);
@@ -115,7 +114,6 @@ export function StudentCamera({ childId = "хүүхэд", sessionCode }) {
       startRecording(stream);
       setOn(true);
 
-      // Live stream to parent via WebSocket
       if (sessionCode) {
         const ws = new WebSocket(`${WS_BASE}/ws?role=child&code=${sessionCode}`);
         streamWsRef.current = ws;
@@ -142,7 +140,6 @@ export function StudentCamera({ childId = "хүүхэд", sessionCode }) {
       videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
       videoRef.current.srcObject = null;
     }
-    // Stop live streaming
     clearInterval(streamIntervalRef.current);
     streamIntervalRef.current = null;
     streamWsRef.current?.close();

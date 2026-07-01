@@ -156,13 +156,13 @@ export default function ContactsSection({
           >
             <div className="flex flex-col gap-3 sm:flex-row sm:gap-4 justify-center items-center">
               <AnimatedButton
-              text="Найзаа сонгох"
-              onClick={() => setPickerOpen(true)}
-            />
-            <AnimatedButton
-              text="Эцэг эх"
-              onClick={() => setParentOpen(true)}
-            />
+                text="Найзаа сонгох"
+                onClick={() => setPickerOpen(true)}
+              />
+              <AnimatedButton
+                text="Эцэг эх"
+                onClick={() => setParentOpen(true)}
+              />
             </div>
           </div>
 
@@ -201,7 +201,6 @@ export default function ContactsSection({
         />
       )}
 
-      {/* Parent monitoring modal */}
       {parentOpen && <ParentModal onClose={() => setParentOpen(false)} />}
 
       <Footer />
