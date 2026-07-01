@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import WebSocket, { WebSocketServer } from "ws";
 import progressRouter from "./api/progress";
 import hintsRouter from "./api/hints";
 import recordingsRouter from "./api/recordings";
@@ -658,6 +659,63 @@ app.post("/api/ai/generate-game", async (req: any, res: any) => {
   }
 });
 
-app.listen(port, "0.0.0.0", () => {
+// Parent monitoring: WebSocket room system (noServer mode — Bun compatible)
+const rooms = new Map<string, { child: WebSocket | null; parents: Set<WebSocket> }>();
+const wss = new WebSocketServer({ noServer: true });
+
+wss.on("connection", (ws, req) => {
+  const url = new URL(req.url!, "http://localhost");
+  const code = url.searchParams.get("code");
+  const role = url.searchParams.get("role");
+  if (!code) { ws.close(); return; }
+
+  console.log(`[WS] ${role?.toUpperCase()} холбогдлоо — код: ${code}`);
+
+  if (!rooms.has(code)) rooms.set(code, { child: null, parents: new Set() });
+  const room = rooms.get(code)!;
+
+  if (role === "child") {
+    room.child = ws;
+    let frameCount = 0;
+    ws.on("message", (data, isBinary) => {
+      frameCount++;
+      if (frameCount === 1) console.log(`[WS] Хүүхдийн frame ирж эхэллээ — код: ${code}`);
+      for (const p of room.parents)
+        if (p.readyState === WebSocket.OPEN) p.send(data, { binary: isBinary });
+    });
+    ws.on("close", () => {
+      console.log(`[WS] CHILD салсан — код: ${code}`);
+      room.child = null;
+      for (const p of room.parents)
+        if (p.readyState === WebSocket.OPEN)
+          p.send(JSON.stringify({ type: "child-disconnected" }));
+      if (room.parents.size === 0) rooms.delete(code);
+    });
+  } else {
+    room.parents.add(ws);
+    console.log(`[WS] Room ${code}: child=${room.child ? "байна" : "байхгүй"}, parents=${room.parents.size}`);
+    if (room.child?.readyState === WebSocket.OPEN)
+      room.child.send(JSON.stringify({ type: "parent-joined" }));
+    ws.on("close", () => {
+      console.log(`[WS] PARENT салсан — код: ${code}`);
+      room.parents.delete(ws);
+      if (!room.child && room.parents.size === 0) rooms.delete(code);
+    });
+  }
+});
+
+const httpServer = app.listen(port, "0.0.0.0", () => {
   console.log(`Server ${port} порт дээр ажиллаж байна`);
+});
+
+httpServer.on("upgrade", (req, socket, head) => {
+  const url = new URL(req.url!, "http://localhost");
+  if (url.pathname !== "/ws") {
+    socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
+    socket.destroy();
+    return;
+  }
+  wss.handleUpgrade(req, socket as any, head, (ws) => {
+    wss.emit("connection", ws, req);
+  });
 });

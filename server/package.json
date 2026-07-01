@@ -14,6 +14,7 @@
     "@types/express": "^5.0.6",
     "@types/multer": "^2.1.0",
     "@types/pg": "^8.20.0",
+    "@types/ws": "^8.18.1",
     "drizzle-kit": "^0.31.10"
   },
   "peerDependencies": {

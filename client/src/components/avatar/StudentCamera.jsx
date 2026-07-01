@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { API_BASE } from "../../lib/config.js";
+import { API_BASE, WS_BASE } from "../../lib/config.js";
 
 function getRecorderMimeType() {
   if (!window.MediaRecorder) return "";
@@ -12,7 +12,7 @@ function getRecorderMimeType() {
   return types.find((type) => MediaRecorder.isTypeSupported(type)) ?? "";
 }
 
-export function StudentCamera({ childId = "хүүхэд" }) {
+export function StudentCamera({ childId = "хүүхэд", sessionCode }) {
   const videoRef = useRef(null);
   const recorderRef = useRef(null);
   const chunksRef = useRef([]);
@@ -20,6 +20,9 @@ export function StudentCamera({ childId = "хүүхэд" }) {
   const [on, setOn] = useState(false);
   const [err, setErr] = useState(false);
   const [recordStatus, setRecordStatus] = useState("idle");
+  const streamWsRef = useRef(null);
+  const streamCanvasRef = useRef(null);
+  const streamIntervalRef = useRef(null);
 
   const uploadRecording = useCallback(
     async (blob, durationMs) => {
@@ -110,12 +113,26 @@ export function StudentCamera({ childId = "хүүхэд" }) {
       await videoRef.current.play();
       startRecording(stream);
       setOn(true);
+
+      if (sessionCode) {
+        const ws = new WebSocket(`${WS_BASE}/ws?role=child&code=${sessionCode}`);
+        streamWsRef.current = ws;
+        const canvas = streamCanvasRef.current;
+        const ctx = canvas.getContext("2d");
+        streamIntervalRef.current = setInterval(() => {
+          if (!ws || ws.readyState !== WebSocket.OPEN) return;
+          canvas.width = 320;
+          canvas.height = 240;
+          if (videoRef.current) ctx.drawImage(videoRef.current, 0, 0, 320, 240);
+          ws.send(JSON.stringify({ type: "camera", data: canvas.toDataURL("image/jpeg", 0.5) }));
+        }, 150);
+      }
     } catch (error) {
       setErr(true);
       setRecordStatus("idle");
       console.error("Error accessing media devices.", error);
     }
-  }, [startRecording]);
+  }, [startRecording, sessionCode]);
 
   const stop = useCallback(() => {
     stopRecording();
@@ -123,6 +140,10 @@ export function StudentCamera({ childId = "хүүхэд" }) {
       videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
       videoRef.current.srcObject = null;
     }
+    clearInterval(streamIntervalRef.current);
+    streamIntervalRef.current = null;
+    streamWsRef.current?.close();
+    streamWsRef.current = null;
     setOn(false);
   }, [stopRecording]);
 
@@ -187,6 +208,8 @@ export function StudentCamera({ childId = "хүүхэд" }) {
       {recordStatus === "error" && (
         <p className="student-cam-status is-error">Бичлэг хадгалж чадсангүй</p>
       )}
+
+      <canvas ref={streamCanvasRef} style={{ display: "none" }} />
     </div>
   );
 }
