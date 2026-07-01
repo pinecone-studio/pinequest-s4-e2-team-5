@@ -1621,6 +1621,38 @@
   box-shadow: 0 0 34px rgba(101,217,157,0.36);
 }
 
+/* Хоосон нүд — сонголтоор бөглөнө (бичихгүй) */
+.seq-chip-blank {
+  border-style: dashed;
+  color: rgba(255,255,255,0.5);
+}
+.seq-chip-filled {
+  border-style: solid;
+  border-color: #65d99d;
+  background: rgba(101,217,157,0.16);
+  color: #fff;
+  box-shadow: 0 0 30px rgba(101,217,157,0.32);
+}
+.seq-chip-current {
+  border-color: #65d99d;
+  color: #65d99d;
+  animation: op-pulse 1.4s ease-in-out infinite;
+}
+
+/* Дарааллын тоо сонгох товчнууд */
+.seq-choice-grid { margin-top: 20px; }
+.seq-choice-btn {
+  min-width: 84px;
+  min-height: 76px;
+  display: grid;
+  place-items: center;
+}
+.seq-choice-num {
+  font-size: clamp(26px, 4vw, 40px);
+  font-weight: 900;
+  color: #fff;
+}
+
 .seq-check-btn {
   border: 2px solid rgba(255,255,255,0.16);
   border-radius: 16px;
@@ -2103,4 +2135,621 @@
 @media (prefers-reduced-motion: reduce) {
   .hw-drop-area, .hw-drop-icon, .student-cam-placeholder svg,
   .student-cam-rec::before { animation: none; transition: none; }
+}
+
+/* ─────────────────────────────────────────────
+   Өгүүлбэртэй бодлого (Word problem) — алхам алхмаар
+   ───────────────────────────────────────────── */
+.wp-root {
+  width: min(100%, 760px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  animation: fade-up .22s ease;
+}
+
+.wp-card {
+  position: relative;
+  width: min(100%, 640px);
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.14);
+  border-radius: 22px;
+  padding: 26px 28px 22px;
+  box-shadow: 0 10px 34px rgba(0,0,0,0.22);
+}
+
+.wp-step-tag {
+  position: absolute;
+  top: -13px;
+  left: 24px;
+  background: #65d99d;
+  color: #0c2e20;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+
+.wp-story {
+  margin: 0;
+  text-align: center;
+  font-size: 21px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.5;
+}
+
+.wp-num {
+  display: inline-block;
+  color: #ffe27a;
+  font-weight: 900;
+  padding: 0 2px;
+  text-shadow: 0 0 16px rgba(255,226,122,0.6);
+}
+
+.wp-guide {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.72);
+  text-align: center;
+}
+
+/* ── 2. Үйлдэл сонгох ── */
+.wp-op-stage,
+.wp-solve-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  animation: fade-up .22s ease;
+}
+
+.wp-quantities {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: nowrap;
+}
+
+.wp-qty { flex-shrink: 0; }
+
+.wp-op-slot {
+  min-width: 64px;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  font-weight: 900;
+  color: rgba(255,255,255,0.4);
+  border: 2px dashed rgba(255,255,255,0.28);
+  border-radius: 18px;
+}
+.wp-op-slot.wp-op-filled {
+  color: #65d99d;
+  border-style: solid;
+  border-color: #65d99d;
+  background: rgba(101,217,157,0.14);
+  text-shadow: 0 0 18px rgba(101,217,157,0.7);
+}
+
+.wp-op-choices {
+  display: flex;
+  gap: 18px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.wp-op-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 108px;
+  padding: 16px 22px;
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: transform .12s, border-color .12s, background .12s;
+}
+.wp-op-btn:hover:not(:disabled) {
+  transform: translateY(-4px);
+  border-color: #65d99d;
+  background: rgba(101,217,157,0.08);
+}
+.wp-op-btn:disabled { cursor: default; }
+.wp-op-btn.wp-op-btn-correct {
+  border-color: #65d99d;
+  background: rgba(101,217,157,0.16);
+  animation: vm-celebrate .4s ease;
+}
+.wp-op-btn.wp-op-btn-wrong {
+  border-color: #ef4444;
+  background: rgba(239,68,68,0.12);
+  animation: vm-shake .35s ease;
+}
+.wp-op-sym {
+  font-size: 38px;
+  font-weight: 900;
+  color: #65d99d;
+  line-height: 1;
+}
+.wp-op-word {
+  font-size: 14px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.78);
+}
+
+/* ── 3. Хариу ── */
+.wp-equation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+.wp-eq-num {
+  font-size: 46px;
+  font-weight: 900;
+  color: #fff;
+}
+.wp-eq-q {
+  font-size: 46px;
+  font-weight: 900;
+  color: #ffe27a;
+  animation: op-pulse 2s ease-in-out infinite;
+}
+
+/* ─────────────────────────────────────────────
+   Аравт ба нэгж (Tens & Ones)
+   ───────────────────────────────────────────── */
+.to-root {
+  width: min(100%, 740px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  animation: fade-up .22s ease;
+}
+
+.to-number {
+  font-size: 64px;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1;
+  text-shadow: 0 0 26px rgba(101,217,157,0.5);
+}
+
+.to-build {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.to-build-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+  padding: 14px 18px;
+  background: rgba(255,255,255,0.05);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  border-radius: 18px;
+}
+
+.to-build-label {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  color: rgba(255,255,255,0.6);
+}
+
+.to-build-blocks {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 56px;
+}
+
+.to-build-empty {
+  font-size: 32px;
+  font-weight: 900;
+  color: rgba(255,255,255,0.28);
+}
+
+.to-plus {
+  font-size: 34px;
+  font-weight: 900;
+  color: #65d99d;
+  align-self: center;
+}
+
+/* Сонгосон тоонуудын мөр */
+.to-answer-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.to-slot {
+  min-width: 56px;
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 900;
+  color: #fff;
+  border: 2px dashed rgba(255,255,255,0.28);
+  border-radius: 16px;
+}
+.to-slot-filled { border-style: solid; border-color: rgba(255,255,255,0.4); }
+.to-slot-correct {
+  border-style: solid;
+  border-color: #65d99d;
+  background: rgba(101,217,157,0.16);
+}
+.to-slot-wrong {
+  border-style: solid;
+  border-color: #ef4444;
+  background: rgba(239,68,68,0.12);
+  animation: vm-shake .35s ease;
+}
+.to-answer-word {
+  font-size: 18px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.78);
+}
+
+/* Сонголтын хэсэг */
+.to-choice-panel {
+  display: flex;
+  gap: 26px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.to-choice-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.to-choice-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.7);
+}
+.to-choice-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.to-choice {
+  min-width: 52px;
+  padding: 12px 16px;
+  font-size: 22px;
+  font-weight: 900;
+  color: #fff;
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: transform .12s, border-color .12s, background .12s;
+}
+.to-choice:hover {
+  transform: translateY(-3px);
+  border-color: #65d99d;
+  background: rgba(101,217,157,0.08);
+}
+.to-choice-selected {
+  border-color: #65d99d;
+  background: rgba(101,217,157,0.16);
+}
+.to-choice-correct {
+  border-color: #65d99d;
+  background: rgba(101,217,157,0.24);
+  animation: vm-celebrate .4s ease;
+}
+
+/* Дараалсан бодлогын явцын заагч */
+.ta-problem-progress {
+  position: absolute;
+  top: 14px;
+  left: 18px;
+  background: rgba(101,217,157,0.14);
+  border: 2px solid rgba(101,217,157,0.4);
+  border-radius: 14px;
+  padding: 8px 14px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: .02em;
+  z-index: 5;
+}
+
+/* ─────────────────────────────────────────────
+   Тэнцэтгэл (Equation balance): □ - 26 = 6 + 9
+   ───────────────────────────────────────────── */
+.eqb-root {
+  width: min(100%, 760px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  animation: fade-up .22s ease;
+}
+
+.eqb-equation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.eqb-num {
+  font-size: clamp(34px, 5vw, 54px);
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 0 18px rgba(255,255,255,0.25);
+}
+.eqb-op {
+  font-size: clamp(30px, 4.5vw, 46px);
+  font-weight: 900;
+  color: #65d99d;
+}
+.eqb-eq {
+  font-size: clamp(34px, 5vw, 54px);
+  font-weight: 900;
+  color: #ffe27a;
+  padding: 0 6px;
+}
+
+.eqb-slot {
+  min-width: clamp(64px, 8vw, 92px);
+  min-height: clamp(64px, 8vw, 92px);
+  display: grid;
+  place-items: center;
+  font-size: clamp(34px, 5vw, 52px);
+  font-weight: 900;
+  color: #ffe27a;
+  border: 3px dashed rgba(255,255,255,0.4);
+  border-radius: 20px;
+  background: rgba(255,255,255,0.05);
+  animation: op-pulse 1.6s ease-in-out infinite;
+}
+.eqb-slot-correct {
+  color: #fff;
+  border-style: solid;
+  border-color: #65d99d;
+  background: rgba(101,217,157,0.18);
+  box-shadow: 0 0 34px rgba(101,217,157,0.4);
+  animation: vm-celebrate .4s ease;
+}
+
+.eqb-hint {
+  max-width: 560px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.82);
+  background: rgba(255,255,255,0.05);
+  border: 1.5px solid rgba(255,255,255,0.12);
+  border-radius: 16px;
+  padding: 12px 18px;
+}
+.eqb-hint b { color: #ffe27a; }
+
+.eqb-choice-grid { margin-top: 6px; }
+.eqb-choice-btn {
+  min-width: 88px;
+  min-height: 76px;
+  display: grid;
+  place-items: center;
+}
+.eqb-choice-num {
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 900;
+  color: #fff;
+}
+
+/* ─────────────────────────────────────────────
+   Урт илэрхийлэл (Long expression): 7+4-(15+8)=
+   ───────────────────────────────────────────── */
+.lex-root {
+  width: min(100%, 780px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  animation: fade-up .22s ease;
+}
+
+.lex-expr {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.lex-num {
+  font-size: clamp(30px, 4.6vw, 48px);
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 0 16px rgba(255,255,255,0.22);
+}
+.lex-op {
+  font-size: clamp(26px, 4vw, 42px);
+  font-weight: 900;
+  color: rgba(255,255,255,0.7);
+}
+/* Идэвхтэй (одоо бодох) хэсгийг тодотгоно */
+.lex-hi {
+  color: #65d99d;
+  text-shadow: 0 0 22px rgba(101,217,157,0.6);
+  transform: translateY(-1px);
+}
+
+.lex-hint {
+  font-size: 16px;
+  font-weight: 800;
+  color: #ffe27a;
+  text-align: center;
+}
+
+.lex-mini {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 22px;
+  background: rgba(101,217,157,0.1);
+  border: 2px solid rgba(101,217,157,0.32);
+  border-radius: 18px;
+}
+.lex-q {
+  font-size: clamp(30px, 4.6vw, 46px);
+  font-weight: 900;
+  color: #ffe27a;
+  animation: op-pulse 1.6s ease-in-out infinite;
+}
+
+.lex-choice-grid { margin-top: 4px; }
+.lex-choice-btn {
+  min-width: 84px;
+  min-height: 72px;
+  display: grid;
+  place-items: center;
+}
+.lex-choice-num {
+  font-size: clamp(26px, 4vw, 40px);
+  font-weight: 900;
+  color: #fff;
+}
+
+.lex-progress {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: .03em;
+  color: rgba(255,255,255,0.5);
+}
+
+/* ─────────────────────────────────────────────
+   Урт хэмжигдэхүүн (см/дм): 1 дм = 10 см
+   ───────────────────────────────────────────── */
+.lu-root {
+  width: min(100%, 760px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  animation: fade-up .22s ease;
+}
+
+.lu-hint {
+  font-size: 15px;
+  font-weight: 800;
+  color: #ffe27a;
+  background: rgba(255,226,122,0.1);
+  border: 1.5px solid rgba(255,226,122,0.28);
+  border-radius: 14px;
+  padding: 7px 16px;
+}
+
+.lu-parts {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.lu-part {
+  font-size: clamp(24px, 3.6vw, 36px);
+  font-weight: 900;
+  color: #fff;
+}
+.lu-plus {
+  font-size: clamp(22px, 3.2vw, 32px);
+  font-weight: 900;
+  color: #65d99d;
+}
+
+.lu-blocks {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 22px;
+  flex-wrap: wrap;
+  min-height: 40px;
+}
+.lu-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.lu-group-tiles {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.lu-group-cap {
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.7);
+}
+
+.lu-mini {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 22px;
+  background: rgba(101,217,157,0.1);
+  border: 2px solid rgba(101,217,157,0.32);
+  border-radius: 18px;
+}
+.lu-mini-num {
+  font-size: clamp(26px, 4vw, 40px);
+  font-weight: 900;
+  color: #fff;
+}
+.lu-q {
+  font-size: clamp(28px, 4.4vw, 44px);
+  font-weight: 900;
+  color: #ffe27a;
+  animation: op-pulse 1.6s ease-in-out infinite;
+}
+.lu-unit {
+  font-size: clamp(20px, 3vw, 30px);
+  font-weight: 800;
+  color: rgba(255,255,255,0.7);
+}
+
+.lu-choice-grid { margin-top: 4px; }
+.lu-choice-btn {
+  min-width: 96px;
+  min-height: 66px;
+  display: grid;
+  place-items: center;
+}
+.lu-choice-num {
+  font-size: clamp(22px, 3.2vw, 32px);
+  font-weight: 900;
+  color: #fff;
 }
