@@ -1,0 +1,90 @@
+/* ══════════════════════════════════════════════════════════════
+   Сансрын нисгэгч avatar — learn хуудас.
+   Баруун талын tutor тайзан дээр AstronautLoader эргэлдэнэ.
+   Joy/Minecraft/McQueen-тэй ижил бүтэц: .ta-astro дотор хязгаарлав.
+   ══════════════════════════════════════════════════════════════ */
+
+.ta-root.ta-astro {
+  background:
+    radial-gradient(120% 90% at 20% 10%, rgba(90, 120, 220, 0.28), transparent 60%),
+    radial-gradient(120% 95% at 85% 92%, rgba(150, 90, 220, 0.26), transparent 62%),
+    linear-gradient(165deg, #131a3a 0%, #0b1030 55%, #060819 100%);
+}
+.ta-astro .ta-blob { opacity: 0; }
+.ta-astro .sb-box {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(150, 180, 255, 0.5);
+}
+.ta-astro .sb-text { color: #1b2350; }
+.ta-astro .tutor-status { color: #cdd7ff; }
+.ta-astro .ta-back-btn { color: #dbe4ff; border-color: rgba(150, 180, 255, 0.35); }
+
+/* AstronautLoader-ийн дотоод элементүүд absolute тул тайз нь
+   position: relative + overflow: hidden байх ёстой */
+.astro-stage {
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 24px;
+}
+.astro-stage > div {
+  position: absolute;
+  inset: 0;
+}
+
+/* ── Center: нисгэгч ТОМ, голдоо ── */
+.ta-astro.ta-root-center .ta-robot-col {
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 20px;
+  position: relative;
+  z-index: 2;
+}
+.ta-astro.ta-root-center .astro-stage {
+  width: min(80vw, 560px);
+  height: min(66vh, 560px);
+}
+.ta-astro.ta-root-center .sb-wrap {
+  position: static;
+  transform: none;
+  left: auto;
+  bottom: auto;
+  margin: 0;
+  width: min(82%, 380px);
+  align-self: center;
+}
+.ta-astro.ta-root-center .ta-status-row {
+  position: static;
+  transform: none;
+  left: auto;
+  bottom: auto;
+  margin-top: 0;
+}
+.ta-astro.ta-root-center .sb-box { text-align: center; justify-content: center; }
+.ta-astro.ta-root-center .sb-text { text-align: center; }
+
+/* ── Split: бодлого идэвхтэй үед нисгэгч ЖИЖИГ, зүүн-дээд HUD ── */
+.ta-astro.ta-root-split .ta-robot-col {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: auto;
+  max-width: min(44%, 360px);
+  height: auto;
+  flex: none;
+  z-index: 5;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 20px 22px;
+  pointer-events: none;
+}
+.ta-astro.ta-root-split .astro-stage {
+  width: clamp(150px, 22vw, 240px);
+  height: clamp(150px, 22vw, 240px);
+}
+.ta-astro.ta-root-split .sb-wrap { align-self: flex-start; width: 100%; }
+.ta-astro.ta-root-split .sb-box { text-align: left; justify-content: flex-start; }
+.ta-astro.ta-root-split .sb-text { text-align: left; }
+.ta-astro.ta-root-split .ta-problem-pane { padding-top: 44px; }
