@@ -119,7 +119,7 @@ export function StudentCamera({ childId = "хүүхэд", sessionCode }) {
       setOn(true);
 
       if (sessionCode) {
-        const ws = new WebSocket(`${WS_BASE}/ws?role=child&code=${sessionCode}`);
+        const ws = new WebSocket(`${WS_BASE}/ws?role=child&code=${sessionCode}&family=${encodeURIComponent(childId)}`);
         streamWsRef.current = ws;
         const canvas = streamCanvasRef.current;
         const ctx = canvas.getContext("2d");
