@@ -2753,3 +2753,275 @@
   font-weight: 900;
   color: #fff;
 }
+
+/* ─────────────────────────────────────────────
+   Үржих / Хуваах (Multiplication / Division)
+   ───────────────────────────────────────────── */
+.md-root {
+  width: min(100%, 760px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  animation: fade-up .22s ease;
+}
+
+.md-equation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.md-eq-num {
+  font-size: clamp(30px, 4.6vw, 48px);
+  font-weight: 900;
+  color: #fff;
+}
+.md-eq-op {
+  font-size: clamp(26px, 4vw, 42px);
+  font-weight: 900;
+  color: #65d99d;
+}
+.md-eq-ans {
+  min-width: 56px;
+  min-height: 56px;
+  display: grid;
+  place-items: center;
+  font-size: clamp(30px, 4.6vw, 46px);
+  font-weight: 900;
+  color: #ffe27a;
+  border: 3px dashed rgba(255,255,255,0.34);
+  border-radius: 16px;
+}
+.md-eq-ans-on {
+  color: #fff;
+  border-style: solid;
+  border-color: #65d99d;
+  background: rgba(101,217,157,0.18);
+  box-shadow: 0 0 30px rgba(101,217,157,0.4);
+}
+
+/* Бүлгүүд */
+.md-groups {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  max-width: 640px;
+}
+.md-group {
+  padding: 10px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.14);
+}
+.md-group-empty {
+  min-width: 54px;
+  min-height: 54px;
+  border-style: dashed;
+  display: grid;
+  place-items: center;
+}
+
+.md-cubes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, 16px);
+  gap: 4px;
+  justify-content: center;
+  max-width: 92px;
+}
+.md-cube {
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  background: var(--c, #65d99d);
+  box-shadow: inset 0 -2px 0 rgba(0,0,0,0.15);
+}
+
+.md-hint {
+  font-size: 15px;
+  font-weight: 800;
+  color: rgba(255,255,255,0.72);
+  text-align: center;
+}
+
+.md-choice-grid { margin-top: 4px; }
+.md-choice-btn {
+  min-width: 84px;
+  min-height: 66px;
+  display: grid;
+  place-items: center;
+}
+.md-choice-num {
+  font-size: clamp(26px, 4vw, 40px);
+  font-weight: 900;
+  color: #fff;
+}
+
+/* ─────────────────────────────────────────────
+   Баганан бичлэг — Өнгөт АРАВТ / НЭГЖ багана
+   ───────────────────────────────────────────── */
+.cc-root {
+  width: min(100%, 720px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  animation: fade-up .22s ease;
+}
+
+.cc-board {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 20px;
+  background: rgba(255,255,255,0.06);
+  border: 2px solid rgba(255,255,255,0.14);
+  border-radius: 22px;
+  box-shadow: 0 14px 36px rgba(0,0,0,0.22);
+}
+
+.cc-head, .cc-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cc-sign {
+  width: 28px;
+  text-align: center;
+  font-size: 30px;
+  font-weight: 900;
+  color: #d16a2e;
+  flex-shrink: 0;
+}
+.cc-head-cell {
+  width: 132px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: .06em;
+  padding: 4px 0;
+  border-radius: 8px;
+}
+.cc-head-tens { color: #cfe0f5; background: rgba(96,150,214,0.22); }
+.cc-head-ones { color: #cdeecd; background: rgba(101,201,143,0.22); }
+.cc-head-val { width: 52px; }
+
+.cc-col {
+  width: 132px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  padding: 6px;
+}
+.cc-col-tens { background: rgba(96,150,214,0.1); }
+.cc-col-ones { background: rgba(101,201,143,0.1); }
+
+.cc-blocks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
+  max-width: 118px;
+}
+.cc-block {
+  width: 15px;
+  height: 15px;
+  border-radius: 4px;
+  box-shadow: inset 0 -2px 0 rgba(0,0,0,0.18);
+}
+.cc-block-tens { background: #6096d6; }
+.cc-block-ones { background: #65c98f; }
+
+.cc-val {
+  width: 52px;
+  text-align: right;
+  font-size: 30px;
+  font-weight: 900;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.cc-val-ans { color: #65d99d; }
+
+.cc-line {
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.4);
+  margin: 4px 0;
+}
+
+.cc-row-ans { margin-top: 2px; }
+.cc-ansbox {
+  width: 132px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  font-size: 30px;
+  font-weight: 900;
+  color: #ffe27a;
+  border: 3px dashed rgba(255,255,255,0.32);
+  border-radius: 14px;
+}
+.cc-ansbox-active {
+  border-color: #65d99d;
+  color: #65d99d;
+  animation: op-pulse 1.4s ease-in-out infinite;
+}
+.cc-ansbox-filled {
+  border-style: solid;
+  border-color: #65d99d;
+  color: #fff;
+  background: rgba(101,217,157,0.16);
+}
+
+/* Зөөсөн блок */
+.cc-carry {
+  position: absolute;
+  top: 44px;
+  left: 168px;
+}
+.cc-carry-notens { left: 36px; }
+.cc-carry-block {
+  display: inline-grid;
+  place-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #f6a723;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 900;
+  box-shadow: 0 4px 12px rgba(246,167,35,0.5);
+  animation: vm-celebrate .5s ease;
+}
+
+.cc-hint {
+  font-size: 16px;
+  font-weight: 800;
+  color: #ffe27a;
+  text-align: center;
+}
+
+.cc-mini {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px 22px;
+  background: rgba(101,217,157,0.1);
+  border: 2px solid rgba(101,217,157,0.32);
+  border-radius: 18px;
+}
+.cc-mini-num { font-size: clamp(24px, 3.6vw, 36px); font-weight: 900; color: #fff; }
+.cc-mini-carry { color: #f6a723; }
+.cc-mini-op { font-size: clamp(22px, 3.2vw, 32px); font-weight: 900; color: rgba(255,255,255,0.7); }
+.cc-mini-q { font-size: clamp(26px, 4vw, 40px); font-weight: 900; color: #ffe27a; animation: op-pulse 1.6s ease-in-out infinite; }
+
+.cc-choice-grid { margin-top: 2px; }
+.cc-choice-btn { min-width: 84px; min-height: 64px; display: grid; place-items: center; }
+.cc-choice-num { font-size: clamp(26px, 4vw, 40px); font-weight: 900; color: #fff; }

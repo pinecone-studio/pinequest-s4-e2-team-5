@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MascotScene } from '../KidMascotScene.jsx'
 import { useTutor } from './useTutor.js'
 import { NumberVisual, COLORS } from '../lesson/NumberVisual.jsx'
-import { RobotInteractive } from './RobotInteractive.jsx'
+import { MulDivInteractive } from './MulDivInteractive.jsx'
+import { ColumnMathInteractive } from './ColumnMathInteractive.jsx'
 import { ComparisonInteractive } from './ComparisonInteractive.jsx'
 import { MissingAddendInteractive } from './MissingAddendInteractive.jsx'
 import { NumberSequenceInteractive } from './NumberSequenceInteractive.jsx'
@@ -352,7 +353,7 @@ function AnswerChoice({ problem, onCorrect, onWrong }) {
 }
 
 /* ── Төрлөөр нь тохирох интерактивийг сонгоно ── */
-function ProblemInteractive({ problem, isSpeaking, onCorrect, onWrong }) {
+function ProblemInteractive({ problem, onCorrect, onWrong }) {
   if (!problem) return null
   if (problem.type === 'comparison')
     return <ComparisonInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
@@ -375,9 +376,17 @@ function ProblemInteractive({ problem, isSpeaking, onCorrect, onWrong }) {
 
   const op = inferOperator(problem)
   if (op === '*' || op === '/')
-    return <RobotInteractive problem={toAB(problem)} isSpeaking={isSpeaking} onCorrect={onCorrect} onWrong={onWrong} />
-  if (op === '+' || op === '-')
-    return <VisualMathAuto problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+    return <MulDivInteractive problem={problem} op={op} onCorrect={onCorrect} onWrong={onWrong} />
+  if (op === '+' || op === '-') {
+    const [a, b] = (problem.operands ?? []).map(Number)
+    const answer = op === '+' ? a + b : a - b
+    // 2 оронтой тоо орсон эсвэл хариу нь ≥10 бол өнгөт аравт/нэгж баганаар;
+    // жижиг дан оронтойг блок домино хэлбэрээр.
+    const useColumn = a >= 10 || b >= 10 || answer >= 10
+    return useColumn
+      ? <ColumnMathInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+      : <VisualMathAuto problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+  }
 
   return <AnswerChoice problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
 }
@@ -542,9 +551,9 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
       if (next < total) {
         setSelectedIndex(next)
       } else if (total > 1) {
-        // Бүх бодлого дууссан — жагсаалт руу буцна
-        setShowListView(true)
-        speak(`Сайн байна ${nickname}! Бүх бодлогоо дууслаа.`)
+        // Бүх бодлого дууслаа — жагсаалт руу БУЦААХГҮЙ (дахин "аль вэ?" гэж асуухгүй).
+        // Сүүлийн бодлого баяр хүргэсэн хэвээрээ үлдэнэ.
+        speak(`Сайн байна ${nickname}! Бүх бодлогоо дууслаа. Гоё ажиллалаа!`)
       } else {
         speak(`Гайхалтай ${nickname}! Бодлогоо зөв бодлоо.`)
       }
@@ -610,7 +619,6 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
               <ProblemInteractive
                 key={problemKey(activeProblem)}
                 problem={activeProblem}
-                isSpeaking={isSpeaking}
                 onCorrect={handleCorrect}
                 onWrong={handleWrong}
               />
