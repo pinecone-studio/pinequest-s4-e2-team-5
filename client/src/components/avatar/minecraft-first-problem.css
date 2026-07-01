@@ -1,0 +1,278 @@
+/* Minecraft эхний бодлого (40 − 5 × 7) — 1-2-р ангийн интерактив */
+
+.mfp-root {
+  position: relative;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 18px 18px 26px;
+  border-radius: 18px;
+  overflow: hidden;
+  font-family: system-ui, sans-serif;
+  color: #1c2b1a;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  border: 4px solid #3a5a2a;
+}
+
+/* ── Дэвсгэр: тэнгэр, нар, үүл, өвс ── */
+.mfp-bg { position: absolute; inset: 0; z-index: 0; background: linear-gradient(#8fd0ff 0%, #bfe8ff 55%); }
+.mfp-sun {
+  position: absolute; top: 14px; right: 18px; width: 46px; height: 46px;
+  background: #ffdb4d; border: 4px solid #ffb300;
+  box-shadow: 0 0 24px #ffe680; image-rendering: pixelated;
+}
+.mfp-cloud {
+  position: absolute; width: 84px; height: 22px; background: #fff; border-radius: 12px;
+  box-shadow: 20px -8px 0 6px #fff, -18px -4px 0 2px #fff, 0 0 0 4px #eaf6ff;
+  animation: mfp-drift 18s linear infinite alternate;
+}
+@keyframes mfp-drift { from { transform: translateX(-8px); } to { transform: translateX(24px); } }
+.mfp-ground {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 26%;
+  background:
+    repeating-linear-gradient(90deg, #7bbf3a 0 16px, #6fae34 16px 32px);
+  border-top: 6px solid #4f8f2a;
+}
+
+/* ── Гарчиг / тэгшитгэл ── */
+.mfp-title {
+  position: relative; z-index: 1; text-align: center; margin: 4px 0 12px;
+  font-size: 22px; color: #234; text-shadow: 1px 1px 0 #fff;
+}
+.mfp-equation {
+  position: relative; z-index: 1;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  background: rgba(255, 255, 255, 0.82); border: 3px solid #3a5a2a; border-radius: 12px;
+  padding: 8px 12px; margin: 0 auto 14px; width: fit-content;
+}
+.mfp-num { font-size: 30px; font-weight: 800; color: #1f3a5f; }
+.mfp-num-sm { font-size: 24px; font-weight: 800; color: #1f3a5f; }
+.mfp-op { font-size: 24px; font-weight: 800; color: #557; }
+.mfp-ans { font-size: 30px; font-weight: 800; color: #e0692a; min-width: 30px; text-align: center; }
+.mfp-group {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 2px 8px; border-radius: 8px; border: 2px dashed transparent;
+}
+.mfp-hot {
+  border-color: #ff9d2e; background: #fff3df;
+  animation: mfp-pulse 1s ease-in-out infinite;
+}
+@keyframes mfp-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 157, 46, 0.5); } 50% { box-shadow: 0 0 0 8px rgba(255, 157, 46, 0); } }
+
+/* ── Тайз: Стив ба крийперүүд ── */
+.mfp-stage {
+  position: relative; z-index: 1;
+  display: flex; align-items: flex-end; justify-content: space-around; gap: 10px;
+  min-height: 150px; margin-bottom: 12px;
+}
+.mfp-steve-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.mfp-steve { font-size: 44px; animation: mfp-bob 3s ease-in-out infinite; }
+@keyframes mfp-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+.mfp-steve-label {
+  font-size: 13px; font-weight: 700; background: #fff; padding: 2px 8px;
+  border-radius: 8px; border: 2px solid #3a5a2a;
+}
+
+/* Алмазан овоо */
+.mfp-pile {
+  display: grid; grid-template-columns: repeat(8, 1fr); gap: 1px;
+  max-width: 170px; justify-items: center;
+}
+.mfp-diamond { font-size: 15px; animation: mfp-shine 2s ease-in-out infinite; animation-delay: var(--d); }
+@keyframes mfp-shine { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.75; transform: scale(1.12); } }
+/* Хулгайлагдах алмаз — крийпер тийш нисэх */
+.mfp-diamond-fly { animation: mfp-fly 1.2s ease-in forwards; animation-delay: var(--d); }
+@keyframes mfp-fly {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(120px, -40px) scale(0.3); opacity: 0; }
+}
+
+/* Крийперүүд */
+.mfp-creepers { display: flex; align-items: flex-end; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.mfp-creeper-slot {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  animation: mfp-pop 0.4s ease-out both; animation-delay: calc(var(--i) * 0.1s);
+}
+@keyframes mfp-pop { from { transform: translateY(14px) scale(0.6); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+.mfp-creeper-take { font-size: 12px; font-weight: 800; color: #2a7d2a; }
+
+/* Крийперын пиксел нүүр */
+.mfp-creeper {
+  display: inline-block; width: 34px; height: 34px;
+  background: linear-gradient(135deg, #6fbf4a 0 50%, #57a638 50% 100%);
+  border: 2px solid #3e7a28; image-rendering: pixelated;
+  animation: mfp-creep-sway 2.4s ease-in-out infinite;
+}
+@keyframes mfp-creep-sway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+.mfp-creeper-munch { animation: mfp-creep-munch 0.35s steps(2) infinite; }
+@keyframes mfp-creep-munch { 0% { transform: translateY(0); } 100% { transform: translateY(-3px); } }
+.mfp-creeper-face { position: relative; display: block; width: 100%; height: 100%; }
+.mfp-eye { position: absolute; top: 7px; width: 8px; height: 9px; background: #111; }
+.mfp-eye-l { left: 5px; }
+.mfp-eye-r { right: 5px; }
+.mfp-mouth {
+  position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+  width: 8px; height: 14px; background: #111;
+  box-shadow: -6px 6px 0 #111, 6px 6px 0 #111;
+}
+
+/* ── Алхмын хэсэг ── */
+.mfp-step { position: relative; z-index: 1; }
+.mfp-prompt {
+  background: rgba(255, 255, 255, 0.9); border: 2px solid #3a5a2a; border-radius: 12px;
+  padding: 10px 12px; font-size: 15px; line-height: 1.45; margin: 0 0 10px;
+}
+.mfp-prompt-flash { text-align: center; animation: mfp-flash 0.6s ease-in-out infinite alternate; }
+@keyframes mfp-flash { from { background: rgba(255, 255, 255, 0.9); } to { background: #fff2cf; } }
+
+.mfp-mini {
+  display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0 auto 10px;
+  background: #fff; border: 2px dashed #ff9d2e; border-radius: 10px; padding: 6px 14px; width: fit-content;
+}
+.mfp-q { font-size: 26px; font-weight: 800; color: #e0692a; }
+
+.mfp-choices { display: flex; gap: 12px; justify-content: center; }
+.mfp-choice {
+  min-width: 66px; padding: 12px 8px; font-size: 26px; font-weight: 800; cursor: pointer;
+  color: #234; background: #ffd98a; border: 3px solid #b9812f; border-bottom-width: 6px;
+  border-radius: 10px; transition: transform 0.08s, background 0.15s;
+}
+.mfp-choice:hover { background: #ffe3a3; transform: translateY(-2px); }
+.mfp-choice:active { transform: translateY(2px); border-bottom-width: 3px; }
+.mfp-choice-wrong { animation: mfp-shake 0.4s; background: #ffb3b3; border-color: #c0392b; }
+@keyframes mfp-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+/* ── Дуусгавар ── */
+.mfp-done { position: relative; z-index: 1; text-align: center; }
+.mfp-success {
+  background: #eafce2; border: 3px solid #3a8a2a; border-radius: 12px;
+  padding: 12px; font-size: 16px; color: #235c1a;
+}
+
+/* ═══════════ 2-р бодлого: Харьцуулах цамхаг ═══════════ */
+.mcc-stage {
+  position: relative; z-index: 1;
+  display: flex; align-items: flex-end; justify-content: center; gap: 22px;
+  min-height: 170px; margin-bottom: 14px;
+}
+.mcc-tower-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.mcc-tower {
+  position: relative; width: 52px; min-height: 20px;
+  background:
+    repeating-linear-gradient(0deg, #f2c14e 0 11px, #e0a92e 11px 13px),
+    #f2c14e;
+  border: 3px solid #b9812f; border-radius: 4px;
+  transition: height 0.7s cubic-bezier(0.34, 1.3, 0.5, 1);
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.25);
+}
+.mcc-tower-win { animation: mcc-win 0.6s ease-in-out infinite alternate; box-shadow: 0 0 18px #ffdb4d; }
+@keyframes mcc-win { from { transform: translateY(0); } to { transform: translateY(-6px); } }
+.mcc-tower-cap { position: absolute; top: -26px; left: 50%; transform: translateX(-50%); font-size: 22px; }
+.mcc-tower-val { font-size: 26px; font-weight: 800; color: #1f3a5f; background: #fff; padding: 2px 10px; border-radius: 8px; border: 2px solid #3a5a2a; }
+.mcc-tower-note { font-size: 12px; font-weight: 700; color: #2a7d2a; }
+.mcc-sign-slot { display: flex; align-items: center; padding-bottom: 40px; }
+.mcc-sign-big { font-size: 46px; font-weight: 900; color: #557; }
+.mcc-sign-on { color: #e0692a; animation: mfp-pop 0.4s ease-out; }
+.mcc-signs { position: relative; z-index: 1; display: flex; gap: 14px; justify-content: center; }
+.mcc-sign-btn {
+  width: 74px; height: 74px; font-size: 40px; font-weight: 900; cursor: pointer; color: #234;
+  background: #8fd0ff; border: 3px solid #2f6ba0; border-bottom-width: 6px; border-radius: 12px;
+  transition: transform 0.08s, background 0.15s;
+}
+.mcc-sign-btn:hover:not(:disabled) { background: #aadfff; transform: translateY(-2px); }
+.mcc-sign-btn:active:not(:disabled) { transform: translateY(2px); border-bottom-width: 3px; }
+.mcc-sign-btn:disabled { opacity: 0.5; cursor: default; }
+.mcc-legend { position: relative; z-index: 1; display: flex; gap: 16px; justify-content: center; margin-top: 8px; font-size: 13px; font-weight: 700; color: #345; }
+
+/* ═══════════ 3-р бодлого: Блокон шугам ═══════════ */
+.mcl-rule { text-align: center; }
+.mcl-ruler {
+  position: relative; z-index: 1;
+  display: flex; flex-wrap: wrap; gap: 2px; justify-content: center;
+  max-width: 440px; margin: 0 auto 12px; padding: 8px;
+  background: rgba(255, 255, 255, 0.7); border-radius: 10px; border: 2px solid #3a5a2a;
+}
+.mcl-cm {
+  width: 16px; height: 26px; border-radius: 3px; border: 2px solid rgba(0, 0, 0, 0.25);
+  animation: mfp-pop 0.3s ease-out both;
+}
+/* дм болж бүрдсэн багц — багц бүр өөр өнгө */
+.mcl-cm-dm { background: hsl(calc(var(--g) * 67 + 90), 65%, 55%); }
+.mcl-cm-loose { background: #d7dde3; }
+@media (max-width: 480px) { .mcl-cm { width: 12px; height: 22px; } }
+
+.mcl-filled { color: #2a7d2a !important; }
+
+/* ═══════════ 4-р бодлого: Номын тавиур ═══════════ */
+.mcw-story { text-align: center; }
+.mcw-shelves {
+  position: relative; z-index: 1;
+  display: flex; align-items: flex-end; justify-content: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap;
+}
+.mcw-shelf-col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.mcw-person { font-size: 15px; font-weight: 800; color: #234; }
+.mcw-shelf {
+  display: flex; flex-wrap: wrap; gap: 2px; align-items: flex-end; justify-content: center;
+  max-width: 170px; min-height: 40px; padding: 6px 8px;
+  background: linear-gradient(#a5744a, #8a5c34); border: 3px solid #5e3d20; border-radius: 6px;
+  box-shadow: 0 4px 0 #5e3d20;
+}
+.mcw-book { font-size: 22px; animation: mcw-drop 0.4s ease-out both; }
+@keyframes mcw-drop { from { transform: translateY(-18px) rotate(-12deg); opacity: 0; } to { transform: translateY(0) rotate(0); opacity: 1; } }
+.mcw-book-extra { filter: drop-shadow(0 0 4px #ffbf3f); }
+.mcw-count { font-size: 14px; font-weight: 800; background: #fff; padding: 2px 10px; border-radius: 8px; border: 2px solid #3a5a2a; }
+.mcw-plus { display: flex; flex-direction: column; align-items: center; padding-bottom: 30px; }
+.mcw-plus-eq { font-size: 24px; font-weight: 900; color: #e0692a; }
+.mcw-plus-hint { font-size: 11px; font-weight: 700; color: #557; }
+.mcw-ask { text-align: center; }
+
+/* ═══════════ Даалгаврын хуудас (container) ═══════════ */
+.mcw-page {
+  position: relative; min-height: 100vh; padding: 18px 14px 40px;
+  background:
+    radial-gradient(1200px 500px at 50% -10%, #bfe8ff, transparent),
+    linear-gradient(#8fd0ff, #cdeefe);
+  font-family: system-ui, sans-serif;
+}
+.mcw-back {
+  position: absolute; top: 14px; left: 14px; width: 42px; height: 42px; z-index: 5;
+  font-size: 22px; cursor: pointer; background: #fff; border: 3px solid #3a5a2a; border-radius: 10px;
+}
+.mcw-header { text-align: center; margin-bottom: 12px; }
+.mcw-h1 { margin: 0; font-size: 28px; color: #234; text-shadow: 1px 1px 0 #fff; }
+.mcw-sub { margin: 2px 0 0; font-size: 14px; font-weight: 700; color: #35618a; }
+
+.mcw-steps { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 0 auto 16px; max-width: 640px; }
+.mcw-step {
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  width: 78px; padding: 8px 4px; cursor: pointer;
+  background: rgba(255, 255, 255, 0.75); border: 3px solid #9bb3c9; border-radius: 12px;
+  transition: transform 0.1s, border-color 0.15s, background 0.15s;
+}
+.mcw-step:hover { transform: translateY(-2px); }
+.mcw-step-active { border-color: #e0692a; background: #fff; box-shadow: 0 4px 14px rgba(224, 105, 42, 0.3); }
+.mcw-step-done { border-color: #3a8a2a; background: #eafce2; }
+.mcw-step-done .mcw-step-icon { color: #2a7d2a; }
+.mcw-step-icon { font-size: 22px; font-weight: 900; line-height: 1; }
+.mcw-step-num { font-size: 11px; font-weight: 800; color: #557; }
+.mcw-step-label { font-size: 12px; font-weight: 700; color: #234; }
+
+.mcw-slot { margin: 0 auto; max-width: 660px; }
+
+.mcw-nav { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 16px auto 0; max-width: 660px; }
+.mcw-nav-btn {
+  padding: 10px 16px; font-size: 15px; font-weight: 800; cursor: pointer; color: #234;
+  background: #fff; border: 3px solid #3a5a2a; border-bottom-width: 5px; border-radius: 10px;
+}
+.mcw-nav-btn:disabled { opacity: 0.4; cursor: default; }
+.mcw-nav-next { background: #ffd98a; border-color: #b9812f; }
+.mcw-progress { font-size: 14px; font-weight: 800; color: #35618a; }
+.mcw-alldone {
+  margin: 18px auto 0; max-width: 660px; text-align: center; font-size: 18px; font-weight: 800;
+  color: #235c1a; background: #eafce2; border: 3px solid #3a8a2a; border-radius: 12px; padding: 14px;
+  animation: mfp-pop 0.5s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mfp-cloud, .mfp-steve, .mfp-diamond, .mfp-creeper, .mfp-hot, .mfp-prompt-flash,
+  .mcc-tower-win, .mcl-cm, .mcw-book { animation: none !important; }
+}
