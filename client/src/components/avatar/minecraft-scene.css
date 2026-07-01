@@ -110,7 +110,7 @@
   gap: 14px;
   padding: 20px;
 }
-.ta-mc.ta-root-center .mc-stage { height: min(70vh, 580px); }
+.ta-mc.ta-root-center .mc-stage { height: min(82vh, 720px); width: min(82vh, 720px); }
 
 .ta-mc.ta-root-split .ta-robot-col {
   position: absolute;
@@ -127,7 +127,7 @@
   border: none;
   pointer-events: none;
 }
-.ta-mc.ta-root-split .mc-stage { height: clamp(130px, 17vh, 200px); }
+.ta-mc.ta-root-split .mc-stage { height: clamp(150px, 20vh, 240px); }
 /* Интерактивийг дээш өргөж, доод талын морьтой тулахаас сэргийлнэ */
 .ta-mc.ta-root-split .ta-problem-pane { padding-top: 36px; padding-bottom: 16vh; }
 
