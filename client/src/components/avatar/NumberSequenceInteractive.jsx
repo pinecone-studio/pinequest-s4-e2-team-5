@@ -1,5 +1,25 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { CelebrationBurst } from './CelebrationBurst.jsx'
+
+function shuffle(arr) {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
+// Нэг хоосон нүдэнд 3 сонголт (зөв + ойролцоо тоо), бичихгүй зөвхөн сонгоно.
+function makeChoices(answer) {
+  const set = new Set([answer])
+  for (const d of [1, -1, 2, -2, 3, -3, 4, -4]) {
+    const v = answer + d
+    if (v >= 0) set.add(v)
+    if (set.size >= 3) break
+  }
+  return shuffle([...set].slice(0, 3))
+}
 
 function asNumberArray(value) {
   if (Array.isArray(value)) return value.filter((item) => !isBlankToken(item)).map(Number).filter(Number.isFinite)
@@ -95,38 +115,46 @@ function buildSlots(problem, answers) {
 export function NumberSequenceInteractive({ problem, onCorrect, onWrong }) {
   const answers = useMemo(() => inferNextValues(problem), [problem])
   const slots = useMemo(() => buildSlots(problem, answers), [problem, answers])
-  const [values, setValues] = useState(() => answers.map(() => ''))
-  const [phase, setPhase] = useState('typing')
 
-  useEffect(() => {
-    setValues(answers.map(() => ''))
-    setPhase('typing')
-  }, [answers])
+  // Одоо хэддэх хоосон нүдийг бөглөж байгаа, өмнөх нүдэнд юу сонгосон
+  const [filledCount, setFilledCount] = useState(0)
+  const [wrongPick, setWrongPick] = useState(null)
+  const done = answers.length > 0 && filledCount >= answers.length
 
-  const updateValue = (i, value) => {
-    setValues((prev) => prev.map((v, idx) => (idx === i ? value : v)))
-    if (phase === 'wrong') setPhase('typing')
-  }
+  const currentAnswer = answers[filledCount]
+  const choices = useMemo(
+    () => (currentAnswer == null ? [] : makeChoices(currentAnswer)),
+    [currentAnswer],
+  )
 
-  const check = (e) => {
-    e.preventDefault()
-    const given = values.map((v) => Number(v))
-    const isComplete = values.every((v) => v.trim() !== '') && given.every(Number.isFinite)
-    const isCorrect = isComplete && answers.length > 0 && given.every((n, i) => n === answers[i])
-
-    if (isCorrect) {
-      setPhase('correct')
-      onCorrect?.()
+  const pick = (n) => {
+    if (done) return
+    if (n === currentAnswer) {
+      setWrongPick(null)
+      const next = filledCount + 1
+      setFilledCount(next)
+      if (next >= answers.length) onCorrect?.()
     } else {
-      setPhase('wrong')
+      setWrongPick(n)
       onWrong?.()
+      setTimeout(() => setWrongPick(null), 700)
     }
   }
 
+  // Слот индекс → хэддэх хоосон нүд болохыг урьдчилан тооцно (render дотор мутацгүй)
+  const blankIndexBySlot = useMemo(() => {
+    const map = {}
+    let seen = 0
+    slots.forEach((slot, i) => {
+      if (slot === null) { map[i] = seen; seen += 1 }
+    })
+    return map
+  }, [slots])
+
   return (
-    <form className="seq-root" onSubmit={check}>
+    <div className="seq-root">
       <div className="vm-word-prompt">
-        {problem.promptMn || 'Дарааллын дараагийн 3 тоог олоорой.'}
+        {problem.promptMn || 'Дарааллын дутуу тоог сонгоорой.'}
       </div>
 
       <div className="seq-row" aria-label="Тоон дараалал">
@@ -134,33 +162,39 @@ export function NumberSequenceInteractive({ problem, onCorrect, onWrong }) {
           if (slot !== null) {
             return <span key={`${slot}-${slotIndex}`} className="seq-chip">{slot}</span>
           }
-          const inputIndex = slots.slice(0, slotIndex + 1).filter((value) => value === null).length - 1
+          const blankIndex = blankIndexBySlot[slotIndex]
+          const isFilled = blankIndex < filledCount
+          const isCurrent = blankIndex === filledCount && !done
           return (
-            <input
+            <span
               key={`blank-${slotIndex}`}
-              className={`seq-input${phase === 'wrong' ? ' seq-input-wrong' : ''}${phase === 'correct' ? ' seq-input-correct' : ''}`}
-              value={phase === 'correct' ? answers[inputIndex] : values[inputIndex] ?? ''}
-              onChange={(e) => updateValue(inputIndex, e.target.value)}
-              inputMode="numeric"
-              pattern="-?[0-9]*"
-              placeholder="?"
-              aria-label={`Хоосон ${inputIndex + 1} тоо`}
-              disabled={phase === 'correct'}
-            />
+              className={`seq-chip seq-chip-blank${isFilled ? ' seq-chip-filled' : ''}${isCurrent ? ' seq-chip-current' : ''}`}
+            >
+              {isFilled || done ? answers[blankIndex] : '?'}
+            </span>
           )
         })}
       </div>
 
-      {phase === 'correct' ? (
+      {done ? (
         <div className="seq-success">
           Зөв дараалал!
           <CelebrationBurst />
         </div>
       ) : (
-        <button type="submit" className={`seq-check-btn${phase === 'wrong' ? ' seq-check-wrong' : ''}`}>
-          Шалгах
-        </button>
+        <div className="vm-choice-grid seq-choice-grid">
+          {choices.map((n) => (
+            <button
+              key={n}
+              type="button"
+              className={`vm-choice-btn seq-choice-btn${wrongPick === n ? ' vm-choice-wrong' : ''}`}
+              onClick={() => pick(n)}
+            >
+              <span className="seq-choice-num">{n}</span>
+            </button>
+          ))}
+        </div>
       )}
-    </form>
+    </div>
   )
 }

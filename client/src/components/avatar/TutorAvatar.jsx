@@ -7,6 +7,11 @@ import { ComparisonInteractive } from './ComparisonInteractive.jsx'
 import { MissingAddendInteractive } from './MissingAddendInteractive.jsx'
 import { NumberSequenceInteractive } from './NumberSequenceInteractive.jsx'
 import { NeighborNumberInteractive } from './NeighborNumberInteractive.jsx'
+import { WordProblemInteractive } from './WordProblemInteractive.jsx'
+import { TensOnesInteractive } from './TensOnesInteractive.jsx'
+import { EquationBalanceInteractive } from './EquationBalanceInteractive.jsx'
+import { LongExpressionInteractive } from './LongExpressionInteractive.jsx'
+import { LengthUnitInteractive } from './LengthUnitInteractive.jsx'
 import { ProblemList } from './ProblemList.jsx'
 import { CelebrationBurst } from './CelebrationBurst.jsx'
 import { JoyBackground, JoyRobot } from './JoyScene.jsx'
@@ -357,6 +362,16 @@ function ProblemInteractive({ problem, isSpeaking, onCorrect, onWrong }) {
     return <NumberSequenceInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
   if (problem.type === 'number_neighbor')
     return <NeighborNumberInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+  if (problem.type === 'word')
+    return <WordProblemInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+  if (problem.type === 'tens_ones')
+    return <TensOnesInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+  if (problem.type === 'equation_balance')
+    return <EquationBalanceInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+  if (problem.type === 'long_expression')
+    return <LongExpressionInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+  if (problem.type === 'length_unit')
+    return <LengthUnitInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
 
   const op = inferOperator(problem)
   if (op === '*' || op === '/')
@@ -424,7 +439,10 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
   const askedRef = useRef(false)
   const analyzingSaidRef = useRef(false)
   const lastExplainedRef = useRef('')
-  const [selectedIndex, setSelectedIndex] = useState(null)
+  // Олон бодлого орж ирэхэд ЭХНИЙ бодлогоос эхэлнэ (жагсаалтаас сонгуулж асуухгүй)
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  // Хүүхэд "← Бодлогууд" дарж бүх бодлогын жагсаалтыг үзэхийг хүсвэл л жагсаалт нээгдэнэ
+  const [showListView, setShowListView] = useState(false)
   // Зөв хариулсан үед background-ийг богино хугацаанд баяр хөөртэй болгоно
   const [celebrating, setCelebrating] = useState(false)
 
@@ -435,23 +453,27 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
     return fb ? normalizeHomeworkProblems([fb]) : []
   }, [problems, homeworkContext])
 
-  // Шинэ даалгавар орж ирэхэд сонголтыг цэвэрлэнэ
+  // Шинэ даалгавар орж ирэхэд эхний бодлогоос эхэлнэ
   useEffect(() => {
-    setSelectedIndex(null)
+    setSelectedIndex(0)
+    setShowListView(false)
     askedRef.current = false
     lastExplainedRef.current = ''
   }, [structuredProblems])
 
-  const effectiveIndex = selectedIndex != null
-    ? selectedIndex
-    : (structuredProblems.length === 1 ? 0 : null)
-  // Зөвхөн зураг дээрх бодлогыг ашиглана (AI шинэ бодлого зохиохгүй)
-  const activeProblem = effectiveIndex != null ? structuredProblems[effectiveIndex] : null
+  const effectiveIndex = structuredProblems.length
+    ? Math.min(selectedIndex ?? 0, structuredProblems.length - 1)
+    : null
 
-  const showList = structuredProblems.length > 1 && selectedIndex == null
+  const showList = structuredProblems.length > 1 && showListView
+  // Зөвхөн зураг дээрх бодлогыг ашиглана (AI шинэ бодлого зохиохгүй)
+  const activeProblem = !showList && effectiveIndex != null
+    ? structuredProblems[effectiveIndex]
+    : null
 
   const selectProblem = useCallback((i) => {
     setSelectedIndex(i)
+    setShowListView(false)
   }, [])
 
   // interpretCommand логикийг рендер бүрийн дараа шинэчилнэ (сүүлийн state-ийг барина)
@@ -460,7 +482,7 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
       if (!structuredProblems.length) return false
       // Тусламж/асуулт бол сонголт БИШ — chat руу дамжуулж AI дахин тайлбарлана.
       if (HELP_RE.test(text.toLowerCase())) return false
-      const selecting = selectedIndex == null && structuredProblems.length > 1
+      const selecting = showListView && structuredProblems.length > 1
       const idx = extractProblemNumber(text, { requireKeyword: !selecting })
       if (idx == null || idx < 1 || idx > structuredProblems.length) return false
       // Одоогийн бодлогоо дахин нэрлэвэл шилжихгүй — chat-аар дахин тайлбарлуулна.
@@ -479,13 +501,14 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
     return () => { stopAlwaysListen(); stopCurrentAudio() }
   }, [nickname]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Олон бодлого орж ирэхэд "аль вэ?" гэж асууна
+  // Хүүхэд бүх бодлогын жагсаалтыг нээвэл "аль вэ?" гэж асууна
   useEffect(() => {
-    if (structuredProblems.length > 1 && selectedIndex == null && !askedRef.current && greetedRef.current) {
+    if (structuredProblems.length > 1 && showListView && !askedRef.current && greetedRef.current) {
       askedRef.current = true
       speak(`${nickname}, аль бодлогыг хамт бодох вэ? Дугаарыг нь хэлээрэй.`)
     }
-  }, [structuredProblems.length, selectedIndex, nickname, speak])
+    if (!showListView) askedRef.current = false
+  }, [structuredProblems.length, showListView, nickname, speak])
 
   // Зураг шинжиж байх үед зааварчилгааны оронд "түр хүлээ" гэж хэлнэ
   useEffect(() => {
@@ -520,7 +543,7 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
         setSelectedIndex(next)
       } else if (total > 1) {
         // Бүх бодлого дууссан — жагсаалт руу буцна
-        setSelectedIndex(null)
+        setShowListView(true)
         speak(`Сайн байна ${nickname}! Бүх бодлогоо дууслаа.`)
       } else {
         speak(`Гайхалтай ${nickname}! Бодлогоо зөв бодлоо.`)
@@ -575,9 +598,14 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
           ) : activeProblem ? (
             <>
               {structuredProblems.length > 1 && (
-                <button className="ta-back-btn" onClick={() => setSelectedIndex(null)}>
-                  ← Бодлогууд
-                </button>
+                <div className="ta-problem-nav">
+                  <button className="ta-back-btn" onClick={() => setShowListView(true)}>
+                    ← Бодлогууд
+                  </button>
+                  <span className="ta-problem-progress">
+                    Бодлого {(effectiveIndex ?? 0) + 1} / {structuredProblems.length}
+                  </span>
+                </div>
               )}
               <ProblemInteractive
                 key={problemKey(activeProblem)}
