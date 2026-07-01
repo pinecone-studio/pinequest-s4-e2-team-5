@@ -376,7 +376,7 @@ function normalizeProblems(problems: any[]): any[] {
         target = (answerNums[0] + answerNums[1]) / 2;
       }
       if (!Number.isFinite(target) && rawNums.length === 1) {
-        target = rawNums[0];
+        target = rawNums[0]!;
       }
       if (isNeighborTarget(target)) {
         out.type = "number_neighbor";
@@ -420,15 +420,18 @@ function normalizeProblems(problems: any[]): any[] {
       ) {
         let step: number | null = null;
         for (let idx = 1; idx < knownSlots.length; idx++) {
-          const gap = knownSlots[idx].index - knownSlots[idx - 1].index;
-          const diff = knownSlots[idx].value - knownSlots[idx - 1].value;
+          const cur = knownSlots[idx]!;
+          const prev = knownSlots[idx - 1]!;
+          const gap = cur.index - prev.index;
+          const diff = cur.value! - prev.value!;
           if (gap > 0 && diff % gap === 0) {
             step = diff / gap;
             break;
           }
         }
         if (step !== null) {
-          const first = knownSlots[0].value - step * knownSlots[0].index;
+          const firstSlot = knownSlots[0]!;
+          const first = firstSlot.value! - step * firstSlot.index;
           const complete = slots.map(
             (_: any, idx: number) => first + step! * idx,
           );
@@ -458,7 +461,7 @@ function normalizeProblems(problems: any[]): any[] {
         const step = ops[ops.length - 1] - ops[ops.length - 2];
         const isArithmetic =
           ops.length < 3 ||
-          ops.every((n, idx) => idx === 0 || n - ops[idx - 1] === step);
+          ops.every((n: number, idx: number) => idx === 0 || n - ops[idx - 1] === step);
         if (isArithmetic) {
           out.answer = [1, 2, 3].map((k) => ops[ops.length - 1] + step * k);
           out.sequenceSlots = [...ops, null, null, null];
@@ -473,7 +476,7 @@ function normalizeProblems(problems: any[]): any[] {
             ratio !== null &&
             Number.isFinite(ratio) &&
             ops.every(
-              (n, idx) =>
+              (n: number, idx: number) =>
                 idx === 0 || (ops[idx - 1] !== 0 && n / ops[idx - 1] === ratio),
             );
           if (isGeometric) {

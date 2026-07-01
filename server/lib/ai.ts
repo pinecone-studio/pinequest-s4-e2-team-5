@@ -57,5 +57,5 @@ export async function chatComplete({
 
   if (jsonMode) params.response_format = { type: "json_object" };
 
-  return openai.chat.completions.create(params);
+  return openai.chat.completions.create(params as any);
 }
