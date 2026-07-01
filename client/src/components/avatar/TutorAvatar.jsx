@@ -17,6 +17,7 @@ import { ProblemList } from './ProblemList.jsx'
 import { CelebrationBurst } from './CelebrationBurst.jsx'
 import { JoyBackground, JoyRobot } from './JoyScene.jsx'
 import { MinecraftBackground } from './MinecraftScene.jsx'
+import { MinecraftSteveScene } from './MinecraftSteveScene.jsx'
 import { McQueenBackground } from './McQueenScene.jsx'
 import AstronautLoader from './AstronautLoader.jsx'
 import './astronaut-loader.css'
@@ -637,8 +638,11 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
             <JoyRobot mood={mascotMood} />
           </div>
         ) : isMc ? (
-          <div className="mc-stage">
-            <img src="/maynkrap.png" alt="Майнкрафт найз" draggable="false" />
+          <div className="mc-stage mc-stage--3d">
+            <MinecraftSteveScene
+              variant="compact"
+              mood={celebrating ? 'celebrate' : mascotMood}
+            />
           </div>
         ) : isMcq ? (
           <div className="mcq-stage">

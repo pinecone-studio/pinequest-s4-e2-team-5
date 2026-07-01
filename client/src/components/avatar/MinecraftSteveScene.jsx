@@ -148,8 +148,14 @@ function SteveCharacter({ reducedMotion = false, mood = "speaking" }) {
   const rightLegRef = useRef(null);
 
   const introFinishedRef = useRef(false);
+  // "celebrate" mood ирэх бүрт хугацааг тэмдэглэж, богино баярын үсрэлт тоглуулна.
+  const celebrateStartRef = useRef(0);
 
   const materials = useSteveMaterials();
+
+  useEffect(() => {
+    if (mood === "celebrate") celebrateStartRef.current = performance.now();
+  }, [mood]);
 
   useEffect(() => {
     if (!rootRef.current || reducedMotion) {
@@ -233,9 +239,21 @@ function SteveCharacter({ reducedMotion = false, mood = "speaking" }) {
 
     const t = clock.getElapsedTime();
 
+    // Баярын үсрэлт: зөв хариулсны дараа ~1.1 сек хоёр удаа бөмбөрч дээш үсэрнэ.
+    const sinceCelebrate = (performance.now() - celebrateStartRef.current) / 1000;
+    const celebrating =
+      celebrateStartRef.current > 0 && sinceCelebrate < 1.15 && !reducedMotion;
+    const jump = celebrating
+      ? Math.abs(Math.sin(sinceCelebrate * Math.PI * 2.2)) *
+        0.6 *
+        (1 - sinceCelebrate / 1.15)
+      : 0;
+
     if (rootRef.current) {
+      const restY = -1.05 + Math.sin(t * 1.5) * 0.02 + jump;
+      // Үсрэх үед хурдан (0.35), тайван үед зөөлөн (0.05) лерп.
       rootRef.current.position.y +=
-        (-1.05 + Math.sin(t * 1.5) * 0.02 - rootRef.current.position.y) * 0.05;
+        (restY - rootRef.current.position.y) * (celebrating ? 0.35 : 0.05);
 
       rootRef.current.rotation.y +=
         (Math.sin(t * 0.4) * 0.03 - rootRef.current.rotation.y) * 0.05;
@@ -292,6 +310,19 @@ function SteveCharacter({ reducedMotion = false, mood = "speaking" }) {
 
     if (rightLegRef.current) {
       rightLegRef.current.rotation.x = -Math.sin(t * 1.5) * 0.02;
+    }
+
+    // Баярлаж байх үед хоёр гараа дээш өргөж баяр хөөрөөр даллана.
+    if (celebrating) {
+      const cheer = -Math.PI / 1.5 + Math.sin(t * 20) * 0.25;
+      if (rightArmRef.current) {
+        rightArmRef.current.rotation.x = cheer;
+        rightArmRef.current.rotation.z = -0.22;
+      }
+      if (leftArmRef.current) {
+        leftArmRef.current.rotation.x = cheer;
+        leftArmRef.current.rotation.z = 0.22;
+      }
     }
   });
 
@@ -750,13 +781,16 @@ function WoodFence({ position, rotation = [0, 0, 0] }) {
   );
 }
 
-function MinecraftWorld({ reducedMotion, mood }) {
+function MinecraftWorld({ reducedMotion, mood, variant = "full" }) {
   const { size } = useThree();
   const narrow = size.width < 720;
+  const compact = variant === "compact";
+  const celebrating = mood === "celebrate";
 
   return (
     <>
-      <color attach="background" args={["#9bd2ff"]} />
+      {/* compact (learn хуудас) хувилбар нь ард талын DOM дэвсгэр дээр тунгалаг сууна */}
+      {!compact && <color attach="background" args={["#9bd2ff"]} />}
 
       <ambientLight intensity={0.85} />
       <hemisphereLight args={["#dff5ff", "#7a5230", 1.05]} />
@@ -773,12 +807,62 @@ function MinecraftWorld({ reducedMotion, mood }) {
       <pointLight position={[-2.8, 2.2, 4]} intensity={0.55} color="#b7fff3" />
 
       <group
-        scale={narrow ? 0.68 : 1}
-        position={[narrow ? 0 : 0.05, narrow ? -0.06 : 0, 0]}
+        scale={compact ? (narrow ? 0.74 : 0.88) : narrow ? 0.68 : 1}
+        position={
+          compact
+            ? [narrow ? -0.42 : -0.48, -0.05, 0]
+            : [narrow ? 0 : 0.05, narrow ? -0.06 : 0, 0]
+        }
       >
         <SteveCharacter reducedMotion={reducedMotion} mood={mood} />
       </group>
 
+      {/* Баяр хүргэх мөчид алтан очлолын дэлбэрэлт */}
+      {celebrating && !reducedMotion && (
+        <Sparkles
+          count={40}
+          scale={[4.4, 3.4, 2.2]}
+          size={4}
+          speed={0.9}
+          opacity={0.7}
+          color="#ffe45e"
+          position={[compact ? -0.4 : 0.15, 1.6, 0.3]}
+        />
+      )}
+
+      {/* compact хувилбар: цөөн хөвөгч блок + очлолоор л "vibe" өгнө */}
+      {compact ? (
+        <>
+          <GrassBlock
+            position={[2.35, 0.7, -1.1]}
+            scale={[0.5, 0.5, 0.5]}
+            float={!reducedMotion}
+          />
+          <DiamondOre position={[2.5, -0.7, 0.6]} />
+          <CloudPuff position={[-2.3, 2.4, -2.4]} scale={0.72} />
+          <CloudPuff position={[2.2, 2.7, -2.8]} scale={0.86} />
+          {!reducedMotion && (
+            <Sparkles
+              count={16}
+              scale={[4, 2.6, 2]}
+              size={2.2}
+              speed={0.2}
+              opacity={0.32}
+              color="#fff6b0"
+              position={[-0.35, 1.4, 0.2]}
+            />
+          )}
+        </>
+      ) : (
+        <FullMinecraftWorld reducedMotion={reducedMotion} />
+      )}
+    </>
+  );
+}
+
+function FullMinecraftWorld({ reducedMotion }) {
+  return (
+    <>
       {/* Дэлхийн Блокууд */}
       <GrassBlock
         position={[-3.25, 0.15, -1.25]}
@@ -849,26 +933,38 @@ function MinecraftWorld({ reducedMotion, mood }) {
   );
 }
 
-export function MinecraftSteveScene({ mood = "speaking" }) {
+export function MinecraftSteveScene({ mood = "speaking", variant = "full" }) {
   const reducedMotion = usePrefersReducedMotion();
+  const compact = variant === "compact";
 
   return (
-    <div className="minecraft-steve-stage" aria-hidden="true">
+    <div
+      className={`minecraft-steve-stage${compact ? " minecraft-steve-stage--compact" : ""}`}
+      aria-hidden="true"
+    >
       <Canvas
         className="minecraft-steve-canvas"
         shadows
         dpr={[1, 2]}
-        camera={{ position: [0, 1.55, 8.85], fov: 34, near: 0.1, far: 40 }}
+        camera={
+          compact
+            ? { position: [0, 0.95, 8.9], fov: 32, near: 0.1, far: 40 }
+            : { position: [0, 1.55, 8.85], fov: 34, near: 0.1, far: 40 }
+        }
         gl={{
           antialias: true,
-          alpha: false,
+          alpha: compact,
           preserveDrawingBuffer: true,
           powerPreference: "high-performance",
           logarithmicDepthBuffer: true,
         }}
       >
         <Suspense fallback={null}>
-          <MinecraftWorld reducedMotion={reducedMotion} mood={mood} />
+          <MinecraftWorld
+            reducedMotion={reducedMotion}
+            mood={mood}
+            variant={variant}
+          />
         </Suspense>
       </Canvas>
     </div>
