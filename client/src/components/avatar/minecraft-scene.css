@@ -90,6 +90,20 @@
   50%      { transform: translateY(-10px); }
 }
 
+/* ── 3D Steve (start хуудаснаас авчирсан) learn хуудсанд ── */
+.mc-stage--3d {
+  overflow: visible;
+  animation: none;
+  aspect-ratio: 1 / 1;
+}
+.mc-stage--3d .minecraft-steve-stage {
+  overflow: visible;
+}
+/* compact хувилбарт start хуудасны soft-light vignette хэрэггүй */
+.mc-stage--3d .minecraft-steve-stage--compact::before {
+  display: none;
+}
+
 .ta-mc.ta-root-center .ta-robot-col {
   align-items: center;
   justify-content: center;
