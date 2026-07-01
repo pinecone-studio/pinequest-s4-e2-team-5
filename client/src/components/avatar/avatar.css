@@ -389,6 +389,21 @@
   width: 42%;
   flex-shrink: 0;
   border-left: 1px solid rgba(255, 255, 255, 0.06);
+  position: relative;
+}
+.ta-root-split .ta-chat-log {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  transform: none;
+  max-height: 130px;
+  margin-top: auto;
+}
+.ta-root-split .ta-text-input-row {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  transform: none;
 }
 @keyframes robot-enter {
   from { opacity: 0; transform: scale(0.94); }
@@ -422,17 +437,32 @@
 .ta-root-center .sb-wrap {
   position: absolute;
   left: 50%;
-  bottom: 92px;
+  bottom: 232px;
   transform: translateX(-50%);
   z-index: 4;
 }
 .ta-root-center .ta-status-row {
   position: absolute;
   left: 50%;
-  bottom: 56px;
+  bottom: 200px;
   transform: translateX(-50%);
   margin-top: 0;
   z-index: 4;
+}
+.ta-root-center .ta-chat-log {
+  position: absolute;
+  left: 50%;
+  bottom: 58px;
+  transform: translateX(-50%);
+  z-index: 5;
+  max-height: 130px;
+}
+.ta-root-center .ta-text-input-row {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  z-index: 5;
 }
 .tutor-spline-side { height: min(64vh, 560px) !important; max-width: none !important; width: 100%; }
 
@@ -1165,6 +1195,89 @@
   margin: 4px 0 0;
   padding: 0 12px;
 }
+
+.ta-chat-log {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+  width: 100%;
+  max-width: 300px;
+  margin-top: 10px;
+  padding: 4px 2px;
+  scrollbar-width: none;
+}
+.ta-chat-log::-webkit-scrollbar { display: none; }
+
+.ta-chat-msg {
+  display: flex;
+  max-width: 88%;
+}
+.ta-chat-msg--user     { align-self: flex-end; }
+.ta-chat-msg--assistant { align-self: flex-start; }
+
+.ta-chat-text {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 14px;
+  font-size: 12px;
+  line-height: 1.45;
+  word-break: break-word;
+}
+.ta-chat-msg--user .ta-chat-text {
+  background: rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.92);
+  border-bottom-right-radius: 4px;
+}
+.ta-chat-msg--assistant .ta-chat-text {
+  background: rgba(101,217,157,0.18);
+  color: rgba(255,255,255,0.88);
+  border-bottom-left-radius: 4px;
+}
+
+.ta-text-input-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  width: 100%;
+  max-width: 300px;
+}
+.ta-text-input {
+  flex: 1;
+  height: 36px;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  border-radius: 18px;
+  background: rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.92);
+  font-size: 13px;
+  font-family: inherit;
+  padding: 0 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.ta-text-input::placeholder { color: rgba(255,255,255,0.35); }
+.ta-text-input:focus { border-color: rgba(255,255,255,0.45); }
+.ta-text-input:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.ta-text-send-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(101,217,157,0.35);
+  color: white;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+.ta-text-send-btn:hover:not(:disabled) { background: rgba(101,217,157,0.55); }
+.ta-text-send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
 /* ===== Landing form additions ===== */
 .landing-form {

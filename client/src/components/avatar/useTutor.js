@@ -10,6 +10,7 @@ export function useTutor({ nickname, homeworkContext, interpretCommand }) {
   const [isThinking, setIsThinking] = useState(false);
   const [error, setError] = useState(null);
   const [lastText, setLastText] = useState("");
+  const [chatMessages, setChatMessages] = useState([]);
 
   const messagesRef = useRef([]);
   const nicknameRef = useRef(nickname);
@@ -144,6 +145,7 @@ export function useTutor({ nickname, homeworkContext, interpretCommand }) {
           ...messagesRef.current,
           { role: "user", content: userText.trim() },
         ];
+        setChatMessages((prev) => [...prev, { role: "user", text: userText.trim() }]);
       }
       isBusyRef.current = true;
       setIsThinking(true);
@@ -164,6 +166,7 @@ export function useTutor({ nickname, homeworkContext, interpretCommand }) {
           ...messagesRef.current,
           { role: "assistant", content: text },
         ];
+        setChatMessages((prev) => [...prev, { role: "assistant", text }]);
         setIsThinking(false);
         await speak(text);
       } catch (e) {
@@ -292,11 +295,11 @@ export function useTutor({ nickname, homeworkContext, interpretCommand }) {
   }, []);
 
   // ── greet (mount) ────────────────────────────────────────
-  const greet = useCallback(async () => {
+  const greet = useCallback(async (greetingText) => {
     messagesRef.current = [];
-    await speak(
-      `Сайн уу ${nicknameRef.current}! Хоёулаа гэрийн даалгавраа хамтдаа хийцгээе.`,
-    );
+    const text = greetingText ??
+      `Сайн уу ${nicknameRef.current}! Хоёулаа гэрийн даалгавраа хамтдаа хийцгээе.`;
+    await speak(text);
     if (!homeworkRef.current) {
       await speak(
         `${nicknameRef.current}, эхлээд даалгаврынхаа зургийг зүүн талд оруулна уу.`,
@@ -342,6 +345,7 @@ export function useTutor({ nickname, homeworkContext, interpretCommand }) {
     isThinking,
     error,
     lastText,
+    chatMessages,
     greet,
     announceHomework,
     explainProblem,
