@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { MascotScene } from "../KidMascotScene.jsx";
 import { JoyBackground, JoyRobot } from "./JoyScene.jsx";
 import { MinecraftSteveScene } from "./MinecraftSteveScene.jsx";
+import RocketLoader from "./RocketLoader.jsx";
 import { DEFAULT_MASCOT } from "../mascotConfig.js";
 import { API_BASE } from "../../lib/config.js";
 import { useVoiceCapture } from "./useVoiceCapture.js";
@@ -24,9 +25,11 @@ export function AvatarIntro({
   avatar = DEFAULT_MASCOT.id,
 }) {
   const [name, setName] = useState("");
+  const [launching, setLaunching] = useState(false);
   const isRobot = avatar === "robot";
   const isMinecraft = avatar === "minecraft";
   const isMcqueen = avatar === "mcqueen";
+  const isAstronaut = avatar === "astronaut";
 
   const introPlayedRef = useRef(false);
   const introPlayingRef = useRef(false);
@@ -144,12 +147,20 @@ export function AvatarIntro({
     continuedRef.current = true;
     stop();
     cleanupAudio();
-    onContinue(name.trim() || "хүүхэд");
+    const finalName = name.trim() || "хүүхэд";
+    // Сансрын нисгэгч: нэр авмагц пуужин жинхэнэ хөөрөлт мэт дээш нисч,
+    // анимаци дуусмагц дараагийн (learn) хуудас руу шилжинэ.
+    if (isAstronaut) {
+      setLaunching(true);
+      setTimeout(() => onContinue(finalName), 1700);
+      return;
+    }
+    onContinue(finalName);
   };
 
   return (
     <div
-      className={`avatar-intro${isRobot ? " avatar-intro--joy" : isMinecraft ? " avatar-intro--mc" : isMcqueen ? " avatar-intro--mcq" : ""}`}
+      className={`avatar-intro${isRobot ? " avatar-intro--joy" : isMinecraft ? " avatar-intro--mc" : isMcqueen ? " avatar-intro--mcq" : isAstronaut ? " avatar-intro--astro" : ""}${launching ? " is-launching" : ""}`}
       onPointerDown={playIntro}
     >
       <button
@@ -174,6 +185,10 @@ export function AvatarIntro({
           </>
         ) : isMinecraft ? (
           <MinecraftSteveScene mood={listening ? "listening" : "speaking"} />
+        ) : isAstronaut ? (
+          <div className={`avatar-intro__rocket${launching ? " is-launch" : ""}`}>
+            <RocketLoader />
+          </div>
         ) : isMcqueen ? (
           <>
             <div className="mcq-bg" aria-hidden="true">

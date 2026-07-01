@@ -17,6 +17,8 @@ import { CelebrationBurst } from './CelebrationBurst.jsx'
 import { JoyBackground, JoyRobot } from './JoyScene.jsx'
 import { MinecraftBackground } from './MinecraftScene.jsx'
 import { McQueenBackground } from './McQueenScene.jsx'
+import AstronautLoader from './AstronautLoader.jsx'
+import './astronaut-loader.css'
 import { extractProblemNumber } from './extractProblemNumber.js'
 import { normalizeHomeworkProblems } from './problemNormalizer.js'
 import '../lesson/lesson.css'
@@ -572,10 +574,11 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
   const isJoy = avatar === 'robot'
   const isMc = avatar === 'minecraft'
   const isMcq = avatar === 'mcqueen'
+  const isAstro = avatar === 'astronaut'
 
   return (
     <div
-      className={`ta-root${showProblemPane ? ' ta-root-split' : ' ta-root-center'}${celebrating ? ' ta-celebrate' : ''}${isJoy ? ' ta-joy' : ''}${isMc ? ' ta-mc' : ''}${isMcq ? ' ta-mcq' : ''}`}
+      className={`ta-root${showProblemPane ? ' ta-root-split' : ' ta-root-center'}${celebrating ? ' ta-celebrate' : ''}${isJoy ? ' ta-joy' : ''}${isMc ? ' ta-mc' : ''}${isMcq ? ' ta-mcq' : ''}${isAstro ? ' ta-astro' : ''}`}
       data-theme={themeIndex}
     >
       {isJoy && <JoyBackground />}
@@ -632,6 +635,10 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
         ) : isMcq ? (
           <div className="mcq-stage">
             <img src="/McQueen.png" alt="Маккуин найз" draggable="false" />
+          </div>
+        ) : isAstro ? (
+          <div className="astro-stage">
+            <AstronautLoader />
           </div>
         ) : (
           <div className={`tutor-spline-wrap tutor-spline-big${showProblemPane ? ' tutor-spline-side' : ''}`}>

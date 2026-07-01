@@ -15,6 +15,7 @@ function normalizeAvatar(avatar) {
   if (avatar === "robot" || avatar === "hero") return "robot";
   if (avatar === "minecraft") return "minecraft";
   if (avatar === "mcqueen") return "mcqueen";
+  if (avatar === "astronaut") return "astronaut";
   if (avatar === "barbie") return "barbie";
   return "sun-buddy";
 }

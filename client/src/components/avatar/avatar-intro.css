@@ -984,3 +984,48 @@
     animation: none !important;
   }
 }
+
+/* ════════════════════════════════════════════════════════════
+   Сансрын нисгэгч — пуужингийн start дэлгэц ба хөөрөлт
+   ════════════════════════════════════════════════════════════ */
+.avatar-intro--astro {
+  background: radial-gradient(circle at 50% 30%, #1b2a5e 0%, #0a0f2b 68%, #05081c 100%);
+}
+
+/* RocketLoader-г scene дүүргэж байрлуулах — transform-оор дээш нисгэнэ */
+.avatar-intro__rocket {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+/* Нэр авмагц: бага зэрэг доош суугаад дараа нь хурдтай дээш нисч алга болно */
+.avatar-intro__rocket.is-launch {
+  animation: rocket-blastoff 1.7s cubic-bezier(0.45, 0, 0.85, 0.25) forwards;
+}
+@keyframes rocket-blastoff {
+  0% {
+    transform: translateY(0);
+  }
+  22% {
+    transform: translateY(2.5vh);
+  }
+  100% {
+    transform: translateY(-135vh);
+  }
+}
+
+/* Хөөрөх үед доод панель ба буцах товч замаас зайлж, дэлгэц цэвэр болно */
+.avatar-intro.is-launching .avatar-intro__panel,
+.avatar-intro.is-launching .avatar-intro__back {
+  opacity: 0;
+  transform: translateY(24px);
+  pointer-events: none;
+  transition: opacity 0.45s ease, transform 0.45s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .avatar-intro__rocket.is-launch {
+    animation-duration: 0.8s;
+  }
+}
