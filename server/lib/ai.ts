@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import type { ChatCompletionCreateParamsNonStreaming } from "openai/resources";
 
 // Бүх серверийн AI дуудлагад ашиглах нэг OpenAI client.
 export const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -57,5 +58,5 @@ export async function chatComplete({
 
   if (jsonMode) params.response_format = { type: "json_object" };
 
-  return openai.chat.completions.create(params);
+  return openai.chat.completions.create(params as ChatCompletionCreateParamsNonStreaming);
 }
