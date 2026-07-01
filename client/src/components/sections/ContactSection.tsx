@@ -8,7 +8,6 @@ import { Highlighter } from "../Highlighter";
 import AnimatedButton from "../AnimatedButton";
 import AvatarPicker, { AVATARS } from "../AvatarPicker";
 import Footer from "../Footer";
-import ParentModal from "../ParentModal";
 
 export default function ContactsSection({
   contactsSectionRef,
@@ -45,7 +44,10 @@ export default function ContactsSection({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [showError, setShowError] = useState(false);
   const [errorTick, setErrorTick] = useState(0);
-  const [parentOpen, setParentOpen] = useState(false);
+  const goToParents = () => {
+    window.history.pushState({}, "", "/parents");
+    window.dispatchEvent(new Event("pushstate-internal"));
+  };
 
   const selectedName =
     AVATARS.find((a) => a.id === selectedAvatar)?.name ?? null;
@@ -161,7 +163,7 @@ export default function ContactsSection({
               />
               <AnimatedButton
                 text="Эцэг эх"
-                onClick={() => setParentOpen(true)}
+                onClick={goToParents}
               />
             </div>
           </div>
@@ -200,8 +202,6 @@ export default function ContactsSection({
           onClose={() => setPickerOpen(false)}
         />
       )}
-
-      {parentOpen && <ParentModal onClose={() => setParentOpen(false)} />}
 
       <Footer />
     </div>
