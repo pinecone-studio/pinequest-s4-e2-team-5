@@ -27,9 +27,7 @@ function App() {
   );
   // Username → Bodoh хооронд warp шилжилт үзүүлэх үед {nickname, avatar}-г барина.
   const [warpTo, setWarpTo] = useState(null);
-  // Эцэг эхийн хяналтад зориулсан нэг удаагийн 6 оронтой код
-  const sessionCode = useMemo(() => String(Math.floor(100000 + Math.random() * 900000)), []);
-  // Хүүхдийн байнгын identifier — localStorage-д хадгалагдана
+  // Хүүхдийн байнгын identifier — localStorage-д хадгалагдана, WS room болон recordings-д ашиглана
   const familyCode = useMemo(() => {
     const stored = localStorage.getItem("childFamilyCode");
     if (stored) return stored;
@@ -109,10 +107,10 @@ function App() {
         </button>
 
         <div className="parent-code-badge">
-          Шууд: <strong>{sessionCode}</strong> · Бичлэг: <strong>{familyCode}</strong>
+          Код: <strong>{familyCode}</strong>
         </div>
 
-        <AvatarSession nickname={name} avatar={avatar} sessionCode={sessionCode} familyCode={familyCode} />
+        <AvatarSession nickname={name} avatar={avatar} sessionCode={familyCode} familyCode={familyCode} />
       </main>
     );
   }

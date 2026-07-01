@@ -15,61 +15,15 @@ function fmtDuration(ms) {
 
 export default function ParentPage({ onBack }) {
   const [step, setStep] = useState("input");
-  const [digits, setDigits] = useState(["", "", "", "", "", ""]);
-  const [familyCodeInput, setFamilyCodeInput] = useState("");
+  const [code, setCode] = useState("");
   const [status, setStatus] = useState("idle");
   const [screenOn, setScreenOn] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [recordings, setRecordings] = useState([]);
   const [playingId, setPlayingId] = useState(null);
-  const [activeFamily, setActiveFamily] = useState("");
-  const inputRefs = useRef([]);
   const wsRef = useRef(null);
   const cameraCanvasRef = useRef(null);
   const screenCanvasRef = useRef(null);
-
-  const code = digits.join("");
-
-  useEffect(() => { inputRefs.current[0]?.focus(); }, []);
-
-  const handleDigit = (i, val) => {
-    const v = val.replace(/\D/g, "").slice(-1);
-    const next = [...digits];
-    next[i] = v;
-    setDigits(next);
-    if (v && i < 5) inputRefs.current[i + 1]?.focus();
-  };
-
-  const handleKeyDown = (i, e) => {
-    if (e.key === "Backspace" && !digits[i] && i > 0) inputRefs.current[i - 1]?.focus();
-    if (e.key === "Enter" && code.length === 6) connect();
-  };
-
-  const handlePaste = (e) => {
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
-    if (pasted.length === 6) {
-      setDigits(pasted.split(""));
-      inputRefs.current[5]?.focus();
-    }
-    e.preventDefault();
-  };
-
-  const connect = useCallback(() => {
-    if (code.length !== 6) return;
-    setStep("viewing");
-    setStatus("connecting");
-  }, [code]);
-
-  const viewRecordingsOnly = useCallback(() => {
-    const fc = familyCodeInput.trim();
-    if (!fc) return;
-    setActiveFamily(fc);
-    fetch(`${API_BASE}/api/recordings?family=${encodeURIComponent(fc)}`)
-      .then((r) => r.json())
-      .then((d) => setRecordings(d.recordings ?? []))
-      .catch(() => {});
-    setStep("recordings-only");
-  }, [familyCodeInput]);
 
   const fetchRecordings = useCallback((fc) => {
     if (!fc) return;
@@ -78,6 +32,13 @@ export default function ParentPage({ onBack }) {
       .then((d) => setRecordings(d.recordings ?? []))
       .catch(() => {});
   }, []);
+
+  const connect = useCallback(() => {
+    if (code.length < 4) return;
+    setStep("viewing");
+    setStatus("connecting");
+    fetchRecordings(code);
+  }, [code, fetchRecordings]);
 
   useEffect(() => {
     if (step !== "viewing") return;
@@ -89,10 +50,13 @@ export default function ParentPage({ onBack }) {
     ws.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data);
-        if (msg.type === "child-disconnected") { setStatus("offline"); return; }
+        if (msg.type === "child-disconnected") {
+          setStatus("offline");
+          setTimeout(() => fetchRecordings(code), 3000);
+          return;
+        }
         if (msg.type === "screen-disconnected") { setScreenOn(false); return; }
         if (msg.type === "family-code" && msg.code) {
-          setActiveFamily(msg.code);
           fetchRecordings(msg.code);
           return;
         }
@@ -139,49 +103,15 @@ export default function ParentPage({ onBack }) {
     setScreenOn(false);
     setPlayingId(null);
     setRecordings([]);
-    setActiveFamily("");
     onBack();
   };
-
-  const RecordingsSidebar = () => (
-    <div style={{ ...sidebar, width: sidebarOpen ? "260px" : "44px" }}>
-      <button style={sidebarToggle} onClick={() => setSidebarOpen((o) => !o)} title={sidebarOpen ? "Хаах" : "Нээх"}>
-        {sidebarOpen ? "◀" : "▶"}
-      </button>
-      {sidebarOpen && (
-        <>
-          <p style={sidebarTitle}>Бичлэгийн түүх</p>
-          {activeFamily && (
-            <button style={refreshBtn} onClick={() => fetchRecordings(activeFamily)}>↻ Шинэчлэх</button>
-          )}
-          <div style={recList}>
-            {recordings.length === 0 && (
-              <p style={recEmpty}>Бичлэг байхгүй байна</p>
-            )}
-            {recordings.map((r) => (
-              <button
-                key={r.id}
-                style={{ ...recItem, background: playingId === r.id ? "#e8f5f0" : "transparent", borderColor: playingId === r.id ? "#185d56" : "rgba(22,43,42,0.08)" }}
-                onClick={() => setPlayingId(playingId === r.id ? null : r.id)}
-              >
-                <span style={recDate}>{fmtDate(r.created_at)}</span>
-                {r.duration_ms > 0 && <span style={recDur}>{fmtDuration(r.duration_ms)}</span>}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  );
 
   return (
     <div style={pageWrap}>
       <div style={topBar}>
         <button style={backBtn} onClick={goBack}>← Буцах</button>
         <span style={topTitle}>
-          {step === "input" ? "Эцэг эхийн хяналт"
-            : step === "recordings-only" ? `Бичлэг: ${activeFamily}`
-            : `Код: ${code}`}
+          {step === "input" ? "Эцэг эхийн хяналт" : `Код: ${code}`}
         </span>
         {step === "viewing" && (
           <div style={statusBadge}>
@@ -189,72 +119,70 @@ export default function ParentPage({ onBack }) {
             <span style={statusLabel}>{statusText(status)}</span>
           </div>
         )}
-        {step === "recordings-only" && (
-          <span style={{ fontSize: "12px", color: "#9ca3af" }}>Бичлэг горим</span>
-        )}
       </div>
 
       {step === "input" && (
         <div style={inputWrap}>
           <div style={inputCard}>
             <p style={inputTitle}>Хүүхдийн дэлгэц дээрх</p>
-            <p style={inputSubtitle}>6 оронтой кодыг оруулна уу</p>
-            <div style={digitRow} onPaste={handlePaste}>
-              {digits.map((d, i) => (
-                <input
-                  key={i}
-                  ref={(el) => { inputRefs.current[i] = el; }}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={1}
-                  value={d}
-                  onChange={(e) => handleDigit(i, e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(i, e)}
-                  style={{ ...digitInput, borderColor: d ? "#185d56" : "rgba(22,43,42,0.15)", background: d ? "#f0faf8" : "#fff" }}
-                />
-              ))}
-            </div>
+            <p style={inputSubtitle}>Кодыг оруулна уу (жш: WBOWAC)</p>
+            <input
+              type="text"
+              value={code}
+              onChange={(e) =>
+                setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8))
+              }
+              onKeyDown={(e) => { if (e.key === "Enter" && code.length >= 4) connect(); }}
+              placeholder="WBOWAC"
+              maxLength={8}
+              autoFocus
+              style={codeInput}
+            />
             <button
-              style={{ ...actionBtn, opacity: code.length === 6 ? 1 : 0.4 }}
-              disabled={code.length !== 6}
+              style={{ ...actionBtn, opacity: code.length >= 4 ? 1 : 0.4 }}
+              disabled={code.length < 4}
               onClick={connect}
             >
               Хянах эхлэх →
             </button>
-
-            <div style={divider}>
-              <div style={dividerLine} />
-              <span style={dividerText}>эсвэл зөвхөн бичлэг харах</span>
-              <div style={dividerLine} />
-            </div>
-
-            <div style={{ display: "flex", gap: "8px", width: "100%" }}>
-              <input
-                type="text"
-                placeholder="Бичлэг код (жш: WBOWAC)"
-                maxLength={8}
-                value={familyCodeInput}
-                onChange={(e) => setFamilyCodeInput(e.target.value.toUpperCase())}
-                onKeyDown={(e) => { if (e.key === "Enter" && familyCodeInput.length >= 4) viewRecordingsOnly(); }}
-                style={familyInput}
-              />
-              <button
-                style={{ ...actionBtn, opacity: familyCodeInput.length >= 4 ? 1 : 0.4, padding: "12px 18px", whiteSpace: "nowrap" }}
-                disabled={familyCodeInput.length < 4}
-                onClick={viewRecordingsOnly}
-              >
-                Харах →
-              </button>
-            </div>
           </div>
         </div>
       )}
 
       {step === "viewing" && (
         <div style={viewingWrap}>
-          <RecordingsSidebar />
+          {/* Sidebar */}
+          <div style={{ ...sidebar, width: sidebarOpen ? "260px" : "44px" }}>
+            <button style={sidebarToggle} onClick={() => setSidebarOpen((o) => !o)} title={sidebarOpen ? "Хаах" : "Нээх"}>
+              {sidebarOpen ? "◀" : "▶"}
+            </button>
+            {sidebarOpen && (
+              <>
+                <p style={sidebarTitle}>Бичлэгийн түүх</p>
+                <button style={refreshBtn} onClick={() => fetchRecordings(code)}>↻ Шинэчлэх</button>
+                <div style={recList}>
+                  {recordings.length === 0 && (
+                    <p style={recEmpty}>Бичлэг байхгүй байна</p>
+                  )}
+                  {recordings.map((r) => (
+                    <button
+                      key={r.id}
+                      style={{ ...recItem, background: playingId === r.id ? "#e8f5f0" : "transparent", borderColor: playingId === r.id ? "#185d56" : "rgba(22,43,42,0.08)" }}
+                      onClick={() => setPlayingId(playingId === r.id ? null : r.id)}
+                    >
+                      <span style={recDate}>{fmtDate(r.created_at)}</span>
+                      {r.duration_ms > 0 && <span style={recDur}>{fmtDuration(r.duration_ms)}</span>}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Main feed area */}
           <div style={mainArea}>
             <canvas ref={cameraCanvasRef} style={{ display: "none" }} />
+
             {playingId ? (
               <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px", minHeight: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -290,35 +218,6 @@ export default function ParentPage({ onBack }) {
           </div>
         </div>
       )}
-
-      {step === "recordings-only" && (
-        <div style={viewingWrap}>
-          <RecordingsSidebar />
-          <div style={mainArea}>
-            {playingId ? (
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px", minHeight: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <p style={feedLabel}>БИЧЛЭГ</p>
-                  <button style={closePlayBtn} onClick={() => setPlayingId(null)}>✕ Хаах</button>
-                </div>
-                <div style={{ ...feedBox, flex: 1 }}>
-                  <video
-                    key={playingId}
-                    src={`${API_BASE}/api/recordings/stream?path=${encodeURIComponent(playingId)}`}
-                    controls
-                    autoPlay
-                    style={{ width: "100%", height: "100%", objectFit: "contain", background: "#000" }}
-                  />
-                </div>
-              </div>
-            ) : (
-              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <p style={{ color: "#9ca3af", fontSize: "14px" }}>Зүүн талаас бичлэг сонгоно уу</p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -347,20 +246,15 @@ const statusBadge = { display: "flex", alignItems: "center", gap: "6px" };
 const statusDot = { width: 8, height: 8, borderRadius: "50%", flexShrink: 0 };
 const statusLabel = { fontSize: "13px", color: "#6d7d79" };
 const inputWrap = { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "32px 16px" };
-const inputCard = { background: "#fff", borderRadius: "20px", padding: "40px 36px", boxShadow: "0 8px 40px rgba(0,0,0,0.08)", display: "flex", flexDirection: "column", alignItems: "center", gap: "20px", width: "100%", maxWidth: "420px" };
+const inputCard = { background: "#fff", borderRadius: "20px", padding: "40px 36px", boxShadow: "0 8px 40px rgba(0,0,0,0.08)", display: "flex", flexDirection: "column", alignItems: "center", gap: "24px", width: "100%", maxWidth: "400px" };
 const inputTitle = { fontSize: "20px", fontWeight: 800, color: "#162b2a", margin: 0, textAlign: "center" };
-const inputSubtitle = { fontSize: "14px", color: "#6d7d79", margin: "-12px 0 0", textAlign: "center" };
-const digitRow = { display: "flex", gap: "10px", alignItems: "center" };
-const digitInput = { width: "52px", height: "60px", borderRadius: "12px", border: "2px solid rgba(22,43,42,0.15)", fontSize: "26px", fontWeight: 700, textAlign: "center", color: "#162b2a", outline: "none", transition: "border-color 0.15s, background 0.15s", caretColor: "transparent" };
+const inputSubtitle = { fontSize: "14px", color: "#6d7d79", margin: "-16px 0 0", textAlign: "center" };
+const codeInput = { width: "100%", padding: "16px 20px", borderRadius: "14px", border: "2px solid rgba(22,43,42,0.15)", fontSize: "28px", fontWeight: 800, textAlign: "center", color: "#162b2a", letterSpacing: "6px", outline: "none", background: "#fff", boxSizing: "border-box" };
 const actionBtn = { padding: "14px 40px", borderRadius: "12px", border: "none", background: "#185d56", color: "#fff", fontSize: "15px", fontWeight: 700, cursor: "pointer", transition: "opacity 0.15s" };
-const divider = { display: "flex", alignItems: "center", gap: "10px", width: "100%" };
-const dividerLine = { flex: 1, height: "1px", background: "rgba(22,43,42,0.1)" };
-const dividerText = { fontSize: "12px", color: "#9ca3af", whiteSpace: "nowrap" };
-const familyInput = { flex: 1, padding: "12px 14px", borderRadius: "10px", border: "2px solid rgba(22,43,42,0.15)", fontSize: "14px", fontWeight: 600, color: "#162b2a", outline: "none", letterSpacing: "2px" };
 const viewingWrap = { flex: 1, display: "flex", flexDirection: "row", overflow: "hidden" };
 const sidebar = { display: "flex", flexDirection: "column", background: "#fff", borderRight: "1px solid rgba(22,43,42,0.08)", transition: "width 0.2s", overflow: "hidden", flexShrink: 0 };
 const sidebarToggle = { margin: "10px auto", display: "block", border: "none", background: "none", color: "#185d56", fontSize: "13px", cursor: "pointer", padding: "4px 8px", fontWeight: 700, flexShrink: 0 };
-const sidebarTitle = { fontSize: "11px", fontWeight: 700, letterSpacing: "1.5px", color: "#9ca3af", margin: "0 0 4px", padding: "0 14px" };
+const sidebarTitle = { fontSize: "11px", fontWeight: 700, letterSpacing: "1.5px", color: "#9ca3af", margin: "0 0 2px", padding: "0 14px" };
 const refreshBtn = { display: "block", margin: "0 14px 8px", border: "none", background: "none", color: "#185d56", fontSize: "11px", fontWeight: 700, cursor: "pointer", padding: "2px 0", textAlign: "left" };
 const recList = { flex: 1, overflowY: "auto", padding: "0 8px 12px", display: "flex", flexDirection: "column", gap: "4px" };
 const recEmpty = { fontSize: "12px", color: "#9ca3af", textAlign: "center", padding: "20px 8px" };
