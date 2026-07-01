@@ -36,13 +36,13 @@ function useSteveMaterials() {
         roughness: 0.72,
       }),
       shirt: new THREE.MeshStandardMaterial({
-        color: "#2ca6ad",
-        roughness: 0.48,
-        metalness: 0.04,
+        color: "#3d7dc4", // teal-ийн оронд цэнхэр
+        roughness: 0.75, // гялбааг багасгах
+        metalness: 0, // metalness-ийг бүрмөсөн авах
       }),
       shirtDark: new THREE.MeshStandardMaterial({
-        color: "#1b7280",
-        roughness: 0.56,
+        color: "#2a5a96",
+        roughness: 0.8,
       }),
       pants: new THREE.MeshStandardMaterial({
         color: "#354486",
@@ -56,14 +56,36 @@ function useSteveMaterials() {
         color: "#17100c",
         roughness: 0.45,
       }),
+      // Жинхэнэ Стив шиг: цагаан цурхайн дэвсгэр + ягаан/цэнхэр хүүхэн хараа
+      eyeWhite: new THREE.MeshStandardMaterial({
+        color: "#f6f6fb",
+        roughness: 0.28,
+      }),
+      iris: new THREE.MeshStandardMaterial({
+        color: "#4b3ea6",
+        roughness: 0.4,
+      }),
       eyeShine: new THREE.MeshStandardMaterial({
         color: "#ffffff",
         roughness: 0.18,
         emissive: "#ffffff",
         emissiveIntensity: 0.18,
       }),
+      // Хөмсөг ба сахал — үснээс арай улаавтар бор
+      brow: new THREE.MeshStandardMaterial({
+        color: "#2e1c11",
+        roughness: 0.72,
+      }),
+      beard: new THREE.MeshStandardMaterial({
+        color: "#5a3a24",
+        roughness: 0.8,
+      }),
+      noseShadow: new THREE.MeshStandardMaterial({
+        color: "#b9825a",
+        roughness: 0.6,
+      }),
       mouth: new THREE.MeshStandardMaterial({
-        color: "#5b211e",
+        color: "#3f1512",
         roughness: 0.5,
       }),
       grass: new THREE.MeshStandardMaterial({
@@ -130,22 +152,28 @@ function BoxPart({ args, position, material, radius = 0.025, children }) {
   );
 }
 
-function FaceTile({ position, scale, material }) {
+function FaceTile({ position, scale, material, innerRef }) {
   return (
-    <mesh position={position} scale={scale}>
+    <mesh ref={innerRef} position={position} scale={scale}>
       <planeGeometry args={[1, 1]} />
       <primitive object={material} attach="material" />
     </mesh>
   );
 }
 
-function SteveCharacter({ reducedMotion = false, mood = "speaking" }) {
+function SteveCharacter({
+  reducedMotion = false,
+  mood = "speaking",
+  variant = "full",
+}) {
+  const compact = variant === "compact";
   const rootRef = useRef(null);
   const headRef = useRef(null);
   const leftArmRef = useRef(null);
   const rightArmRef = useRef(null);
   const leftLegRef = useRef(null);
   const rightLegRef = useRef(null);
+  const mouthRef = useRef(null);
 
   const introFinishedRef = useRef(false);
   // "celebrate" mood ирэх бүрт хугацааг тэмдэглэж, богино баярын үсрэлт тоглуулна.
@@ -234,13 +262,21 @@ function SteveCharacter({ reducedMotion = false, mood = "speaking" }) {
   }, [reducedMotion]);
 
   useFrame(({ clock, pointer }) => {
+    const t = clock.getElapsedTime();
+
+    // Ам хөдөлгөөн: AI ярих үед ам нээж хаагаад (lip-sync мэт),
+    // баярлах үед том инээмсэглэл, бусад үед нимгэн зурвас.
+    if (mouthRef.current) {
+      mouthRef.current.scale.y = 0.05;
+      mouthRef.current.position.y = -0.235;
+    }
+
     if (!introFinishedRef.current) return;
     if (reducedMotion) return;
 
-    const t = clock.getElapsedTime();
-
     // Баярын үсрэлт: зөв хариулсны дараа ~1.1 сек хоёр удаа бөмбөрч дээш үсэрнэ.
-    const sinceCelebrate = (performance.now() - celebrateStartRef.current) / 1000;
+    const sinceCelebrate =
+      (performance.now() - celebrateStartRef.current) / 1000;
     const celebrating =
       celebrateStartRef.current > 0 && sinceCelebrate < 1.15 && !reducedMotion;
     const jump = celebrating
@@ -266,42 +302,45 @@ function SteveCharacter({ reducedMotion = false, mood = "speaking" }) {
       headRef.current.rotation.y = THREE.MathUtils.lerp(
         headRef.current.rotation.y,
         targetRotationY,
-        0.1,
+        0.2,
       );
 
       headRef.current.rotation.x = THREE.MathUtils.lerp(
         headRef.current.rotation.x,
         targetRotationX,
-        0.1,
+        0.2,
       );
     }
 
-    if (rightArmRef.current) {
-      if (mood === "listening") {
-        rightArmRef.current.rotation.z = 0;
-        rightArmRef.current.rotation.x = Math.sin(t * 1.5) * 0.08;
-      } else {
-        // Хурдыг 4.5 болгож ихэсгэн, далайцыг 0.25 болгож илүү тод, огцом урагш хойш хөдөлгөв
-        rightArmRef.current.rotation.z = -0.12;
-        rightArmRef.current.rotation.x =
-          -Math.PI / 4.5 + Math.sin(t * 4.5) * 0.25;
+    if (compact) {
+      // learn хуудасны цээж (bust) харагдац: хоёр гар урагш, харагч тал руу
+      // гарсан тайван байрлал + зөөлөн амьсгалын хөдөлгөөн.
+      const sway = Math.sin(t * 1.6) * 0.06;
+      if (rightArmRef.current) {
+        rightArmRef.current.rotation.x = -0.72 + sway;
+        rightArmRef.current.rotation.z = -0.16;
       }
-    }
-    if (leftArmRef.current) {
-      if (mood === "listening") {
-        leftArmRef.current.rotation.z = 0;
-        leftArmRef.current.rotation.x = -Math.sin(t * 1.5) * 0.08;
-      } else {
-        // Баруун гартай яг эсрэг фазаар (Math.PI зөрүүтэй) маш хурдтай урагш хойш зөрнө
-        leftArmRef.current.rotation.z = 0.12;
-        leftArmRef.current.rotation.x =
-          -Math.PI / 4.5 + Math.sin(t * 4.5 + Math.PI) * 0.25;
+      if (leftArmRef.current) {
+        leftArmRef.current.rotation.x = -0.72 - sway;
+        leftArmRef.current.rotation.z = 0.16;
       }
-    }
-
-    if (leftArmRef.current) {
-      leftArmRef.current.rotation.z = 0.1 + Math.sin(t * 1.5) * 0.04;
-      leftArmRef.current.rotation.x = Math.sin(t * 1.2) * 0.05;
+    } else {
+      if (rightArmRef.current) {
+        if (mood === "listening") {
+          rightArmRef.current.rotation.z = 0;
+          rightArmRef.current.rotation.x = Math.sin(t * 1.5) * 0.08;
+        } else {
+          // Хурдыг 4.5 болгож ихэсгэн, далайцыг 0.25 болгож илүү тод, огцом урагш хойш хөдөлгөв
+          rightArmRef.current.rotation.z = -0.12;
+          rightArmRef.current.rotation.x =
+            -Math.PI / 4.5 + Math.sin(t * 4.5) * 0.25;
+        }
+      }
+      // Зүүн гар: бага зэрэг найгалзсан тайван байрлал
+      if (leftArmRef.current) {
+        leftArmRef.current.rotation.z = 0.1 + Math.sin(t * 1.5) * 0.04;
+        leftArmRef.current.rotation.x = Math.sin(t * 1.2) * 0.05;
+      }
     }
 
     if (leftLegRef.current) {
@@ -789,32 +828,38 @@ function MinecraftWorld({ reducedMotion, mood, variant = "full" }) {
 
   return (
     <>
-      {/* compact (learn хуудас) хувилбар нь ард талын DOM дэвсгэр дээр тунгалаг сууна */}
       {!compact && <color attach="background" args={["#9bd2ff"]} />}
 
-      <ambientLight intensity={0.85} />
-      <hemisphereLight args={["#dff5ff", "#7a5230", 1.05]} />
+      <ambientLight intensity={1.3} />
+      <hemisphereLight args={["#dff5ff", "#7a5230", 1.3]} />
       <directionalLight
         castShadow
         position={[4, 6, 4.5]}
-        intensity={2.35}
+        intensity={1.4}
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-6}
         shadow-camera-right={6}
         shadow-camera-top={6}
         shadow-camera-bottom={-6}
       />
-      <pointLight position={[-2.8, 2.2, 4]} intensity={0.55} color="#b7fff3" />
+      <pointLight position={[-2.8, 2.2, 4]} intensity={0.9} color="#ffffff" />
 
       <group
-        scale={compact ? (narrow ? 0.74 : 0.88) : narrow ? 0.68 : 1}
+        scale={compact ? (narrow ? 0.98 : 1.12) : narrow ? 0.68 : 1}
         position={
           compact
-            ? [narrow ? -0.42 : -0.48, -0.05, 0]
+            ? [narrow ? -0.1 : -0.12, -0.28, 0]
             : [narrow ? 0 : 0.05, narrow ? -0.06 : 0, 0]
         }
+        // learn хуудсанд Стивийг тал хажуу тийш эргүүлж, зүгээр зогсохгүй
+        // илүү амьд, сонирхолтой ¾ өнцгөөр харуулна
+        rotation={compact ? [0, -0.32, 0] : [0, 0, 0]}
       >
-        <SteveCharacter reducedMotion={reducedMotion} mood={mood} />
+        <SteveCharacter
+          reducedMotion={reducedMotion}
+          mood={mood}
+          variant={variant}
+        />
       </group>
 
       {/* Баяр хүргэх мөчид алтан очлолын дэлбэрэлт */}
@@ -830,26 +875,22 @@ function MinecraftWorld({ reducedMotion, mood, variant = "full" }) {
         />
       )}
 
-      {/* compact хувилбар: цөөн хөвөгч блок + очлолоор л "vibe" өгнө */}
+      {/* compact хувилбар (learn хуудас): Стив дээр төвлөрүүлэхийн тулд
+          эргэн тойрны блок/чимэглэлийг авч, зөвхөн хол дэвсгэрийн бүдэг
+          үүл + сул очлолоор гэрэл өгнө */}
       {compact ? (
         <>
-          <GrassBlock
-            position={[2.35, 0.7, -1.1]}
-            scale={[0.5, 0.5, 0.5]}
-            float={!reducedMotion}
-          />
-          <DiamondOre position={[2.5, -0.7, 0.6]} />
-          <CloudPuff position={[-2.3, 2.4, -2.4]} scale={0.72} />
-          <CloudPuff position={[2.2, 2.7, -2.8]} scale={0.86} />
+          <CloudPuff position={[-3.2, 2.7, -4.2]} scale={0.6} />
+          <CloudPuff position={[3.1, 3.0, -4.6]} scale={0.7} />
           {!reducedMotion && (
             <Sparkles
-              count={16}
-              scale={[4, 2.6, 2]}
-              size={2.2}
-              speed={0.2}
-              opacity={0.32}
+              count={14}
+              scale={[4.2, 3.2, 2]}
+              size={2}
+              speed={0.18}
+              opacity={0.26}
               color="#fff6b0"
-              position={[-0.35, 1.4, 0.2]}
+              position={[-0.35, 1.6, 0.2]}
             />
           )}
         </>
@@ -948,7 +989,7 @@ export function MinecraftSteveScene({ mood = "speaking", variant = "full" }) {
         dpr={[1, 2]}
         camera={
           compact
-            ? { position: [0, 0.95, 8.9], fov: 32, near: 0.1, far: 40 }
+            ? { position: [0, 1.0, 8.5], fov: 33, near: 0.1, far: 40 }
             : { position: [0, 1.55, 8.85], fov: 34, near: 0.1, far: 40 }
         }
         gl={{

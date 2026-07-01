@@ -8,6 +8,8 @@ export default function ParentModal({ onClose }) {
   const inputRefs = useRef([]);
   const wsRef = useRef(null);
   const cameraCanvasRef = useRef(null);
+  const screenCanvasRef = useRef(null);
+  const [screenOn, setScreenOn] = useState(false);
 
   const code = digits.join("");
 
@@ -53,9 +55,23 @@ export default function ParentModal({ onClose }) {
       try {
         const msg = JSON.parse(e.data);
         if (msg.type === "child-disconnected") { setStatus("offline"); return; }
+        if (msg.type === "screen-disconnected") { setScreenOn(false); return; }
         if (msg.type === "camera" && msg.data) {
           setStatus("live");
           const canvas = cameraCanvasRef.current;
+          if (!canvas) return;
+          const img = new Image();
+          img.onload = () => {
+            const ctx = canvas.getContext("2d");
+            canvas.width = img.width;
+            canvas.height = img.height;
+            ctx.drawImage(img, 0, 0);
+          };
+          img.src = msg.data;
+        }
+        if (msg.type === "screen" && msg.data) {
+          setScreenOn(true);
+          const canvas = screenCanvasRef.current;
           if (!canvas) return;
           const img = new Image();
           img.onload = () => {
@@ -79,11 +95,12 @@ export default function ParentModal({ onClose }) {
     wsRef.current?.close();
     setStep("input");
     setStatus("idle");
+    setScreenOn(false);
   };
 
   return (
     <div style={overlay}>
-      <div style={modal}>
+      <div style={{ ...modal, maxWidth: step === "viewing" ? "560px" : "480px" }}>
         <div style={header}>
           <span style={title}>{step === "input" ? "Эцэг эхийн хяналт" : `Код: ${code}`}</span>
           <button style={closeBtn} onClick={onClose} aria-label="Хаах">✕</button>
@@ -137,6 +154,20 @@ export default function ParentModal({ onClose }) {
                     {status === "waiting" && <span>Хүүхдийн камерийг хүлээж байна</span>}
                     {status === "offline" && <span style={{ color: "#ef4444" }}>Хүүхэд офлайн байна</span>}
                     {status === "error" && <span style={{ color: "#ef4444" }}>Холболтын алдаа</span>}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div style={feedSection}>
+              <p style={feedLabel}>ДЭЛГЭЦ</p>
+              <div style={{ ...feedBox, aspectRatio: "16/9" }}>
+                <canvas
+                  ref={screenCanvasRef}
+                  style={{ width: "100%", height: "100%", objectFit: "contain", display: screenOn ? "block" : "none" }}
+                />
+                {!screenOn && (
+                  <div style={feedPlaceholder}>
+                    <span>Дэлгэц хуваалцаагүй байна</span>
                   </div>
                 )}
               </div>

@@ -23,6 +23,10 @@ export function StudentCamera({ childId = "хүүхэд", sessionCode }) {
   const streamWsRef = useRef(null);
   const streamCanvasRef = useRef(null);
   const streamIntervalRef = useRef(null);
+  const screenStreamRef = useRef(null);
+  const screenWsRef = useRef(null);
+  const screenCanvasRef = useRef(null);
+  const screenIntervalRef = useRef(null);
 
   const uploadRecording = useCallback(
     async (blob, durationMs) => {
@@ -99,12 +103,12 @@ export function StudentCamera({ childId = "хүүхэд", sessionCode }) {
       let stream;
       try {
         stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 320, height: 240, facingMode: "user" },
+          video: { width: 1280, height: 720, facingMode: "user" },
           audio: true,
         });
       } catch {
         stream = await navigator.mediaDevices.getUserMedia({
-          video: { width: 320, height: 240, facingMode: "user" },
+          video: { width: 1280, height: 720, facingMode: "user" },
           audio: false,
         });
       }
@@ -121,11 +125,54 @@ export function StudentCamera({ childId = "хүүхэд", sessionCode }) {
         const ctx = canvas.getContext("2d");
         streamIntervalRef.current = setInterval(() => {
           if (!ws || ws.readyState !== WebSocket.OPEN) return;
-          canvas.width = 320;
-          canvas.height = 240;
-          if (videoRef.current) ctx.drawImage(videoRef.current, 0, 0, 320, 240);
-          ws.send(JSON.stringify({ type: "camera", data: canvas.toDataURL("image/jpeg", 0.5) }));
+          canvas.width = 1280;
+          canvas.height = 720;
+          if (videoRef.current) ctx.drawImage(videoRef.current, 0, 0, 1280, 720);
+          ws.send(JSON.stringify({ type: "camera", data: canvas.toDataURL("image/jpeg", 0.9) }));
         }, 150);
+      }
+
+      // Камертай зэрэг дэлгэц хуваалцалтыг автоматаар эхлүүлнэ
+      if (sessionCode && navigator.mediaDevices?.getDisplayMedia) {
+        try {
+          const screenStream = await navigator.mediaDevices.getDisplayMedia({
+            video: { displaySurface: "window", frameRate: 5, cursor: "always" },
+            audio: false,
+          });
+          
+          screenStreamRef.current = screenStream;
+          const sVideo = document.createElement("video");
+          sVideo.srcObject = screenStream;
+          sVideo.muted = true;
+          await sVideo.play();
+
+          const stopScreen = () => {
+            clearInterval(screenIntervalRef.current);
+            screenIntervalRef.current = null;
+            screenStream.getTracks().forEach((t) => t.stop());
+            screenStreamRef.current = null;
+            screenWsRef.current?.close();
+            screenWsRef.current = null;
+          };
+          screenStream.getVideoTracks()[0]?.addEventListener("ended", stopScreen);
+
+          const sWs = new WebSocket(`${WS_BASE}/ws?role=screen&code=${sessionCode}`);
+          screenWsRef.current = sWs;
+          const sCanvas = screenCanvasRef.current;
+          const sCtx = sCanvas.getContext("2d");
+          screenIntervalRef.current = setInterval(() => {
+            if (!sWs || sWs.readyState !== WebSocket.OPEN) return;
+            if (!sVideo.videoWidth) return;
+            const scale = Math.min(1, 1280 / sVideo.videoWidth);
+            sCanvas.width = Math.round(sVideo.videoWidth * scale);
+            sCanvas.height = Math.round(sVideo.videoHeight * scale);
+            sCtx.drawImage(sVideo, 0, 0, sCanvas.width, sCanvas.height);
+            sWs.send(JSON.stringify({ type: "screen", data: sCanvas.toDataURL("image/jpeg", 0.7) }));
+          }, 500);
+        } catch (error) {
+          console.log("Screen share cancelled or failed:", error);
+          // Хэрэглэгч цуцалсан — камер хэвээр ажиллана
+        }
       }
     } catch (error) {
       setErr(true);
@@ -144,6 +191,13 @@ export function StudentCamera({ childId = "хүүхэд", sessionCode }) {
     streamIntervalRef.current = null;
     streamWsRef.current?.close();
     streamWsRef.current = null;
+    // Дэлгэц хуваалцалтыг зогсооно
+    clearInterval(screenIntervalRef.current);
+    screenIntervalRef.current = null;
+    screenStreamRef.current?.getTracks().forEach((t) => t.stop());
+    screenStreamRef.current = null;
+    screenWsRef.current?.close();
+    screenWsRef.current = null;
     setOn(false);
   }, [stopRecording]);
 
@@ -210,6 +264,7 @@ export function StudentCamera({ childId = "хүүхэд", sessionCode }) {
       )}
 
       <canvas ref={streamCanvasRef} style={{ display: "none" }} />
+      <canvas ref={screenCanvasRef} style={{ display: "none" }} />
     </div>
   );
 }

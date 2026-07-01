@@ -9,6 +9,7 @@ import { MathLesson } from "./components/lesson/components/MathLesson.jsx";
 import { TypingLesson } from "./components/lesson/TypingLesson.jsx";
 import { BigAddLesson } from "./components/lesson/BigAddLesson.jsx";
 import Landing from "./components/Landing.jsx";
+import ParentPage from "./components/ParentPage.jsx";
 import { stopAllAudio } from "./components/avatar/audioBus.js";
 
 function normalizeAvatar(avatar) {
@@ -108,6 +109,10 @@ function App() {
     );
   }
 
+
+  if (page === "parents") {
+    return <ParentPage onBack={() => navigate("/")} />;
+  }
 
   return <Landing />;
 }
