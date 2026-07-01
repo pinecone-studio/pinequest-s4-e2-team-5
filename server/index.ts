@@ -1,5 +1,7 @@
 import express from "express";
 import cors from "cors";
+import { createServer } from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import progressRouter from "./api/progress";
 import hintsRouter from "./api/hints";
 import recordingsRouter from "./api/recordings";
@@ -658,6 +660,47 @@ app.post("/api/ai/generate-game", async (req: any, res: any) => {
   }
 });
 
-app.listen(port, "0.0.0.0", () => {
+// Parent monitoring: WebSocket room system
+// rooms: code → { child, parents }
+const rooms = new Map<string, { child: WebSocket | null; parents: Set<WebSocket> }>();
+
+const httpServer = createServer(app);
+const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
+
+wss.on("connection", (ws, req) => {
+  const url = new URL(req.url!, "http://localhost");
+  const code = url.searchParams.get("code");
+  const role = url.searchParams.get("role");
+  if (!code) { ws.close(); return; }
+
+  if (!rooms.has(code)) rooms.set(code, { child: null, parents: new Set() });
+  const room = rooms.get(code)!;
+
+  if (role === "child") {
+    room.child = ws;
+    ws.on("message", (data) => {
+      for (const p of room.parents)
+        if (p.readyState === WebSocket.OPEN) p.send(data);
+    });
+    ws.on("close", () => {
+      room.child = null;
+      for (const p of room.parents)
+        if (p.readyState === WebSocket.OPEN)
+          p.send(JSON.stringify({ type: "child-disconnected" }));
+      if (room.parents.size === 0) rooms.delete(code);
+    });
+  } else {
+    room.parents.add(ws);
+    // Notify child that a parent joined
+    if (room.child?.readyState === WebSocket.OPEN)
+      room.child.send(JSON.stringify({ type: "parent-joined" }));
+    ws.on("close", () => {
+      room.parents.delete(ws);
+      if (!room.child && room.parents.size === 0) rooms.delete(code);
+    });
+  }
+});
+
+httpServer.listen(port, "0.0.0.0", () => {
   console.log(`Server ${port} порт дээр ажиллаж байна`);
 });
