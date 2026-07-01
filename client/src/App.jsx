@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 import "./components/avatar/avatar.css";
 import { getPageFromPath } from "./navigation.js";
@@ -25,6 +25,8 @@ function App() {
   );
   // Username → Bodoh хооронд warp шилжилт үзүүлэх үед {nickname, avatar}-г барина.
   const [warpTo, setWarpTo] = useState(null);
+  // Эцэг эхийн хяналтад зориулсан нэг удаагийн 6 оронтой код
+  const sessionCode = useMemo(() => String(Math.floor(100000 + Math.random() * 900000)), []);
   const selectedAvatar = normalizeAvatar(
     window.history.state?.avatar || window.sessionStorage.getItem("selectedAvatar"),
   );
@@ -93,7 +95,11 @@ function App() {
           ←
         </button>
 
-        <AvatarSession nickname={name} avatar={avatar} />
+        <div className="parent-code-badge">
+          Эцэг эхийн код: <strong>{sessionCode}</strong>
+        </div>
+
+        <AvatarSession nickname={name} avatar={avatar} sessionCode={sessionCode} />
       </main>
     );
   }
