@@ -26,6 +26,10 @@ export function useTutor({ nickname, homeworkContext, interpretCommand }) {
   const chunksRef = useRef([]);
   const mimeTypeRef = useRef("audio/webm");
 
+  const [isManualRecording, setIsManualRecording] = useState(false);
+  const manualRecorderRef = useRef(null);
+  const manualChunksRef = useRef([]);
+
   // Яриа давхцахаас сэргийлэх: нэг л аудио тоглоно, шинэ яриа хуучныг таслана.
   const currentAudioRef = useRef(null);
   const currentUrlRef = useRef("");
@@ -214,6 +218,68 @@ export function useTutor({ nickname, homeworkContext, interpretCommand }) {
     [chat],
   );
 
+  // ── manual mic button (tap-to-record) ───────────────────
+  const toggleManualRecord = useCallback(async () => {
+    // VAD recorder явж байвал зогсоо
+    if (recorderRef.current) {
+      try { recorderRef.current.stop(); } catch { /* ok */ }
+      recorderRef.current = null;
+      setIsListening(false);
+    }
+    // Тоглож байгаа дуугаа зогсоо
+    stopCurrentAudio();
+    setIsSpeaking(false);
+
+    if (manualRecorderRef.current) {
+      // Зогсоож STT руу илгээнэ
+      const recorder = manualRecorderRef.current;
+      manualRecorderRef.current = null;
+      setIsManualRecording(false);
+      const mime = mimeTypeRef.current;
+      recorder.onstop = () => {
+        const captured = [...manualChunksRef.current];
+        // processAudio isBusyRef шалгадаг тул эхлээд reset хийнэ
+        isBusyRef.current = false;
+        if (captured.length) processAudio(captured, mime);
+      };
+      try { recorder.stop(); } catch { /* ok */ }
+      return;
+    }
+
+    // Микрофон stream авна (VAD stream байвал дахин ашиглана)
+    let stream = streamRef.current;
+    if (!stream) {
+      let mimeType = "audio/webm;codecs=opus";
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4";
+      }
+      mimeTypeRef.current = mimeType;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true },
+        });
+        streamRef.current = stream;
+      } catch {
+        setError("Микрофон ашиглах зөвшөөрөл олдсонгүй.");
+        return;
+      }
+    }
+
+    manualChunksRef.current = [];
+    try {
+      const recorder = new MediaRecorder(stream, { mimeType: mimeTypeRef.current });
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) manualChunksRef.current.push(e.data);
+      };
+      recorder.start();
+      manualRecorderRef.current = recorder;
+      setIsManualRecording(true);
+    } catch (e) {
+      console.error("Manual record error:", e);
+      setError("Микрофон ашиглах боломжгүй.");
+    }
+  }, [stopCurrentAudio, processAudio]);
+
   // ── always-listen (VAD) ──────────────────────────────────
   const startAlwaysListen = useCallback(async () => {
     if (streamRef.current) return;
@@ -355,5 +421,7 @@ export function useTutor({ nickname, homeworkContext, interpretCommand }) {
     startAlwaysListen,
     stopAlwaysListen,
     stopCurrentAudio,
+    isManualRecording,
+    toggleManualRecord,
   };
 }

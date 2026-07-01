@@ -110,7 +110,36 @@
   gap: 14px;
   padding: 20px;
 }
-.ta-mc.ta-root-center .mc-stage { height: min(82vh, 720px); width: min(82vh, 720px); }
+.ta-mc.ta-root-center .mc-stage { height: min(38vh, 300px); }
+
+/* Center горимд бүх элемент normal flow-д байна — absolute positioning хийхгүй */
+.ta-mc.ta-root-center .ta-robot-col {
+  justify-content: flex-start;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px 0 16px;
+  gap: 10px;
+}
+.ta-mc.ta-root-center .ta-chat-log {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  transform: none;
+  max-height: 160px;
+  width: min(88%, 300px);
+  align-self: center;
+  margin-top: 4px;
+}
+.ta-mc.ta-root-center .ta-text-input-row {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  transform: none;
+  width: min(88%, 300px);
+  align-self: center;
+  padding-bottom: 8px;
+  flex-shrink: 0;
+}
 
 .ta-mc.ta-root-split .ta-robot-col {
   position: absolute;
@@ -127,7 +156,12 @@
   border: none;
   pointer-events: none;
 }
-.ta-mc.ta-root-split .mc-stage { height: clamp(150px, 20vh, 240px); }
+/* Split горимд input болон chat log interactive байна */
+.ta-mc.ta-root-split .ta-chat-log,
+.ta-mc.ta-root-split .ta-text-input-row {
+  pointer-events: auto;
+}
+.ta-mc.ta-root-split .mc-stage { height: clamp(130px, 17vh, 200px); }
 /* Интерактивийг дээш өргөж, доод талын морьтой тулахаас сэргийлнэ */
 .ta-mc.ta-root-split .ta-problem-pane { padding-top: 36px; padding-bottom: 16vh; }
 
