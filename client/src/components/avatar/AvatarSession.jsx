@@ -5,7 +5,7 @@ import { StudentCamera } from './StudentCamera.jsx'
 import { TutorAvatar } from './TutorAvatar.jsx'
 import './avatar.css'
 
-export function AvatarSession({ nickname = 'хүүхэд', avatar = 'sun-buddy', sessionCode }) {
+export function AvatarSession({ nickname = 'хүүхэд', avatar = 'sun-buddy', sessionCode, familyCode }) {
   const [homeworkContext, setHomeworkContext] = useState('')
   const [problems, setProblems] = useState([])
   const [analyzing, setAnalyzing] = useState(false)
@@ -41,7 +41,7 @@ export function AvatarSession({ nickname = 'хүүхэд', avatar = 'sun-buddy',
             <HomeworkUpload onHomeworkLoaded={handleHomeworkLoaded} onAnalyzingChange={setAnalyzing} />
           </div>
           <div className="session-camera">
-            <StudentCamera sessionCode={sessionCode} />
+            <StudentCamera sessionCode={sessionCode} childId={familyCode} />
           </div>
         </div>
 

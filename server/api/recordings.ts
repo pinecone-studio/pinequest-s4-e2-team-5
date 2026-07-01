@@ -1,7 +1,5 @@
 import express, { Router } from "express";
-import { randomUUID } from "node:crypto";
-import { supabase } from "../lib/supabase";
-import { uploadToR2 } from "../lib/r2";
+import { uploadToR2, fetchFromR2, listFromR2 } from "../lib/r2";
 
 const router = Router();
 
@@ -11,21 +9,6 @@ function extensionFor(contentType: string) {
   if (contentType.includes("mp4")) return "mp4";
   if (contentType.includes("ogg")) return "ogv";
   return "webm";
-}
-
-function cleanSegment(value: unknown, fallback: string) {
-  if (typeof value !== "string") return fallback;
-  const cleaned = value.trim().replace(/[^a-zA-Z0-9_-]+/g, "-").slice(0, 48);
-  return cleaned || fallback;
-}
-
-function recordingKey(childId: string, contentType: string) {
-  const now = new Date();
-  const yyyy = now.getUTCFullYear();
-  const mm = String(now.getUTCMonth() + 1).padStart(2, "0");
-  const dd = String(now.getUTCDate()).padStart(2, "0");
-  const ext = extensionFor(contentType);
-  return `recordings/${yyyy}/${mm}/${dd}/${Date.now()}-${cleanSegment(childId, "child")}-${randomUUID()}.${ext}`;
 }
 
 router.post(
@@ -41,50 +24,88 @@ router.post(
       return;
     }
 
-    const contentType =
-      req.header("content-type")?.split(";")[0] || "video/webm";
-    const childId = cleanSegment(req.header("x-child-id"), "child");
-    const durationMsRaw = Number(req.header("x-duration-ms") ?? 0);
-    const durationMs = Number.isFinite(durationMsRaw)
-      ? Math.max(0, Math.round(durationMsRaw))
-      : 0;
-    const key = recordingKey(childId, contentType);
+    const ct = req.header("content-type")?.split(";")[0] || "video/webm";
+    const family = (req.header("x-child-id") || "unknown")
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .slice(0, 16);
+    const durRaw = Number(req.header("x-duration-ms") ?? 0);
+    const dur = Number.isFinite(durRaw) ? Math.max(0, Math.round(durRaw)) : 0;
+    const key = `recordings/${family}/${Date.now()}-${dur}.${extensionFor(ct)}`;
 
     try {
-      const r2 = await uploadToR2({ key, body, contentType });
-      const { data, error } = await supabase
-        .from("student_recordings")
-        .insert({
-          child_id: childId,
-          r2_bucket: r2.bucket,
-          r2_key: r2.key,
-          r2_url: r2.url,
-          content_type: contentType,
-          size_bytes: body.length,
-          duration_ms: durationMs,
-          etag: r2.etag,
-        })
-        .select("id, r2_key, r2_url")
-        .single();
-
-      if (error) {
-        res.status(500).json({
-          error: error.message,
-          r2Key: r2.key,
-        });
-        return;
-      }
-
-      res.json({
-        ok: true,
-        id: data.id,
-        r2Key: data.r2_key,
-        url: data.r2_url,
-      });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
+      await uploadToR2({ key, body, contentType: ct });
+      res.json({ ok: true, key });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
     }
   },
 );
+
+router.get("/", async (req, res) => {
+  const family =
+    typeof req.query.family === "string"
+      ? req.query.family.replace(/[^a-zA-Z0-9]/g, "").slice(0, 16)
+      : "";
+  if (!family) {
+    res.json({ recordings: [] });
+    return;
+  }
+  try {
+    const files = await listFromR2(`recordings/${family}/`);
+    const recordings = files
+      .map((f) => {
+        const name = f.key.split("/").pop() ?? "";
+        const m = name.match(/^(\d+)-(\d+)\./);
+        return {
+          id: f.key,
+          child_id: family,
+          content_type: name.endsWith(".mp4") ? "video/mp4" : "video/webm",
+          size_bytes: f.size,
+          duration_ms: m ? Number(m[2]) : 0,
+          created_at: m
+            ? new Date(Number(m[1])).toISOString()
+            : f.lastModified,
+        };
+      })
+      .sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      );
+    res.json({ recordings });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/stream", async (req, res) => {
+  const path = typeof req.query.path === "string" ? req.query.path : "";
+  if (!path.startsWith("recordings/")) {
+    res.status(400).end();
+    return;
+  }
+  try {
+    const r2Res = await fetchFromR2(path);
+    if (!r2Res.ok) {
+      res.status(502).end();
+      return;
+    }
+    res.set(
+      "Content-Type",
+      path.endsWith(".mp4") ? "video/mp4" : "video/webm",
+    );
+    res.set("Accept-Ranges", "none");
+    res.set("Cache-Control", "no-store");
+    const reader = r2Res.body!.getReader();
+    const pump = async (): Promise<void> => {
+      const { done, value } = await reader.read();
+      if (done) { res.end(); return; }
+      res.write(Buffer.from(value));
+      return pump();
+    };
+    await pump().catch(() => res.end());
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 export default router;

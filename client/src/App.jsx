@@ -29,6 +29,14 @@ function App() {
   const [warpTo, setWarpTo] = useState(null);
   // Эцэг эхийн хяналтад зориулсан нэг удаагийн 6 оронтой код
   const sessionCode = useMemo(() => String(Math.floor(100000 + Math.random() * 900000)), []);
+  // Хүүхдийн байнгын identifier — localStorage-д хадгалагдана
+  const familyCode = useMemo(() => {
+    const stored = localStorage.getItem("childFamilyCode");
+    if (stored) return stored;
+    const code = Math.random().toString(36).slice(2, 8).toUpperCase();
+    localStorage.setItem("childFamilyCode", code);
+    return code;
+  }, []);
   const selectedAvatar = normalizeAvatar(
     window.history.state?.avatar || window.sessionStorage.getItem("selectedAvatar"),
   );
@@ -101,10 +109,10 @@ function App() {
         </button>
 
         <div className="parent-code-badge">
-          Эцэг эхийн код: <strong>{sessionCode}</strong>
+          Шууд: <strong>{sessionCode}</strong> · Бичлэг: <strong>{familyCode}</strong>
         </div>
 
-        <AvatarSession nickname={name} avatar={avatar} sessionCode={sessionCode} />
+        <AvatarSession nickname={name} avatar={avatar} sessionCode={sessionCode} familyCode={familyCode} />
       </main>
     );
   }

@@ -1,11 +1,28 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { WS_BASE } from "../lib/config.js";
+import { API_BASE, WS_BASE } from "../lib/config.js";
+
+function fmtDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString("mn-MN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+function fmtDuration(ms) {
+  if (!ms) return "";
+  const s = Math.round(ms / 1000);
+  const m = Math.floor(s / 60), rem = s % 60;
+  return m > 0 ? `${m}м ${rem}с` : `${rem}с`;
+}
 
 export default function ParentPage({ onBack }) {
   const [step, setStep] = useState("input");
   const [digits, setDigits] = useState(["", "", "", "", "", ""]);
+  const [familyCodeInput, setFamilyCodeInput] = useState("");
   const [status, setStatus] = useState("idle");
   const [screenOn, setScreenOn] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [recordings, setRecordings] = useState([]);
+  const [playingId, setPlayingId] = useState(null);
+  const [activeFamily, setActiveFamily] = useState("");
   const inputRefs = useRef([]);
   const wsRef = useRef(null);
   const cameraCanvasRef = useRef(null);
@@ -43,6 +60,25 @@ export default function ParentPage({ onBack }) {
     setStatus("connecting");
   }, [code]);
 
+  const viewRecordingsOnly = useCallback(() => {
+    const fc = familyCodeInput.trim();
+    if (!fc) return;
+    setActiveFamily(fc);
+    fetch(`${API_BASE}/api/recordings?family=${encodeURIComponent(fc)}`)
+      .then((r) => r.json())
+      .then((d) => setRecordings(d.recordings ?? []))
+      .catch(() => {});
+    setStep("recordings-only");
+  }, [familyCodeInput]);
+
+  const fetchRecordings = useCallback((fc) => {
+    if (!fc) return;
+    fetch(`${API_BASE}/api/recordings?family=${encodeURIComponent(fc)}`)
+      .then((r) => r.json())
+      .then((d) => setRecordings(d.recordings ?? []))
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     if (step !== "viewing") return;
     const ws = new WebSocket(`${WS_BASE}/ws?role=parent&code=${code}`);
@@ -55,6 +91,11 @@ export default function ParentPage({ onBack }) {
         const msg = JSON.parse(e.data);
         if (msg.type === "child-disconnected") { setStatus("offline"); return; }
         if (msg.type === "screen-disconnected") { setScreenOn(false); return; }
+        if (msg.type === "family-code" && msg.code) {
+          setActiveFamily(msg.code);
+          fetchRecordings(msg.code);
+          return;
+        }
         if (msg.type === "camera" && msg.data) {
           setStatus("live");
           const canvas = cameraCanvasRef.current;
@@ -70,6 +111,7 @@ export default function ParentPage({ onBack }) {
         }
         if (msg.type === "screen" && msg.data) {
           setScreenOn(true);
+          if (playingId) return;
           const canvas = screenCanvasRef.current;
           if (!canvas) return;
           const img = new Image();
@@ -88,28 +130,67 @@ export default function ParentPage({ onBack }) {
     ws.onerror = () => setStatus("error");
 
     return () => { ws.close(); wsRef.current = null; };
-  }, [step, code]);
+  }, [step, code, fetchRecordings]);
 
   const goBack = () => {
     wsRef.current?.close();
     setStep("input");
     setStatus("idle");
     setScreenOn(false);
+    setPlayingId(null);
+    setRecordings([]);
+    setActiveFamily("");
     onBack();
   };
+
+  const RecordingsSidebar = () => (
+    <div style={{ ...sidebar, width: sidebarOpen ? "260px" : "44px" }}>
+      <button style={sidebarToggle} onClick={() => setSidebarOpen((o) => !o)} title={sidebarOpen ? "Хаах" : "Нээх"}>
+        {sidebarOpen ? "◀" : "▶"}
+      </button>
+      {sidebarOpen && (
+        <>
+          <p style={sidebarTitle}>Бичлэгийн түүх</p>
+          {activeFamily && (
+            <button style={refreshBtn} onClick={() => fetchRecordings(activeFamily)}>↻ Шинэчлэх</button>
+          )}
+          <div style={recList}>
+            {recordings.length === 0 && (
+              <p style={recEmpty}>Бичлэг байхгүй байна</p>
+            )}
+            {recordings.map((r) => (
+              <button
+                key={r.id}
+                style={{ ...recItem, background: playingId === r.id ? "#e8f5f0" : "transparent", borderColor: playingId === r.id ? "#185d56" : "rgba(22,43,42,0.08)" }}
+                onClick={() => setPlayingId(playingId === r.id ? null : r.id)}
+              >
+                <span style={recDate}>{fmtDate(r.created_at)}</span>
+                {r.duration_ms > 0 && <span style={recDur}>{fmtDuration(r.duration_ms)}</span>}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
 
   return (
     <div style={pageWrap}>
       <div style={topBar}>
         <button style={backBtn} onClick={goBack}>← Буцах</button>
         <span style={topTitle}>
-          {step === "input" ? "Эцэг эхийн хяналт" : `Код: ${code}`}
+          {step === "input" ? "Эцэг эхийн хяналт"
+            : step === "recordings-only" ? `Бичлэг: ${activeFamily}`
+            : `Код: ${code}`}
         </span>
         {step === "viewing" && (
           <div style={statusBadge}>
             <div style={{ ...statusDot, background: dotColor(status) }} />
             <span style={statusLabel}>{statusText(status)}</span>
           </div>
+        )}
+        {step === "recordings-only" && (
+          <span style={{ fontSize: "12px", color: "#9ca3af" }}>Бичлэг горим</span>
         )}
       </div>
 
@@ -140,29 +221,101 @@ export default function ParentPage({ onBack }) {
             >
               Хянах эхлэх →
             </button>
+
+            <div style={divider}>
+              <div style={dividerLine} />
+              <span style={dividerText}>эсвэл зөвхөн бичлэг харах</span>
+              <div style={dividerLine} />
+            </div>
+
+            <div style={{ display: "flex", gap: "8px", width: "100%" }}>
+              <input
+                type="text"
+                placeholder="Бичлэг код (жш: WBOWAC)"
+                maxLength={8}
+                value={familyCodeInput}
+                onChange={(e) => setFamilyCodeInput(e.target.value.toUpperCase())}
+                onKeyDown={(e) => { if (e.key === "Enter" && familyCodeInput.length >= 4) viewRecordingsOnly(); }}
+                style={familyInput}
+              />
+              <button
+                style={{ ...actionBtn, opacity: familyCodeInput.length >= 4 ? 1 : 0.4, padding: "12px 18px", whiteSpace: "nowrap" }}
+                disabled={familyCodeInput.length < 4}
+                onClick={viewRecordingsOnly}
+              >
+                Харах →
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {step === "viewing" && (
-        <div style={feedsWrap}>
-          {/* hidden camera canvas — status tracking */}
-          <canvas ref={cameraCanvasRef} style={{ display: "none" }} />
-
-          {/* Screen feed — full height */}
-          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px", minHeight: 0 }}>
-            <p style={feedLabel}>ДЭЛГЭЦ</p>
-            <div style={{ ...feedBox, flex: 1 }}>
-              <canvas
-                ref={screenCanvasRef}
-                style={{ width: "100%", height: "100%", objectFit: "contain", display: screenOn ? "block" : "none" }}
-              />
-              {!screenOn && (
-                <div style={feedPlaceholder}>
-                  <span>Дэлгэц хуваалцаагүй байна</span>
+        <div style={viewingWrap}>
+          <RecordingsSidebar />
+          <div style={mainArea}>
+            <canvas ref={cameraCanvasRef} style={{ display: "none" }} />
+            {playingId ? (
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px", minHeight: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <p style={feedLabel}>БИЧЛЭГ</p>
+                  <button style={closePlayBtn} onClick={() => setPlayingId(null)}>✕ Хаах</button>
                 </div>
-              )}
-            </div>
+                <div style={{ ...feedBox, flex: 1 }}>
+                  <video
+                    key={playingId}
+                    src={`${API_BASE}/api/recordings/stream?path=${encodeURIComponent(playingId)}`}
+                    controls
+                    autoPlay
+                    style={{ width: "100%", height: "100%", objectFit: "contain", background: "#000" }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px", minHeight: 0 }}>
+                <p style={feedLabel}>ДЭЛГЭЦ</p>
+                <div style={{ ...feedBox, flex: 1 }}>
+                  <canvas
+                    ref={screenCanvasRef}
+                    style={{ width: "100%", height: "100%", objectFit: "contain", display: screenOn ? "block" : "none" }}
+                  />
+                  {!screenOn && (
+                    <div style={feedPlaceholder}>
+                      <span>Дэлгэц хуваалцаагүй байна</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {step === "recordings-only" && (
+        <div style={viewingWrap}>
+          <RecordingsSidebar />
+          <div style={mainArea}>
+            {playingId ? (
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px", minHeight: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <p style={feedLabel}>БИЧЛЭГ</p>
+                  <button style={closePlayBtn} onClick={() => setPlayingId(null)}>✕ Хаах</button>
+                </div>
+                <div style={{ ...feedBox, flex: 1 }}>
+                  <video
+                    key={playingId}
+                    src={`${API_BASE}/api/recordings/stream?path=${encodeURIComponent(playingId)}`}
+                    controls
+                    autoPlay
+                    style={{ width: "100%", height: "100%", objectFit: "contain", background: "#000" }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <p style={{ color: "#9ca3af", fontSize: "14px" }}>Зүүн талаас бичлэг сонгоно уу</p>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -194,13 +347,28 @@ const statusBadge = { display: "flex", alignItems: "center", gap: "6px" };
 const statusDot = { width: 8, height: 8, borderRadius: "50%", flexShrink: 0 };
 const statusLabel = { fontSize: "13px", color: "#6d7d79" };
 const inputWrap = { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "32px 16px" };
-const inputCard = { background: "#fff", borderRadius: "20px", padding: "40px 36px", boxShadow: "0 8px 40px rgba(0,0,0,0.08)", display: "flex", flexDirection: "column", alignItems: "center", gap: "28px", width: "100%", maxWidth: "420px" };
+const inputCard = { background: "#fff", borderRadius: "20px", padding: "40px 36px", boxShadow: "0 8px 40px rgba(0,0,0,0.08)", display: "flex", flexDirection: "column", alignItems: "center", gap: "20px", width: "100%", maxWidth: "420px" };
 const inputTitle = { fontSize: "20px", fontWeight: 800, color: "#162b2a", margin: 0, textAlign: "center" };
-const inputSubtitle = { fontSize: "14px", color: "#6d7d79", margin: "-20px 0 0", textAlign: "center" };
+const inputSubtitle = { fontSize: "14px", color: "#6d7d79", margin: "-12px 0 0", textAlign: "center" };
 const digitRow = { display: "flex", gap: "10px", alignItems: "center" };
 const digitInput = { width: "52px", height: "60px", borderRadius: "12px", border: "2px solid rgba(22,43,42,0.15)", fontSize: "26px", fontWeight: 700, textAlign: "center", color: "#162b2a", outline: "none", transition: "border-color 0.15s, background 0.15s", caretColor: "transparent" };
 const actionBtn = { padding: "14px 40px", borderRadius: "12px", border: "none", background: "#185d56", color: "#fff", fontSize: "15px", fontWeight: 700, cursor: "pointer", transition: "opacity 0.15s" };
-const feedsWrap = { flex: 1, display: "flex", flexDirection: "column", padding: "16px 24px", overflow: "hidden" };
+const divider = { display: "flex", alignItems: "center", gap: "10px", width: "100%" };
+const dividerLine = { flex: 1, height: "1px", background: "rgba(22,43,42,0.1)" };
+const dividerText = { fontSize: "12px", color: "#9ca3af", whiteSpace: "nowrap" };
+const familyInput = { flex: 1, padding: "12px 14px", borderRadius: "10px", border: "2px solid rgba(22,43,42,0.15)", fontSize: "14px", fontWeight: 600, color: "#162b2a", outline: "none", letterSpacing: "2px" };
+const viewingWrap = { flex: 1, display: "flex", flexDirection: "row", overflow: "hidden" };
+const sidebar = { display: "flex", flexDirection: "column", background: "#fff", borderRight: "1px solid rgba(22,43,42,0.08)", transition: "width 0.2s", overflow: "hidden", flexShrink: 0 };
+const sidebarToggle = { margin: "10px auto", display: "block", border: "none", background: "none", color: "#185d56", fontSize: "13px", cursor: "pointer", padding: "4px 8px", fontWeight: 700, flexShrink: 0 };
+const sidebarTitle = { fontSize: "11px", fontWeight: 700, letterSpacing: "1.5px", color: "#9ca3af", margin: "0 0 4px", padding: "0 14px" };
+const refreshBtn = { display: "block", margin: "0 14px 8px", border: "none", background: "none", color: "#185d56", fontSize: "11px", fontWeight: 700, cursor: "pointer", padding: "2px 0", textAlign: "left" };
+const recList = { flex: 1, overflowY: "auto", padding: "0 8px 12px", display: "flex", flexDirection: "column", gap: "4px" };
+const recEmpty = { fontSize: "12px", color: "#9ca3af", textAlign: "center", padding: "20px 8px" };
+const recItem = { width: "100%", border: "1px solid rgba(22,43,42,0.08)", borderRadius: "10px", padding: "10px 12px", cursor: "pointer", textAlign: "left", display: "flex", flexDirection: "column", gap: "2px", transition: "background 0.1s" };
+const recDate = { fontSize: "12px", fontWeight: 600, color: "#162b2a" };
+const recDur = { fontSize: "11px", color: "#6d7d79" };
+const mainArea = { flex: 1, display: "flex", flexDirection: "column", padding: "16px", overflow: "hidden", gap: "8px" };
 const feedLabel = { fontSize: "11px", fontWeight: 700, letterSpacing: "1.5px", color: "#9ca3af", margin: 0 };
 const feedBox = { width: "100%", background: "#0f0f0f", borderRadius: "14px", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" };
 const feedPlaceholder = { color: "#4b5563", fontSize: "13px", textAlign: "center", padding: "20px" };
+const closePlayBtn = { fontSize: "11px", fontWeight: 700, color: "#185d56", background: "none", border: "none", cursor: "pointer", padding: "2px 6px" };

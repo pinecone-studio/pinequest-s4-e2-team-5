@@ -647,7 +647,7 @@ app.post("/api/ai/generate-game", async (req: any, res: any) => {
 
 // Parent monitoring: WebSocket room system
 // rooms: code → { child, parents }
-const rooms = new Map<string, { child: WebSocket | null; screen: WebSocket | null; parents: Set<WebSocket> }>();
+const rooms = new Map<string, { child: WebSocket | null; screen: WebSocket | null; parents: Set<WebSocket>; familyCode: string | null }>();
 
 const httpServer = createServer(app);
 const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
@@ -658,14 +658,19 @@ wss.on("connection", (ws, req) => {
   const role = url.searchParams.get("role");
   if (!code) { ws.close(); return; }
 
-  if (!rooms.has(code)) rooms.set(code, { child: null, screen: null, parents: new Set() });
+  if (!rooms.has(code)) rooms.set(code, { child: null, screen: null, parents: new Set(), familyCode: null });
   const room = rooms.get(code)!;
+
+  const familyParam = url.searchParams.get("family");
 
   if (role === "parent") {
     room.parents.add(ws);
     // Notify child that a parent joined
     if (room.child?.readyState === WebSocket.OPEN)
       room.child.send(JSON.stringify({ type: "parent-joined" }));
+    // Send family code if child already connected
+    if (room.familyCode)
+      ws.send(JSON.stringify({ type: "family-code", code: room.familyCode }));
     ws.on("close", () => {
       room.parents.delete(ws);
       if (!room.child && !room.screen && room.parents.size === 0) rooms.delete(code);
@@ -673,7 +678,17 @@ wss.on("connection", (ws, req) => {
   } else {
     // Sender: camera child (role=child) эсвэл дэлгэц (role=screen)
     const isScreen = role === "screen";
-    if (isScreen) room.screen = ws; else room.child = ws;
+    if (isScreen) {
+      room.screen = ws;
+    } else {
+      room.child = ws;
+      if (familyParam) {
+        room.familyCode = familyParam;
+        for (const p of room.parents)
+          if (p.readyState === WebSocket.OPEN)
+            p.send(JSON.stringify({ type: "family-code", code: familyParam }));
+      }
+    }
     ws.on("message", (data, isBinary) => {
       for (const p of room.parents)
         if (p.readyState === WebSocket.OPEN) p.send(data, { binary: isBinary });
