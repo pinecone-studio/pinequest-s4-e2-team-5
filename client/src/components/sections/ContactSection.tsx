@@ -45,8 +45,7 @@ export default function ContactsSection({
   const [showError, setShowError] = useState(false);
   const [errorTick, setErrorTick] = useState(0);
   const goToParents = () => {
-    window.history.pushState({}, "", "/parents");
-    window.dispatchEvent(new Event("pushstate-internal"));
+    window.open('/parents', 'parentMonitor', 'popup,width=960,height=700,noopener,noreferrer');
   };
 
   const selectedName =
