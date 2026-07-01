@@ -653,7 +653,7 @@ app.post("/api/ai/generate-game", async (req: any, res: any) => {
 
 // Parent monitoring: WebSocket room system
 // rooms: code → { child, parents }
-const rooms = new Map<string, { child: WebSocket | null; parents: Set<WebSocket> }>();
+const rooms = new Map<string, { child: WebSocket | null; screen: WebSocket | null; parents: Set<WebSocket> }>();
 
 const httpServer = createServer(app);
 const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
@@ -664,30 +664,39 @@ wss.on("connection", (ws, req) => {
   const role = url.searchParams.get("role");
   if (!code) { ws.close(); return; }
 
-  if (!rooms.has(code)) rooms.set(code, { child: null, parents: new Set() });
+  if (!rooms.has(code)) rooms.set(code, { child: null, screen: null, parents: new Set() });
   const room = rooms.get(code)!;
 
-  if (role === "child") {
-    room.child = ws;
-    ws.on("message", (data) => {
-      for (const p of room.parents)
-        if (p.readyState === WebSocket.OPEN) p.send(data);
-    });
-    ws.on("close", () => {
-      room.child = null;
-      for (const p of room.parents)
-        if (p.readyState === WebSocket.OPEN)
-          p.send(JSON.stringify({ type: "child-disconnected" }));
-      if (room.parents.size === 0) rooms.delete(code);
-    });
-  } else {
+  if (role === "parent") {
     room.parents.add(ws);
     // Notify child that a parent joined
     if (room.child?.readyState === WebSocket.OPEN)
       room.child.send(JSON.stringify({ type: "parent-joined" }));
     ws.on("close", () => {
       room.parents.delete(ws);
-      if (!room.child && room.parents.size === 0) rooms.delete(code);
+      if (!room.child && !room.screen && room.parents.size === 0) rooms.delete(code);
+    });
+  } else {
+    // Sender: camera child (role=child) эсвэл дэлгэц (role=screen)
+    const isScreen = role === "screen";
+    if (isScreen) room.screen = ws; else room.child = ws;
+    ws.on("message", (data, isBinary) => {
+      for (const p of room.parents)
+        if (p.readyState === WebSocket.OPEN) p.send(data, { binary: isBinary });
+    });
+    ws.on("close", () => {
+      if (isScreen) {
+        room.screen = null;
+        for (const p of room.parents)
+          if (p.readyState === WebSocket.OPEN)
+            p.send(JSON.stringify({ type: "screen-disconnected" }));
+      } else {
+        room.child = null;
+        for (const p of room.parents)
+          if (p.readyState === WebSocket.OPEN)
+            p.send(JSON.stringify({ type: "child-disconnected" }));
+      }
+      if (!room.child && !room.screen && room.parents.size === 0) rooms.delete(code);
     });
   }
 });
