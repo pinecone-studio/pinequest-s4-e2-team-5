@@ -23,6 +23,7 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "rough-notation": "^0.5.1",
+    "styled-components": "^6.4.3",
     "tailwindcss": "^4.3.1",
     "three": "^0.185.0",
     "vercel": "^54.18.2"

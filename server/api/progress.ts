@@ -4,8 +4,7 @@ import { supabase } from "../lib/supabase";
 
 const router = Router();
 
-// POST /api/progress/session
-// Хүүхэд бодлого эхлүүлэхэд дуудна — шинэ сесс үүсгэнэ
+
 router.post("/session", async (req, res) => {
   const { childId, problem, skill, difficulty, correctAnswer } = req.body as {
     childId: string;
