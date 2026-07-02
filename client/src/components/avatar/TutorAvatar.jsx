@@ -467,19 +467,21 @@ function SpeechBubble({ text, isThinking }) {
 
 /* ── Chat log ── */
 function ChatLog({ messages }) {
-  const bottomRef = useRef(null)
+  const logRef = useRef(null)
+  // Шинэ мессеж нэмэгдэх бүрт chat log-оо доош нь гүйлгэж хамгийн сүүлийн
+  // мессежийг үргэлж харагдуулна (хуудсыг биш зөвхөн log-оо гүйлгэнэ).
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    const el = logRef.current
+    if (el) el.scrollTop = el.scrollHeight
   }, [messages])
   if (!messages.length) return null
   return (
-    <div className="ta-chat-log">
+    <div className="ta-chat-log" ref={logRef}>
       {messages.map((msg, i) => (
         <div key={i} className={`ta-chat-msg ta-chat-msg--${msg.role}`}>
           <span className="ta-chat-text">{msg.text}</span>
         </div>
       ))}
-      <div ref={bottomRef} />
     </div>
   )
 }
