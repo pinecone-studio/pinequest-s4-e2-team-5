@@ -10,7 +10,7 @@ export type AvatarOption = {
 };
 
 export const AVATARS: AvatarOption[] = [
-  { id: "robot", name: "Joy", emoji: "🤖", available: true },
+  { id: "robot", name: "Robi", emoji: "🤖", available: true },
   { id: "minecraft", name: "Minecraft", emoji: "🟩", available: true },
   { id: "astronaut", name: "Сансрын нисгэгч", emoji: "🧑🏻‍🚀", available: true },
   { id: "barbie", name: "Barbie", emoji: "🧚🏻‍♀️", available: true },
@@ -93,7 +93,7 @@ export default function AvatarPicker({
         <h2 className="text-center font-rubik text-2xl font-black text-neutral-900 sm:text-3xl">Найзаа сонгоорой</h2>
         <p className="mx-auto mt-2 mb-7 text-center text-sm text-neutral-400">Өнөөдөр <span className="font-semibold text-[#8b3dff]">хэнтэй хамт</span> гэрийн даалгавараа хиймээр байна?</p>
 
-        <div className="grid grid-cols-3 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
           {AVATARS.map((a, i) => {
             const isSelected = selected === a.id;
             return (
@@ -106,8 +106,8 @@ export default function AvatarPicker({
                   ${a.available ? "cursor-pointer border bg-white hover:-translate-y-1.5 hover:shadow-xl" : "cursor-not-allowed border border-dashed border-neutral-200 bg-neutral-50"}
                   ${isSelected ? "border-[#b778ff] bg-[#f6efff] shadow-[0_0_0_4px_rgba(183,120,255,0.22)]" : "border-neutral-200 shadow-sm"}`}
               >
-                <span className={`flex h-14 w-14 items-center justify-center rounded-full transition-transform duration-200 sm:h-16 sm:w-16 ${a.available ? "bg-[#f3eeff] group-hover:scale-110" : "bg-neutral-100 opacity-40 grayscale"}`}>
-                  <AvatarArt id={a.id} className="h-9 w-9 sm:h-11 sm:w-11 object-contain" />
+                <span className={`flex h-16 w-16 items-center justify-center overflow-hidden rounded-full transition-transform duration-200 sm:h-20 sm:w-20 ${a.available ? "bg-[#f3eeff] group-hover:scale-110" : "bg-neutral-100 opacity-40 grayscale"}`}>
+                  <AvatarArt id={a.id} className="h-11 w-11 sm:h-14 sm:w-14 object-contain" />
                 </span>
                 <span className="font-rubik text-sm font-bold text-neutral-900">{a.name}</span>
               </button>

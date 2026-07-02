@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MascotScene } from "../KidMascotScene.jsx";
-import { JoyBackground, JoyRobot } from "./JoyScene.jsx";
+import { SplineScene } from "../SplineScene.jsx";
 import { MinecraftSteveScene } from "./MinecraftSteveScene.jsx";
 import RocketLoader from "./RocketLoader.jsx";
 import { DEFAULT_MASCOT } from "../mascotConfig.js";
@@ -11,10 +11,10 @@ import { registerAudio, getNavEpoch } from "./audioBus.js";
 import "./avatar-intro.css";
 
 const AVATAR_INTRO_TEXT = {
-  robot:      "Сайн  уу? Чиний нэрийг хэн гэдэг вэ? Намайг Жой гэдэг.",
-  minecraft:  "Сайн уу! Намайг Стив гэдэг. Чиний нэрийг хэн гэдэг вэ?",
-  mcqueen:    "Сайн уу! Намайг Маккуин гэдэг. Чиний нэрийг хэн гэдэг вэ?",
-  astronaut:  "Сайн уу! Би сансрын нисгэгч. Чиний нэрийг хэн гэдэг вэ?",
+  robot: "Сайн байна уу? Таны нэрийг хэн гэдэг вэ? Намайг Роби гэдэг.",
+  minecraft: "Сайн уу! Намайг Стив гэдэг. Чи хэн бэ?",
+  mcqueen: "Сайн уу! Намайг Маккуин гэдэг. Чиний нэр юу вэ?",
+  astronaut: "Сайн уу! Би сансрын нисгэгч. Чи хэн бэ?",
 };
 const MCQ_BOLTS = [
   { top: "20%", left: "12%", s: 30, dur: "6.5s" },
@@ -43,7 +43,7 @@ export function AvatarIntro({
 
   // ЗАССАН: Конфликт болон синтаксын алдааг арилгаж, тернари операторыг цэгцэлсэн
   const mascotName = isRobot
-    ? "Joy"
+    ? "Robi"
     : isMinecraft
       ? "Стив"
       : avatar === "mcqueen"
@@ -178,20 +178,13 @@ export function AvatarIntro({
 
       <div className="avatar-intro__scene">
         {isRobot ? (
-          <>
-            <JoyBackground />
-            <div className="avatar-intro__joy-wrap">
-              <span className="avatar-intro__joy-glow" aria-hidden="true" />
-              <JoyRobot
-                className="avatar-intro__joy"
-                mood={listening ? "listening" : "speaking"}
-              />
-            </div>
-          </>
+          <SplineScene className="avatar-intro__mascot" />
         ) : isMinecraft ? (
           <MinecraftSteveScene mood={listening ? "listening" : "speaking"} />
         ) : isAstronaut ? (
-          <div className={`avatar-intro__rocket${launching ? " is-launch" : ""}`}>
+          <div
+            className={`avatar-intro__rocket${launching ? " is-launch" : ""}`}
+          >
             <RocketLoader />
           </div>
         ) : isMcqueen ? (
@@ -278,7 +271,7 @@ export function AvatarIntro({
       >
         <h1 className="avatar-intro__title">Сайн уу!</h1>
         <p className="avatar-intro__subtitle">
-          Намайг <strong>{mascotName}</strong> гэдэг. Чиний нэр хэн бэ?
+          Намайг <strong>{mascotName}</strong> гэдэг. Чамайг хэн гэдэг вэ?
         </p>
         {isRobot && listening && (
           <p className="avatar-intro__listening">

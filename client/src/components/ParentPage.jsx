@@ -3,13 +3,19 @@ import { API_BASE, WS_BASE } from "../lib/config.js";
 
 function fmtDate(iso) {
   const d = new Date(iso);
-  return d.toLocaleString("mn-MN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleString("mn-MN", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function fmtDuration(ms) {
   if (!ms) return "";
   const s = Math.round(ms / 1000);
-  const m = Math.floor(s / 60), rem = s % 60;
+  const m = Math.floor(s / 60),
+    rem = s % 60;
   return m > 0 ? `${m}м ${rem}с` : `${rem}с`;
 }
 
@@ -24,6 +30,12 @@ export default function ParentPage({ onBack }) {
   const wsRef = useRef(null);
   const cameraCanvasRef = useRef(null);
   const screenCanvasRef = useRef(null);
+  // playingId-ийг ref-т тусгаж WS дотроос хамгийн сүүлийн утгыг уншина
+  // (эс тэгвэл onmessage хаалт хуучирсан утга барина).
+  const playingIdRef = useRef(null);
+  useEffect(() => {
+    playingIdRef.current = playingId;
+  }, [playingId]);
 
   const fetchRecordings = useCallback((fc) => {
     if (!fc) return;
@@ -55,7 +67,10 @@ export default function ParentPage({ onBack }) {
           setTimeout(() => fetchRecordings(code), 3000);
           return;
         }
-        if (msg.type === "screen-disconnected") { setScreenOn(false); return; }
+        if (msg.type === "screen-disconnected") {
+          setScreenOn(false);
+          return;
+        }
         if (msg.type === "family-code" && msg.code) {
           fetchRecordings(msg.code);
           return;
@@ -75,7 +90,7 @@ export default function ParentPage({ onBack }) {
         }
         if (msg.type === "screen" && msg.data) {
           setScreenOn(true);
-          if (playingId) return;
+          if (playingIdRef.current) return;
           const canvas = screenCanvasRef.current;
           if (!canvas) return;
           const img = new Image();
@@ -87,13 +102,18 @@ export default function ParentPage({ onBack }) {
           };
           img.src = msg.data;
         }
-      } catch {}
+      } catch {
+        /* буруу форматтай мессежийг үл тоомсорлоно */
+      }
     };
 
-    ws.onclose = () => setStatus((s) => s === "offline" ? s : "idle");
+    ws.onclose = () => setStatus((s) => (s === "offline" ? s : "idle"));
     ws.onerror = () => setStatus("error");
 
-    return () => { ws.close(); wsRef.current = null; };
+    return () => {
+      ws.close();
+      wsRef.current = null;
+    };
   }, [step, code, fetchRecordings]);
 
   const goBack = () => {
@@ -109,7 +129,9 @@ export default function ParentPage({ onBack }) {
   return (
     <div style={pageWrap}>
       <div style={topBar}>
-        <button style={backBtn} onClick={goBack}>← Буцах</button>
+        <button style={backBtn} onClick={goBack}>
+          ← Буцах
+        </button>
         <span style={topTitle}>
           {step === "input" ? "Эцэг эхийн хяналт" : `Код: ${code}`}
         </span>
@@ -130,10 +152,17 @@ export default function ParentPage({ onBack }) {
               type="text"
               value={code}
               onChange={(e) =>
-                setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8))
+                setCode(
+                  e.target.value
+                    .toUpperCase()
+                    .replace(/[^A-Z0-9]/g, "")
+                    .slice(0, 8),
+                )
               }
-              onKeyDown={(e) => { if (e.key === "Enter" && code.length >= 4) connect(); }}
-              placeholder="WBOWAC"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && code.length >= 4) connect();
+              }}
+              placeholder="XXXXXX"
               maxLength={8}
               autoFocus
               style={codeInput}
@@ -153,13 +182,22 @@ export default function ParentPage({ onBack }) {
         <div style={viewingWrap}>
           {/* Sidebar */}
           <div style={{ ...sidebar, width: sidebarOpen ? "260px" : "44px" }}>
-            <button style={sidebarToggle} onClick={() => setSidebarOpen((o) => !o)} title={sidebarOpen ? "Хаах" : "Нээх"}>
+            <button
+              style={sidebarToggle}
+              onClick={() => setSidebarOpen((o) => !o)}
+              title={sidebarOpen ? "Хаах" : "Нээх"}
+            >
               {sidebarOpen ? "◀" : "▶"}
             </button>
             {sidebarOpen && (
               <>
                 <p style={sidebarTitle}>Бичлэгийн түүх</p>
-                <button style={refreshBtn} onClick={() => fetchRecordings(code)}>↻ Шинэчлэх</button>
+                <button
+                  style={refreshBtn}
+                  onClick={() => fetchRecordings(code)}
+                >
+                  ↻ Шинэчлэх
+                </button>
                 <div style={recList}>
                   {recordings.length === 0 && (
                     <p style={recEmpty}>Бичлэг байхгүй байна</p>
@@ -167,11 +205,23 @@ export default function ParentPage({ onBack }) {
                   {recordings.map((r) => (
                     <button
                       key={r.id}
-                      style={{ ...recItem, background: playingId === r.id ? "#e8f5f0" : "transparent", borderColor: playingId === r.id ? "#185d56" : "rgba(22,43,42,0.08)" }}
-                      onClick={() => setPlayingId(playingId === r.id ? null : r.id)}
+                      style={{
+                        ...recItem,
+                        background:
+                          playingId === r.id ? "#e8f5f0" : "transparent",
+                        borderColor:
+                          playingId === r.id
+                            ? "#185d56"
+                            : "rgba(22,43,42,0.08)",
+                      }}
+                      onClick={() =>
+                        setPlayingId(playingId === r.id ? null : r.id)
+                      }
                     >
                       <span style={recDate}>{fmtDate(r.created_at)}</span>
-                      {r.duration_ms > 0 && <span style={recDur}>{fmtDuration(r.duration_ms)}</span>}
+                      {r.duration_ms > 0 && (
+                        <span style={recDur}>{fmtDuration(r.duration_ms)}</span>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -184,10 +234,25 @@ export default function ParentPage({ onBack }) {
             <canvas ref={cameraCanvasRef} style={{ display: "none" }} />
 
             {playingId ? (
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px", minHeight: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                  minHeight: 0,
+                }}
+              >
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
                   <p style={feedLabel}>БИЧЛЭГ</p>
-                  <button style={closePlayBtn} onClick={() => setPlayingId(null)}>✕ Хаах</button>
+                  <button
+                    style={closePlayBtn}
+                    onClick={() => setPlayingId(null)}
+                  >
+                    ✕ Хаах
+                  </button>
                 </div>
                 <div style={{ ...feedBox, flex: 1 }}>
                   <video
@@ -195,17 +260,35 @@ export default function ParentPage({ onBack }) {
                     src={`${API_BASE}/api/recordings/stream?path=${encodeURIComponent(playingId)}`}
                     controls
                     autoPlay
-                    style={{ width: "100%", height: "100%", objectFit: "contain", background: "#000" }}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "contain",
+                      background: "#000",
+                    }}
                   />
                 </div>
               </div>
             ) : (
-              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "8px", minHeight: 0 }}>
+              <div
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                  minHeight: 0,
+                }}
+              >
                 <p style={feedLabel}>ДЭЛГЭЦ</p>
                 <div style={{ ...feedBox, flex: 1 }}>
                   <canvas
                     ref={screenCanvasRef}
-                    style={{ width: "100%", height: "100%", objectFit: "contain", display: screenOn ? "block" : "none" }}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "contain",
+                      display: screenOn ? "block" : "none",
+                    }}
                   />
                   {!screenOn && (
                     <div style={feedPlaceholder}>
@@ -238,31 +321,211 @@ function statusText(s) {
   return "";
 }
 
-const pageWrap = { minHeight: "100dvh", background: "#f8faf9", display: "flex", flexDirection: "column", fontFamily: "inherit" };
-const topBar = { display: "flex", alignItems: "center", gap: "12px", padding: "16px 24px", background: "#fff", borderBottom: "1px solid rgba(22,43,42,0.08)", position: "sticky", top: 0, zIndex: 10 };
-const backBtn = { border: "none", background: "none", color: "#185d56", fontSize: "14px", cursor: "pointer", padding: "6px 0", fontWeight: 700, flexShrink: 0 };
-const topTitle = { fontSize: "16px", fontWeight: 700, color: "#162b2a", flex: 1 };
+const pageWrap = {
+  minHeight: "100dvh",
+  background: "#f8faf9",
+  display: "flex",
+  flexDirection: "column",
+  fontFamily: "inherit",
+};
+const topBar = {
+  display: "flex",
+  alignItems: "center",
+  gap: "12px",
+  padding: "16px 24px",
+  background: "#fff",
+  borderBottom: "1px solid rgba(22,43,42,0.08)",
+  position: "sticky",
+  top: 0,
+  zIndex: 10,
+};
+const backBtn = {
+  border: "none",
+  background: "none",
+  color: "#185d56",
+  fontSize: "14px",
+  cursor: "pointer",
+  padding: "6px 0",
+  fontWeight: 700,
+  flexShrink: 0,
+};
+const topTitle = {
+  fontSize: "16px",
+  fontWeight: 700,
+  color: "#162b2a",
+  flex: 1,
+};
 const statusBadge = { display: "flex", alignItems: "center", gap: "6px" };
 const statusDot = { width: 8, height: 8, borderRadius: "50%", flexShrink: 0 };
 const statusLabel = { fontSize: "13px", color: "#6d7d79" };
-const inputWrap = { flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "32px 16px" };
-const inputCard = { background: "#fff", borderRadius: "20px", padding: "40px 36px", boxShadow: "0 8px 40px rgba(0,0,0,0.08)", display: "flex", flexDirection: "column", alignItems: "center", gap: "24px", width: "100%", maxWidth: "400px" };
-const inputTitle = { fontSize: "20px", fontWeight: 800, color: "#162b2a", margin: 0, textAlign: "center" };
-const inputSubtitle = { fontSize: "14px", color: "#6d7d79", margin: "-16px 0 0", textAlign: "center" };
-const codeInput = { width: "100%", padding: "16px 20px", borderRadius: "14px", border: "2px solid rgba(22,43,42,0.15)", fontSize: "28px", fontWeight: 800, textAlign: "center", color: "#162b2a", letterSpacing: "6px", outline: "none", background: "#fff", boxSizing: "border-box" };
-const actionBtn = { padding: "14px 40px", borderRadius: "12px", border: "none", background: "#185d56", color: "#fff", fontSize: "15px", fontWeight: 700, cursor: "pointer", transition: "opacity 0.15s" };
-const viewingWrap = { flex: 1, display: "flex", flexDirection: "row", overflow: "hidden" };
-const sidebar = { display: "flex", flexDirection: "column", background: "#fff", borderRight: "1px solid rgba(22,43,42,0.08)", transition: "width 0.2s", overflow: "hidden", flexShrink: 0 };
-const sidebarToggle = { margin: "10px auto", display: "block", border: "none", background: "none", color: "#185d56", fontSize: "13px", cursor: "pointer", padding: "4px 8px", fontWeight: 700, flexShrink: 0 };
-const sidebarTitle = { fontSize: "11px", fontWeight: 700, letterSpacing: "1.5px", color: "#9ca3af", margin: "0 0 2px", padding: "0 14px" };
-const refreshBtn = { display: "block", margin: "0 14px 8px", border: "none", background: "none", color: "#185d56", fontSize: "11px", fontWeight: 700, cursor: "pointer", padding: "2px 0", textAlign: "left" };
-const recList = { flex: 1, overflowY: "auto", padding: "0 8px 12px", display: "flex", flexDirection: "column", gap: "4px" };
-const recEmpty = { fontSize: "12px", color: "#9ca3af", textAlign: "center", padding: "20px 8px" };
-const recItem = { width: "100%", border: "1px solid rgba(22,43,42,0.08)", borderRadius: "10px", padding: "10px 12px", cursor: "pointer", textAlign: "left", display: "flex", flexDirection: "column", gap: "2px", transition: "background 0.1s" };
+const inputWrap = {
+  flex: 1,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "32px 16px",
+};
+const inputCard = {
+  background: "#fff",
+  borderRadius: "20px",
+  padding: "40px 36px",
+  boxShadow: "0 8px 40px rgba(0,0,0,0.08)",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: "24px",
+  width: "100%",
+  maxWidth: "400px",
+};
+const inputTitle = {
+  fontSize: "20px",
+  fontWeight: 800,
+  color: "#162b2a",
+  margin: 0,
+  textAlign: "center",
+};
+const inputSubtitle = {
+  fontSize: "14px",
+  color: "#6d7d79",
+  margin: "-16px 0 0",
+  textAlign: "center",
+};
+const codeInput = {
+  width: "100%",
+  padding: "16px 20px",
+  borderRadius: "14px",
+  border: "2px solid rgba(22,43,42,0.15)",
+  fontSize: "28px",
+  fontWeight: 800,
+  textAlign: "center",
+  color: "#162b2a",
+  letterSpacing: "6px",
+  outline: "none",
+  background: "#fff",
+  boxSizing: "border-box",
+};
+const actionBtn = {
+  padding: "14px 40px",
+  borderRadius: "12px",
+  border: "none",
+  background: "#185d56",
+  color: "#fff",
+  fontSize: "15px",
+  fontWeight: 700,
+  cursor: "pointer",
+  transition: "opacity 0.15s",
+};
+const viewingWrap = {
+  flex: 1,
+  display: "flex",
+  flexDirection: "row",
+  overflow: "hidden",
+};
+const sidebar = {
+  display: "flex",
+  flexDirection: "column",
+  background: "#fff",
+  borderRight: "1px solid rgba(22,43,42,0.08)",
+  transition: "width 0.2s",
+  overflow: "hidden",
+  flexShrink: 0,
+};
+const sidebarToggle = {
+  margin: "10px auto",
+  display: "block",
+  border: "none",
+  background: "none",
+  color: "#185d56",
+  fontSize: "13px",
+  cursor: "pointer",
+  padding: "4px 8px",
+  fontWeight: 700,
+  flexShrink: 0,
+};
+const sidebarTitle = {
+  fontSize: "11px",
+  fontWeight: 700,
+  letterSpacing: "1.5px",
+  color: "#9ca3af",
+  margin: "0 0 2px",
+  padding: "0 14px",
+};
+const refreshBtn = {
+  display: "block",
+  margin: "0 14px 8px",
+  border: "none",
+  background: "none",
+  color: "#185d56",
+  fontSize: "11px",
+  fontWeight: 700,
+  cursor: "pointer",
+  padding: "2px 0",
+  textAlign: "left",
+};
+const recList = {
+  flex: 1,
+  overflowY: "auto",
+  padding: "0 8px 12px",
+  display: "flex",
+  flexDirection: "column",
+  gap: "4px",
+};
+const recEmpty = {
+  fontSize: "12px",
+  color: "#9ca3af",
+  textAlign: "center",
+  padding: "20px 8px",
+};
+const recItem = {
+  width: "100%",
+  border: "1px solid rgba(22,43,42,0.08)",
+  borderRadius: "10px",
+  padding: "10px 12px",
+  cursor: "pointer",
+  textAlign: "left",
+  display: "flex",
+  flexDirection: "column",
+  gap: "2px",
+  transition: "background 0.1s",
+};
 const recDate = { fontSize: "12px", fontWeight: 600, color: "#162b2a" };
 const recDur = { fontSize: "11px", color: "#6d7d79" };
-const mainArea = { flex: 1, display: "flex", flexDirection: "column", padding: "16px", overflow: "hidden", gap: "8px" };
-const feedLabel = { fontSize: "11px", fontWeight: 700, letterSpacing: "1.5px", color: "#9ca3af", margin: 0 };
-const feedBox = { width: "100%", background: "#0f0f0f", borderRadius: "14px", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" };
-const feedPlaceholder = { color: "#4b5563", fontSize: "13px", textAlign: "center", padding: "20px" };
-const closePlayBtn = { fontSize: "11px", fontWeight: 700, color: "#185d56", background: "none", border: "none", cursor: "pointer", padding: "2px 6px" };
+const mainArea = {
+  flex: 1,
+  display: "flex",
+  flexDirection: "column",
+  padding: "16px",
+  overflow: "hidden",
+  gap: "8px",
+};
+const feedLabel = {
+  fontSize: "11px",
+  fontWeight: 700,
+  letterSpacing: "1.5px",
+  color: "#9ca3af",
+  margin: 0,
+};
+const feedBox = {
+  width: "100%",
+  background: "#0f0f0f",
+  borderRadius: "14px",
+  overflow: "hidden",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+};
+const feedPlaceholder = {
+  color: "#4b5563",
+  fontSize: "13px",
+  textAlign: "center",
+  padding: "20px",
+};
+const closePlayBtn = {
+  fontSize: "11px",
+  fontWeight: 700,
+  color: "#185d56",
+  background: "none",
+  border: "none",
+  cursor: "pointer",
+  padding: "2px 6px",
+};
