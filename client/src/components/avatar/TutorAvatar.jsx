@@ -15,7 +15,7 @@ import { LongExpressionInteractive } from './LongExpressionInteractive.jsx'
 import { LengthUnitInteractive } from './LengthUnitInteractive.jsx'
 import { ProblemList } from './ProblemList.jsx'
 import { CelebrationBurst } from './CelebrationBurst.jsx'
-import { JoyBackground, JoyRobot } from './JoyScene.jsx'
+import { SplineScene } from '../SplineScene.jsx'
 import { MinecraftBackground } from './MinecraftScene.jsx'
 import { MinecraftSteveScene } from './MinecraftSteveScene.jsx'
 import { McQueenBackground } from './McQueenScene.jsx'
@@ -630,7 +630,6 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
       className={`ta-root${showProblemPane ? ' ta-root-split' : ' ta-root-center'}${celebrating ? ' ta-celebrate' : ''}${isJoy ? ' ta-joy' : ''}${isMc ? ' ta-mc' : ''}${isMcq ? ' ta-mcq' : ''}${isAstro ? ' ta-astro' : ''}`}
       data-theme={themeIndex}
     >
-      {isJoy && <JoyBackground />}
       {isMc && <MinecraftBackground />}
       {isMcq && <McQueenBackground />}
       <div className="ta-blob ta-blob-1" />
@@ -673,13 +672,13 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
       {/* RIGHT (or centered) — robot + speech bubble + status */}
       <div className="ta-robot-col">
         {isJoy ? (
-          <div className="joy-stage">
-            <JoyRobot mood={mascotMood} />
+          <div className={`tutor-spline-wrap tutor-spline-big${showProblemPane ? ' tutor-spline-side' : ''}`}>
+            <SplineScene className="tutor-mascot" />
           </div>
         ) : isMc ? (
-          <div className="mc-stage mc-stage--3d">
+          <div className={`mc-stage mc-stage--3d${showProblemPane ? '' : ' mc-stage--world'}`}>
             <MinecraftSteveScene
-              variant="compact"
+              variant={showProblemPane ? 'compact' : 'world'}
               mood={celebrating ? 'celebrate' : mascotMood}
             />
           </div>
@@ -701,6 +700,11 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
           {isListening && <span className="tutor-listen-dot" />}
           <span className={`tutor-status${statusCls ? ` ${statusCls}` : ''}`}>{statusText}</span>
         </div>
+        {error && <p className="tutor-error">{error}</p>}
+      </div>
+
+      {/* Chat dock — доод-баруун булан, аватар бүрд өвөрмөц бар */}
+      <div className="ta-chat-dock">
         <ChatLog messages={chatMessages} />
         <div className="ta-text-input-row">
           <input
@@ -720,7 +724,6 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
             ➤
           </button>
         </div>
-        {error && <p className="tutor-error">{error}</p>}
       </div>
     </div>
   )

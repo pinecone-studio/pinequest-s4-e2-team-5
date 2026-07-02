@@ -131,6 +131,39 @@ function useSteveMaterials() {
         color: "#5a3a22",
         roughness: 0.85,
       }),
+      // Ger — цагаан ноос + хөх хээ + улбар шар хаалга + модон хүрээ
+      woolWhite: new THREE.MeshStandardMaterial({
+        color: "#f3f3ef",
+        roughness: 0.96,
+      }),
+      woolBlue: new THREE.MeshStandardMaterial({
+        color: "#274690",
+        roughness: 0.9,
+      }),
+      gerDoor: new THREE.MeshStandardMaterial({
+        color: "#d9772b",
+        roughness: 0.7,
+      }),
+      gerFrame: new THREE.MeshStandardMaterial({
+        color: "#7a4a24",
+        roughness: 0.8,
+      }),
+      // 3D газрын нэмэлт материал
+      grassTop: new THREE.MeshStandardMaterial({
+        color: "#6dbb45",
+        roughness: 1,
+      }),
+      water: new THREE.MeshStandardMaterial({
+        color: "#3a6ea5",
+        roughness: 0.22,
+        metalness: 0.1,
+        transparent: true,
+        opacity: 0.85,
+      }),
+      sand: new THREE.MeshStandardMaterial({
+        color: "#d8c48a",
+        roughness: 0.95,
+      }),
     }),
     [],
   );
@@ -296,8 +329,10 @@ function SteveCharacter({
     }
 
     if (headRef.current) {
+      // learn хуудсанд AI ярих үед толгой өчүүхэн дохиж илүү амьд харагдана.
+      const nod = compact && mood === "speaking" ? Math.sin(t * 6) * 0.05 : 0;
       const targetRotationY = pointer.x * 0.5;
-      const targetRotationX = -pointer.y * 0.3;
+      const targetRotationX = -pointer.y * 0.3 + nod;
 
       headRef.current.rotation.y = THREE.MathUtils.lerp(
         headRef.current.rotation.y,
@@ -313,16 +348,32 @@ function SteveCharacter({
     }
 
     if (compact) {
-      // learn хуудасны цээж (bust) харагдац: хоёр гар урагш, харагч тал руу
-      // гарсан тайван байрлал + зөөлөн амьсгалын хөдөлгөөн.
+      // learn хуудасны цээж (bust) харагдац: зүүн гар тайван урд, зөөлөн
+      // амьсгалын найгалт. AI ярих үед баруун гар дээш өргөгдөж, хэмнэлтэй
+      // "тайлбарлаж яриа" хийж буй мэт дохино.
       const sway = Math.sin(t * 1.6) * 0.06;
-      if (rightArmRef.current) {
-        rightArmRef.current.rotation.x = -0.72 + sway;
-        rightArmRef.current.rotation.z = -0.16;
-      }
+      const speaking = mood === "speaking";
+
+      // Зүүн гар — үргэлж тайван урд байрлал
       if (leftArmRef.current) {
         leftArmRef.current.rotation.x = -0.72 - sway;
         leftArmRef.current.rotation.z = 0.16;
+      }
+
+      // Баруун гар — ярих үед дохих, эс бол тайван урд; огцом биш зөөлөн шилжинэ
+      if (rightArmRef.current) {
+        const targetX = speaking ? -1.15 + Math.sin(t * 7) * 0.32 : -0.72 + sway;
+        const targetZ = speaking ? -0.35 + Math.sin(t * 3.3) * 0.12 : -0.16;
+        rightArmRef.current.rotation.x = THREE.MathUtils.lerp(
+          rightArmRef.current.rotation.x,
+          targetX,
+          0.15,
+        );
+        rightArmRef.current.rotation.z = THREE.MathUtils.lerp(
+          rightArmRef.current.rotation.z,
+          targetZ,
+          0.15,
+        );
       }
     } else {
       if (rightArmRef.current) {
@@ -824,11 +875,14 @@ function MinecraftWorld({ reducedMotion, mood, variant = "full" }) {
   const { size } = useThree();
   const narrow = size.width < 720;
   const compact = variant === "compact";
+  const world = variant === "world";
   const celebrating = mood === "celebrate";
 
   return (
     <>
       {!compact && <color attach="background" args={["#9bd2ff"]} />}
+      {/* Гүн мэдрэгдүүлэх манан — хол блокуудыг бүдгэрүүлж жинхэнэ 3D орчин */}
+      {world && <fog attach="fog" args={["#bfe3ff", 13, 42]} />}
 
       <ambientLight intensity={1.3} />
       <hemisphereLight args={["#dff5ff", "#7a5230", 1.3]} />
@@ -845,15 +899,29 @@ function MinecraftWorld({ reducedMotion, mood, variant = "full" }) {
       <pointLight position={[-2.8, 2.2, 4]} intensity={0.9} color="#ffffff" />
 
       <group
-        scale={compact ? (narrow ? 0.98 : 1.12) : narrow ? 0.68 : 1}
+        scale={
+          world
+            ? narrow
+              ? 0.82
+              : 1.0
+            : compact
+              ? narrow
+                ? 0.98
+                : 1.12
+              : narrow
+                ? 0.68
+                : 1
+        }
         position={
-          compact
-            ? [narrow ? -0.1 : -0.12, -0.28, 0]
-            : [narrow ? 0 : 0.05, narrow ? -0.06 : 0, 0]
+          world
+            ? [narrow ? -1.7 : -2.5, 0, 1.6]
+            : compact
+              ? [narrow ? -0.1 : -0.12, -0.28, 0]
+              : [narrow ? 0 : 0.05, narrow ? -0.06 : 0, 0]
         }
         // learn хуудсанд Стивийг тал хажуу тийш эргүүлж, зүгээр зогсохгүй
         // илүү амьд, сонирхолтой ¾ өнцгөөр харуулна
-        rotation={compact ? [0, -0.32, 0] : [0, 0, 0]}
+        rotation={world || compact ? [0, -0.3, 0] : [0, 0, 0]}
       >
         <SteveCharacter
           reducedMotion={reducedMotion}
@@ -891,6 +959,39 @@ function MinecraftWorld({ reducedMotion, mood, variant = "full" }) {
               opacity={0.26}
               color="#fff6b0"
               position={[-0.35, 1.6, 0.2]}
+            />
+          )}
+        </>
+      ) : world ? (
+        <>
+          {/* Жинхэнэ 3D блокон газар + нуур */}
+          <BlockyTerrain />
+          {/* Цагаан ноосон Монгол ger */}
+          <WoolGer position={[2.7, -1.55, 0.2]} />
+          {/* Модод — олон гүнд байрлаж гүн үүсгэнэ */}
+          <BigOakTree position={[-5.6, -1.55, -6]} scale={[1.3, 1.4, 1.3]} />
+          <TallSpruceTree position={[5.6, -1.55, -7]} scale={[1.2, 1.5, 1.2]} />
+          <BigOakTree position={[-3.4, -1.55, -9.5]} scale={[1, 1, 1]} />
+          <MiniTree position={[-6.6, -1.55, -2]} />
+          <TallSpruceTree position={[7.2, -1.55, -4]} scale={[1, 1.2, 1]} />
+          {/* Үүлс */}
+          <CloudPuff position={[-4, 3.2, -8]} scale={1} />
+          <CloudPuff position={[3.5, 3.7, -9.5]} scale={1.2} />
+          <CloudPuff position={[0, 4, -11]} scale={1.1} />
+          {/* Цэцэг + өвс */}
+          <Flower position={[-3.2, -1.55, 1.6]} type="red" />
+          <Flower position={[-1.4, -1.55, 2.1]} type="yellow" />
+          <GrassDetail position={[-4.2, -1.55, 0.6]} />
+          <GrassDetail position={[0.6, -1.55, 1.9]} />
+          {!reducedMotion && (
+            <Sparkles
+              count={18}
+              scale={[9, 3, 5]}
+              size={2}
+              speed={0.2}
+              opacity={0.28}
+              color="#fff6b0"
+              position={[0, 1.6, -2]}
             />
           )}
         </>
@@ -974,13 +1075,124 @@ function FullMinecraftWorld({ reducedMotion }) {
   );
 }
 
+/* ── Жижиг грасс блок (хурц Minecraft куб) ── */
+function GrassCell({ position, top = "#6dbb45", side = "#7a4d2b" }) {
+  return (
+    <group position={position}>
+      <mesh receiveShadow castShadow>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial color={side} roughness={1} />
+      </mesh>
+      <mesh position={[0, 0.5, 0]} receiveShadow>
+        <boxGeometry args={[1.02, 0.16, 1.02]} />
+        <meshStandardMaterial color={top} roughness={1} />
+      </mesh>
+    </group>
+  );
+}
+
+/* ── Жинхэнэ 3D блокон газар: ойрын блок тор + толгод + хол тэгш + нуур ── */
+function BlockyTerrain() {
+  const m = useSteveMaterials();
+  const surfaceY = -1.55;
+  const inWater = (x, z) => x >= 3 && x <= 5 && z <= -2 && z >= -4;
+  const cells = useMemo(() => {
+    const out = [];
+    for (let x = -5; x <= 5; x++) {
+      for (let z = 2; z >= -4; z--) {
+        if (inWater(x, z)) continue;
+        const rise = Math.max(
+          0,
+          Math.round(Math.sin(x * 0.7) * 0.6 + Math.cos(z * 0.6) * 0.6),
+        );
+        out.push({ x, z, rise });
+      }
+    }
+    return out;
+  }, []);
+
+  return (
+    <>
+      {/* Хол хүртэлх тэгш талбай (манан руу уусна) */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, surfaceY - 0.02, -13]} receiveShadow>
+        <planeGeometry args={[140, 100]} />
+        <primitive object={m.grassTop} attach="material" />
+      </mesh>
+
+      {/* Ойрын блокон гадаргуу (толгодтой) */}
+      {cells.map(({ x, z, rise }, i) => (
+        <GrassCell key={i} position={[x, surfaceY - 0.5 + rise, z]} />
+      ))}
+
+      {/* Нуур: усны хавтгай + элсэн эрэг */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[4, surfaceY - 0.3, -3]}>
+        <planeGeometry args={[3.4, 3.4]} />
+        <primitive object={m.water} attach="material" />
+      </mesh>
+      {[[2, -2], [2, -4], [5.6, -3], [4, -4.6]].map(([x, z], i) => (
+        <mesh key={`s${i}`} position={[x, surfaceY - 0.55, z]} receiveShadow>
+          <boxGeometry args={[1, 1, 1]} />
+          <primitive object={m.sand} attach="material" />
+        </mesh>
+      ))}
+    </>
+  );
+}
+
+/* ── Цагаан ноосон блокоор барьсан Монгол ger (Minecraft хэв маяг) ── */
+function WoolGer({ position = [0, 0, 0], scale = 1 }) {
+  const m = useSteveMaterials();
+  const sides = 10;
+  const radius = 1.55;
+  const wallH = 0.9;
+  const wall = [];
+  for (let i = 0; i < sides; i++) {
+    const a = (i / sides) * Math.PI * 2;
+    wall.push([Math.cos(a) * radius, Math.sin(a) * radius]);
+  }
+  const roof = [];
+  [0, 1].forEach((lvl) => {
+    const r = radius * (1 - (lvl + 1) * 0.28);
+    const y = wallH * 2 + 0.12 + lvl * 0.38;
+    for (let i = 0; i < sides; i++) {
+      const a = (i / sides) * Math.PI * 2 + 0.15;
+      roof.push([Math.cos(a) * r, y, Math.sin(a) * r, `${lvl}-${i}`]);
+    }
+  });
+  const toonoY = wallH * 2 + 0.12 + 2 * 0.38;
+  return (
+    <group position={position} scale={scale}>
+      {wall.map(([x, z], i) => (
+        <group key={i}>
+          <BoxPart args={[0.6, wallH, 0.6]} position={[x, wallH / 2, z]} material={m.woolWhite} radius={0.02} />
+          <BoxPart args={[0.58, wallH, 0.58]} position={[x, wallH * 1.5, z]} material={m.woolWhite} radius={0.02} />
+          <BoxPart args={[0.64, 0.22, 0.64]} position={[x, wallH, z]} material={m.woolBlue} radius={0.015} />
+        </group>
+      ))}
+      {roof.map(([x, y, z, k]) => (
+        <BoxPart key={k} args={[0.5, 0.34, 0.5]} position={[x, y, z]} material={m.woolWhite} radius={0.02} />
+      ))}
+      {/* Тооно (орой) */}
+      <BoxPart args={[0.7, 0.26, 0.7]} position={[0, toonoY, 0]} material={m.gerFrame} radius={0.02} />
+      {/* Хаалга — урд тал (+z) */}
+      <group position={[0, 0, radius + 0.05]}>
+        <BoxPart args={[0.78, 1.4, 0.16]} position={[0, 0.7, 0]} material={m.gerDoor} radius={0.02} />
+        <BoxPart args={[0.95, 0.16, 0.14]} position={[0, 1.45, 0]} material={m.woolBlue} radius={0.01} />
+        <BoxPart args={[0.16, 1.5, 0.14]} position={[-0.45, 0.75, 0]} material={m.woolBlue} radius={0.01} />
+        <BoxPart args={[0.16, 1.5, 0.14]} position={[0.45, 0.75, 0]} material={m.woolBlue} radius={0.01} />
+      </group>
+    </group>
+  );
+}
+
 export function MinecraftSteveScene({ mood = "speaking", variant = "full" }) {
   const reducedMotion = usePrefersReducedMotion();
   const compact = variant === "compact";
+  const world = variant === "world";
 
   return (
     <div
-      className={`minecraft-steve-stage${compact ? " minecraft-steve-stage--compact" : ""}`}
+      className={`minecraft-steve-stage${compact ? " minecraft-steve-stage--compact" : ""}${world ? " minecraft-steve-stage--world" : ""}`}
       aria-hidden="true"
     >
       <Canvas
@@ -988,9 +1200,11 @@ export function MinecraftSteveScene({ mood = "speaking", variant = "full" }) {
         shadows
         dpr={[1, 2]}
         camera={
-          compact
-            ? { position: [0, 1.0, 8.5], fov: 33, near: 0.1, far: 40 }
-            : { position: [0, 1.55, 8.85], fov: 34, near: 0.1, far: 40 }
+          world
+            ? { position: [0, 2.4, 12], fov: 46, near: 0.1, far: 60 }
+            : compact
+              ? { position: [0, 1.0, 8.5], fov: 33, near: 0.1, far: 40 }
+              : { position: [0, 1.55, 8.85], fov: 34, near: 0.1, far: 40 }
         }
         gl={{
           antialias: true,
