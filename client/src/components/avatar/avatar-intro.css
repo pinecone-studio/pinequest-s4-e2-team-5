@@ -21,6 +21,11 @@
   height: 100% !important;
 }
 
+/* Robi (robot) — 3D роботыг голоос баруун тийш бага зэрэг шилжүүлнэ */
+.avatar-intro--joy .avatar-intro__mascot {
+  transform: translateX(18%);
+}
+
 /* Back button, top-left */
 .avatar-intro__back {
   position: absolute;
@@ -989,7 +994,12 @@
    Сансрын нисгэгч — пуужингийн start дэлгэц ба хөөрөлт
    ════════════════════════════════════════════════════════════ */
 .avatar-intro--astro {
-  background: radial-gradient(circle at 50% 30%, #1b2a5e 0%, #0a0f2b 68%, #05081c 100%);
+  background: radial-gradient(
+    circle at 50% 30%,
+    #1b2a5e 0%,
+    #0a0f2b 68%,
+    #05081c 100%
+  );
 }
 
 /* RocketLoader-г scene дүүргэж байрлуулах — transform-оор дээш нисгэнэ */
@@ -1021,7 +1031,9 @@
   opacity: 0;
   transform: translateY(24px);
   pointer-events: none;
-  transition: opacity 0.45s ease, transform 0.45s ease;
+  transition:
+    opacity 0.45s ease,
+    transform 0.45s ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
