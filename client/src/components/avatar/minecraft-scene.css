@@ -176,6 +176,15 @@
   z-index: 0;
 }
 
+/* Эхлэлийн (world) горимд чат баруун доод буланд ТОД харагдана — хоосон үедээ
+   контентоороо хэмжээгээ авч, том хоосон хайрцаг болохгүй. */
+.ta-mc.ta-root-center .ta-chat-dock {
+  height: auto;
+  max-height: min(62vh, 460px);
+  bottom: 20px;
+  right: 20px;
+}
+
 /* Center горимд бүх элемент normal flow-д байна — absolute positioning хийхгүй */
 .ta-mc.ta-root-center .ta-robot-col {
   justify-content: flex-start;
@@ -226,6 +235,22 @@
   pointer-events: auto;
 }
 .ta-mc.ta-root-split .mc-stage { height: clamp(130px, 17vh, 200px); }
+
+/* Бодлого идэвхтэй үед (split): чатыг зүүн талд, Стив аватарын шууд доор дээш
+   нь өргөж, хайрцгийг арилган ард талын тэнгэр/үүлтэй ижил (ил тод) болгов.
+   Мессежүүд өөрсдийн бөмбөлөгтэй тул уншигдацгүй болохгүй. */
+.ta-mc.ta-root-split .ta-chat-dock {
+  left: 22px;
+  right: auto;
+  top: clamp(320px, 42vh, 470px);
+  bottom: clamp(70px, 16vh, 150px);
+  height: auto;
+  width: min(320px, 34vw);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  animation: ta-dock-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
 /* Интерактивийг дээш өргөж, доод талын морьтой тулахаас сэргийлнэ.
    Зүүн дээд булангийн Стив+чат overlay-тай давхцахгүйн тулд баруун тийш зөөнө. */
 .ta-mc.ta-root-split .ta-problem-pane {

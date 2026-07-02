@@ -1233,7 +1233,10 @@ export function MinecraftSteveScene({ mood = "speaking", variant = "full" }) {
         }
         gl={{
           antialias: true,
-          alpha: compact,
+          // Үргэлж alpha:true — R3F renderer-ийг зөвхөн mount үед үүсгэдэг тул
+          // world→compact шилжихэд хар дэвсгэр гарахаас сэргийлнэ. World горимд
+          // <color> тэнгэрийг зурдаг тул ил тод байсан ч асуудалгүй.
+          alpha: true,
           preserveDrawingBuffer: true,
           powerPreference: "high-performance",
           logarithmicDepthBuffer: true,
