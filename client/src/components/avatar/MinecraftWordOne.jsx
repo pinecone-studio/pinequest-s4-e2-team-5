@@ -7,9 +7,10 @@ import { MinecraftBg } from './mcShared.jsx'
 import { makeChoices, extractStory } from './mcUtils.js'
 import './minecraft-first-problem.css'
 
-export function MinecraftWordOne({ problem, onCorrect, onWrong }) {
+export function MinecraftWordOne({ problem, onCorrect, onWrong, review = false }) {
   const story = useMemo(() => extractStory(problem), [problem])
-  const [phase, setPhase] = useState('q') // 'q' | 'done'
+  // review=true үед бодогдсон бодлогыг дахин үзэж байгаа тул шууд дууссан (хариутай) төлөв.
+  const [phase, setPhase] = useState(review ? 'done' : 'q') // 'q' | 'done'
   const [wrong, setWrong] = useState(null)
 
   const total = story?.total ?? (Number(problem?.answer) || 0)
@@ -53,12 +54,6 @@ export function MinecraftWordOne({ problem, onCorrect, onWrong }) {
         <h2 className="mfp-title">Номын сан 📚</h2>
 
         <p className="mfp-prompt mcw2-story">{problem?.promptMn || problem?.raw}</p>
-
-        <p className="mfp-prompt mcw2-key">
-          {isAdd
-            ? <>💡 <b>«олон / нэмэгдсэн»</b> гэдэг нь <b>НЭМЭХ</b>! {a} дээр {b} нэмнэ.</>
-            : <>💡 <b>«үлдэв / цөөн»</b> гэдэг нь <b>ХАСАХ</b>! {a}-аас {b}-г хасна.</>}
-        </p>
 
         {/* Номын тавиур */}
         <div className="mcw2-shelf">

@@ -154,7 +154,7 @@ export function HomeworkUpload({ onHomeworkLoaded, onAnalyzingChange }) {
           setError('OpenAI квот дууссан тул зургийг уншиж чадсангүй. Доорх бодлогуудыг ачаалав — засаад дахин оруулж болно.')
         } else {
           // Серверийн жинхэнэ алдааг харуулна (зүгээр л "алдаа" биш).
-          setError(`Зургийг шинжлэхэд алдаа гарлаа: ${err.message}`)
+          setError(`Зургийг уншихад алдаа гарлаа: ${err.message}`)
           onHomeworkLoaded('', [])
         }
       } finally {
@@ -264,7 +264,7 @@ export function HomeworkUpload({ onHomeworkLoaded, onAnalyzingChange }) {
 
       {(analyzing || done || error) && (
         <div className="hw-status-row">
-          {analyzing && <span className="hw-analyzing">⏳ Шинжилж байна…</span>}
+          {analyzing && <span className="hw-analyzing">⏳ Уншиж байна…</span>}
           {done && !analyzing && <span className="hw-done">✓ Даалгавар уншлаа</span>}
           {error && !analyzing && <span style={{ fontSize: 11, color: '#ef4444' }}>{error}</span>}
           {preview && !analyzing && (

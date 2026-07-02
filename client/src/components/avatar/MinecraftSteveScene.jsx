@@ -1217,9 +1217,43 @@ export function MinecraftSteveScene({ mood = "speaking", variant = "full" }) {
   const reducedMotion = usePrefersReducedMotion();
   const compact = variant === "compact";
   const world = variant === "world";
+  const stageRef = useRef(null);
+
+  // Эхлэх ачаалалт / warp шилжилт / session орж ирэх анимацийн үед r3f canvas нь
+  // эцсийн хэмжээгээ авахаас өмнө хэмжигдэж, баруун-доор зай үлддэг: react-use-measure
+  // getBoundingClientRect-ээр хэмждэг тул layout тогтоогүй/transform-той үед буруу
+  // хэмжээ аваад, дараа нь ResizeObserver дахин ажилладаггүй. Warp зам дээр layout
+  // ХОЖУУ тогтдог тул тогтмол хугацаа хүрэлцдэггүй. Тиймээс stage-ийн бодит хэмжээг
+  // фрейм тутам ажиглаж, өөрчлөгдөх бүрт window resize өдөөж r3f-ийг дахин хэмжүүлнэ.
+  // Хэмжээ тогтвортой болмогц (8 фрейм) эсвэл 2.5с өнгөрмөгц зогсоно — цааш спам болохгүй.
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return undefined;
+    let raf = 0;
+    let stable = 0;
+    let last = "";
+    const start = performance.now();
+    const tick = () => {
+      const r = el.getBoundingClientRect();
+      const sig = `${Math.round(r.width)}x${Math.round(r.height)}`;
+      if (sig !== last) {
+        last = sig;
+        stable = 0;
+        window.dispatchEvent(new Event("resize"));
+      } else {
+        stable += 1;
+      }
+      if (stable < 8 && performance.now() - start < 2500) {
+        raf = requestAnimationFrame(tick);
+      }
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [variant]);
 
   return (
     <div
+      ref={stageRef}
       className={`minecraft-steve-stage${compact ? " minecraft-steve-stage--compact" : ""}${world ? " minecraft-steve-stage--world" : ""}`}
       aria-hidden="true"
     >
