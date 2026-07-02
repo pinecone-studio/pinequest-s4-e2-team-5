@@ -6,6 +6,7 @@
   "scripts": {
     "build": "echo 'Bun does not need a build step'",
     "start": "bun run index.ts",
+    "predev": "lsof -ti :3010 | xargs kill -9 2>/dev/null || true",
     "dev": "bun run --watch index.ts"
   },
   "devDependencies": {

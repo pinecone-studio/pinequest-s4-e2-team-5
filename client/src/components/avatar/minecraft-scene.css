@@ -145,14 +145,14 @@
   position: absolute;
   top: 0; left: 0;
   width: auto;
-  max-width: min(42%, 360px);
+  max-width: min(38%, 320px);
   height: auto;
   flex: none;
   z-index: 5;
   align-items: flex-start;
   justify-content: flex-start;
   gap: 12px;
-  padding: 20px 22px;
+  padding: 58px 22px 20px; /* avatar-ыг жаахан доош буулгав */
   border: none;
   pointer-events: none;
 }
@@ -162,8 +162,62 @@
   pointer-events: auto;
 }
 .ta-mc.ta-root-split .mc-stage { height: clamp(130px, 17vh, 200px); }
-/* Интерактивийг дээш өргөж, доод талын морьтой тулахаас сэргийлнэ */
-.ta-mc.ta-root-split .ta-problem-pane { padding-top: 36px; padding-bottom: 16vh; }
+/* Интерактивийг дээш өргөж, доод талын морьтой тулахаас сэргийлнэ.
+   Зүүн дээд булангийн Стив+чат overlay-тай давхцахгүйн тулд баруун тийш зөөнө. */
+.ta-mc.ta-root-split .ta-problem-pane {
+  padding-top: 36px;
+  padding-bottom: 16vh;
+  padding-left: clamp(16px, 20vw, 430px); /* чат overlay-тай давхцахгүй болгож баруун тийш */
+}
+
+/* Код-ын ард гарч буй шар нар — session дээр хэрэггүй, авъя */
+.ta-mc .mcs-sun { display: none; }
+
+/* Буцах товч (← Бодлогууд) — Майнкрафт session дээр нуув */
+.ta-mc .ta-back-btn { display: none; }
+
+/* Явцын заагчийг гэрэлт тэнгэр дээр тод болгоно */
+.ta-mc .ta-problem-progress {
+  color: #24401a;
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(90, 140, 60, 0.4);
+}
+
+/* Интерактив картын ГАДНА ХҮРЭЭ + дотоод тэнгэр/газрыг авна —
+   Майнкрафт хуудасны ертөнц дээр "хайрцаг доторх хайрцаг" болохгүй,
+   контент шууд хуудсанд шингэнэ. (Зөвхөн багш дотор; /mc-first хэвээр.) */
+.ta-mc .mfp-root {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  max-width: 700px;
+  overflow: visible;
+}
+.ta-mc .mfp-root .mfp-bg { display: none; }
+
+/* Гэрэлт тэнгэр дээр чатын мессежийг ТОД (бараан) болгоно — цайвар биш */
+.ta-mc .ta-chat-log { max-width: 320px; }
+.ta-mc .ta-chat-text {
+  font-size: 13px;
+  box-shadow: 0 3px 10px rgba(60, 110, 40, 0.18);
+}
+.ta-mc .ta-chat-msg--user .ta-chat-text {
+  background: rgba(255, 255, 255, 0.94);
+  color: #24401a;
+  border: 1.5px solid rgba(90, 140, 60, 0.35);
+}
+.ta-mc .ta-chat-msg--assistant .ta-chat-text {
+  background: rgba(184, 228, 152, 0.95);
+  color: #1c3810;
+  border: 1.5px solid rgba(90, 140, 60, 0.35);
+}
+/* Оруулах талбар ба алдааг ч тод болгоно */
+.ta-mc .ta-text-input {
+  background: rgba(255, 255, 255, 0.95);
+  color: #24401a;
+  border-color: rgba(90, 140, 60, 0.4);
+}
+.ta-mc .ta-text-input::placeholder { color: rgba(60, 100, 40, 0.6); }
 
 /* Ярианы бөмбөлөг + статус */
 .ta-mc.ta-root-center .sb-wrap {

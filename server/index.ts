@@ -710,6 +710,19 @@ wss.on("connection", (ws, req) => {
   }
 });
 
+// Порт эзэлсэн үед ойлгомжгүй stack trace биш, тодорхой заавар харуулна.
+httpServer.on("error", (err: NodeJS.ErrnoException) => {
+  if (err.code === "EADDRINUSE") {
+    console.error(
+      `\n⛔ ${port} порт аль хэдийн ашиглагдаж байна (өмнөх сервер унтраагүй үлдсэн).\n` +
+        `   Засах:  lsof -ti :${port} | xargs kill -9\n` +
+        `   Дараа нь дахин эхлүүлнэ үү.\n`,
+    );
+    process.exit(1);
+  }
+  throw err;
+});
+
 httpServer.listen(port, "0.0.0.0", () => {
   console.log(`Server ${port} порт дээр ажиллаж байна`);
 });

@@ -146,6 +146,45 @@
   display: block;
 }
 
+/* Гараар бичих горим */
+.hw-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.hw-mode-toggle {
+  background: transparent;
+  border: 1.5px solid var(--green, #4caf50);
+  color: var(--green, #4caf50);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.hw-mode-toggle:hover { background: rgba(76, 175, 80, 0.1); }
+.hw-manual {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.hw-manual-input {
+  width: 100%;
+  resize: vertical;
+  border: 1.5px dashed #bbb;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 13px;
+  line-height: 1.5;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+.hw-manual-input:focus { outline: none; border-color: var(--green, #4caf50); }
+.hw-manual-btn { align-self: flex-start; }
+.hw-manual-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
 .hw-status-row {
   display: flex;
   align-items: center;
