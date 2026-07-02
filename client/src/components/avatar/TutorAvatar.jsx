@@ -24,7 +24,7 @@ import { SplineScene } from '../SplineScene.jsx'
 import { MinecraftBackground } from './MinecraftScene.jsx'
 import { MinecraftSteveScene } from './MinecraftSteveScene.jsx'
 import { McQueenBackground } from './McQueenScene.jsx'
-import AstronautLoader from './AstronautLoader.jsx'
+import { AstronautScene } from './AstronautScene.jsx'
 import './astronaut-loader.css'
 import { extractProblemNumber } from './extractProblemNumber.js'
 import { normalizeHomeworkProblems } from './problemNormalizer.js'
@@ -714,7 +714,7 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
           </div>
         ) : isAstro ? (
           <div className="astro-stage">
-            <AstronautLoader />
+            <AstronautScene variant={showProblemPane ? 'compact' : 'world'} />
           </div>
         ) : (
           <div className={`tutor-spline-wrap tutor-spline-big${showProblemPane ? ' tutor-spline-side' : ''}`}>
