@@ -3845,7 +3845,8 @@
 }
 
 /* ═══════════════════════════════════════════════════════════
-   Chat dock — доод-баруун булан, аватар бүрд өвөрмөц бар.
+   Chat dock — доод-баруун булан, панельгүй: мессежийн bubble +
+   input мөр шууд background дээр сул харагдана.
    ChatLog + input-ыг ta-root-ийн шууд хүүхэд болгож буланд бэхэлнэ
    (робот-баганын layout/transform-оос хамааралгүй).
    ═══════════════════════════════════════════════════════════ */
@@ -3860,26 +3861,14 @@
   flex-direction: column;
   justify-content: flex-end;
   gap: 10px;
-  padding: 12px;
-  border-radius: 22px;
-  /* Суурь панель (Barbie / default): цагаан шил + ягаан accent */
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(236, 79, 175, 0.3);
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.22);
-  backdrop-filter: blur(10px);
+  padding: 0;
   --bar-accent: #ec4faf;
   pointer-events: auto;
-  animation:
-    ta-dock-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both,
-    ta-glow-pink 3.2s ease-in-out 0.6s infinite;
+  animation: ta-dock-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 @keyframes ta-dock-in {
   from { opacity: 0; transform: translateY(18px) scale(0.98); }
   to   { opacity: 1; transform: none; }
-}
-@keyframes ta-glow-pink {
-  0%, 100% { box-shadow: 0 18px 44px rgba(0, 0, 0, 0.22), 0 0 0 rgba(236, 79, 175, 0); }
-  50%      { box-shadow: 0 18px 44px rgba(0, 0, 0, 0.22), 0 0 26px rgba(236, 79, 175, 0.42); }
 }
 
 /* Chat log — input дээр талд, уншигдах цайвар карт */
@@ -3993,47 +3982,17 @@
   cursor: not-allowed;
 }
 
-/* ── Joy (robot): neon техно бар ── */
+/* ── Joy (robot): cyan accent ── */
 .ta-joy .ta-chat-dock {
-  background: linear-gradient(
-    160deg,
-    rgba(20, 26, 54, 0.94),
-    rgba(32, 20, 62, 0.94)
-  );
-  border: 1px solid rgba(120, 224, 255, 0.5);
-  box-shadow:
-    0 0 26px rgba(120, 224, 255, 0.3),
-    0 18px 44px rgba(0, 0, 0, 0.45);
   --bar-accent: #3ed0e0;
-  animation:
-    ta-dock-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both,
-    ta-glow-joy 3s ease-in-out 0.6s infinite;
-}
-@keyframes ta-glow-joy {
-  0%, 100% { box-shadow: 0 0 18px rgba(120, 224, 255, 0.24), 0 18px 44px rgba(0, 0, 0, 0.45); }
-  50%      { box-shadow: 0 0 36px rgba(120, 224, 255, 0.5), 0 18px 44px rgba(0, 0, 0, 0.45); }
 }
 .ta-joy .ta-chat-dock .ta-text-send-btn {
   background: linear-gradient(135deg, #3ed0e0, #7c83ff);
 }
 
-/* ── Minecraft: модон блок бар ── */
+/* ── Minecraft: ногоон accent + блок хэлбэрийн input ── */
 .ta-mc .ta-chat-dock {
-  background: linear-gradient(180deg, #a5733f, #7c5030);
-  border: 3px solid #5a3a22;
-  border-radius: 12px;
-  box-shadow:
-    inset 0 3px 0 rgba(255, 255, 255, 0.14),
-    0 16px 36px rgba(40, 80, 30, 0.45);
   --bar-accent: #66b347;
-  animation:
-    ta-dock-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both,
-    ta-flicker-mc 4.5s ease-in-out 0.6s infinite;
-}
-@keyframes ta-flicker-mc {
-  0%, 100% { box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.14), 0 16px 36px rgba(40, 80, 30, 0.45), 0 0 12px rgba(255, 180, 80, 0.12); }
-  48%      { box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.18), 0 16px 36px rgba(40, 80, 30, 0.45), 0 0 22px rgba(255, 180, 80, 0.28); }
-  52%      { box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.12), 0 16px 36px rgba(40, 80, 30, 0.45), 0 0 14px rgba(255, 180, 80, 0.16); }
 }
 .ta-mc .ta-chat-dock .ta-text-input {
   border-radius: 6px;
@@ -4043,77 +4002,14 @@
   border-radius: 6px;
 }
 
-/* ── Astronaut: сансрын navy бар ── */
+/* ── Astronaut: ягаан-хөх accent ── */
 .ta-astro .ta-chat-dock {
-  background: linear-gradient(
-    160deg,
-    rgba(12, 18, 42, 0.94),
-    rgba(30, 16, 58, 0.94)
-  );
-  border: 1px solid rgba(150, 180, 255, 0.4);
-  box-shadow:
-    0 0 24px rgba(120, 140, 255, 0.28),
-    0 18px 44px rgba(0, 0, 0, 0.5);
   --bar-accent: #8b7bff;
-  animation:
-    ta-dock-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both,
-    ta-glow-astro 3.4s ease-in-out 0.6s infinite;
-}
-@keyframes ta-glow-astro {
-  0%, 100% { box-shadow: 0 0 18px rgba(120, 140, 255, 0.22), 0 18px 44px rgba(0, 0, 0, 0.5); }
-  50%      { box-shadow: 0 0 34px rgba(139, 123, 255, 0.5), 0 18px 44px rgba(0, 0, 0, 0.5); }
-}
-/* Гэрэлтэн анивчих одод (мессежийн ард) */
-.ta-astro .ta-chat-dock::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background-image:
-    radial-gradient(1.5px 1.5px at 20% 30%, #ffffff, transparent),
-    radial-gradient(1.5px 1.5px at 72% 22%, #cfe0ff, transparent),
-    radial-gradient(1px 1px at 40% 68%, #ffffff, transparent),
-    radial-gradient(1.5px 1.5px at 86% 58%, #ffffff, transparent),
-    radial-gradient(1px 1px at 55% 45%, #dfe8ff, transparent),
-    radial-gradient(1px 1px at 30% 85%, #ffffff, transparent);
-  opacity: 0.5;
-  animation: ta-twinkle 3.5s ease-in-out infinite;
-}
-@keyframes ta-twinkle {
-  0%, 100% { opacity: 0.32; }
-  50%      { opacity: 0.8; }
 }
 
-/* ── McQueen: уралдааны улаан бар + шатрын зураас ── */
+/* ── McQueen: шар accent ── */
 .ta-mcq .ta-chat-dock {
-  background: linear-gradient(180deg, #e33b2f, #b81f1f);
-  border: 2px solid #7d1414;
-  box-shadow: 0 16px 36px rgba(180, 30, 20, 0.45);
-  overflow: hidden;
   --bar-accent: #ffd23e;
-  animation:
-    ta-dock-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both,
-    ta-glow-red 2.6s ease-in-out 0.6s infinite;
-}
-@keyframes ta-glow-red {
-  0%, 100% { box-shadow: 0 16px 36px rgba(180, 30, 20, 0.45), 0 0 0 rgba(255, 90, 60, 0); }
-  50%      { box-shadow: 0 16px 36px rgba(180, 30, 20, 0.45), 0 0 26px rgba(255, 90, 60, 0.4); }
-}
-.ta-mcq .ta-chat-dock::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 6px;
-  background: repeating-linear-gradient(90deg, #1a1a1a 0 9px, #fff 9px 18px);
-  opacity: 0.85;
-  animation: ta-mcq-race 0.5s linear infinite;
-}
-@keyframes ta-mcq-race {
-  from { background-position: 0 0; }
-  to   { background-position: 18px 0; }
 }
 .ta-mcq .ta-chat-dock .ta-text-send-btn {
   color: #1a1a1a;
@@ -4122,9 +4018,7 @@
 /* Хөдөлгөөн багасгах горим: тасралтгүй анимацийг унтраана */
 @media (prefers-reduced-motion: reduce) {
   .ta-chat-dock,
-  .ta-chat-dock .ta-chat-msg,
-  .ta-astro .ta-chat-dock::before,
-  .ta-mcq .ta-chat-dock::before {
+  .ta-chat-dock .ta-chat-msg {
     animation: none !important;
   }
 }
