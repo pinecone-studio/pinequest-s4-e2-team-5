@@ -1,0 +1,33 @@
+.answer-button{
+
+    width:120px;
+
+    height:80px;
+
+    border:none;
+
+    border-radius:20px;
+
+    background:#4D96FF;
+
+    color:white;
+
+    font-size:34px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    transition:.25s;
+}
+
+.answer-button:hover{
+
+    transform:scale(1.08);
+}
+
+.answer-button:active{
+
+    transform:scale(.96);
+}
+

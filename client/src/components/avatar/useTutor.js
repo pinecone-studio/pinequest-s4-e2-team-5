@@ -10,6 +10,7 @@ export function useTutor({ nickname, homeworkContext, interpretCommand }) {
   const [isThinking, setIsThinking] = useState(false);
   const [error, setError] = useState(null);
   const [lastText, setLastText] = useState("");
+  const [chatMessages, setChatMessages] = useState([]);
 
   const messagesRef = useRef([]);
   const nicknameRef = useRef(nickname);
@@ -24,6 +25,10 @@ export function useTutor({ nickname, homeworkContext, interpretCommand }) {
   const recorderRef = useRef(null);
   const chunksRef = useRef([]);
   const mimeTypeRef = useRef("audio/webm");
+
+  const [isManualRecording, setIsManualRecording] = useState(false);
+  const manualRecorderRef = useRef(null);
+  const manualChunksRef = useRef([]);
 
   // Яриа давхцахаас сэргийлэх: нэг л аудио тоглоно, шинэ яриа хуучныг таслана.
   const currentAudioRef = useRef(null);
@@ -144,6 +149,7 @@ export function useTutor({ nickname, homeworkContext, interpretCommand }) {
           ...messagesRef.current,
           { role: "user", content: userText.trim() },
         ];
+        setChatMessages((prev) => [...prev, { role: "user", text: userText.trim() }]);
       }
       isBusyRef.current = true;
       setIsThinking(true);
@@ -164,6 +170,7 @@ export function useTutor({ nickname, homeworkContext, interpretCommand }) {
           ...messagesRef.current,
           { role: "assistant", content: text },
         ];
+        setChatMessages((prev) => [...prev, { role: "assistant", text }]);
         setIsThinking(false);
         await speak(text);
       } catch (e) {
@@ -210,6 +217,68 @@ export function useTutor({ nickname, homeworkContext, interpretCommand }) {
     },
     [chat],
   );
+
+  // ── manual mic button (tap-to-record) ───────────────────
+  const toggleManualRecord = useCallback(async () => {
+    // VAD recorder явж байвал зогсоо
+    if (recorderRef.current) {
+      try { recorderRef.current.stop(); } catch { /* ok */ }
+      recorderRef.current = null;
+      setIsListening(false);
+    }
+    // Тоглож байгаа дуугаа зогсоо
+    stopCurrentAudio();
+    setIsSpeaking(false);
+
+    if (manualRecorderRef.current) {
+      // Зогсоож STT руу илгээнэ
+      const recorder = manualRecorderRef.current;
+      manualRecorderRef.current = null;
+      setIsManualRecording(false);
+      const mime = mimeTypeRef.current;
+      recorder.onstop = () => {
+        const captured = [...manualChunksRef.current];
+        // processAudio isBusyRef шалгадаг тул эхлээд reset хийнэ
+        isBusyRef.current = false;
+        if (captured.length) processAudio(captured, mime);
+      };
+      try { recorder.stop(); } catch { /* ok */ }
+      return;
+    }
+
+    // Микрофон stream авна (VAD stream байвал дахин ашиглана)
+    let stream = streamRef.current;
+    if (!stream) {
+      let mimeType = "audio/webm;codecs=opus";
+      if (!MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "audio/mp4";
+      }
+      mimeTypeRef.current = mimeType;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true },
+        });
+        streamRef.current = stream;
+      } catch {
+        setError("Микрофон ашиглах зөвшөөрөл олдсонгүй.");
+        return;
+      }
+    }
+
+    manualChunksRef.current = [];
+    try {
+      const recorder = new MediaRecorder(stream, { mimeType: mimeTypeRef.current });
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) manualChunksRef.current.push(e.data);
+      };
+      recorder.start();
+      manualRecorderRef.current = recorder;
+      setIsManualRecording(true);
+    } catch (e) {
+      console.error("Manual record error:", e);
+      setError("Микрофон ашиглах боломжгүй.");
+    }
+  }, [stopCurrentAudio, processAudio]);
 
   // ── always-listen (VAD) ──────────────────────────────────
   const startAlwaysListen = useCallback(async () => {
@@ -292,11 +361,11 @@ export function useTutor({ nickname, homeworkContext, interpretCommand }) {
   }, []);
 
   // ── greet (mount) ────────────────────────────────────────
-  const greet = useCallback(async () => {
+  const greet = useCallback(async (greetingText) => {
     messagesRef.current = [];
-    await speak(
-      `Сайн уу ${nicknameRef.current}! Хоёулаа гэрийн даалгавраа хамтдаа хийцгээе.`,
-    );
+    const text = greetingText ??
+      `Сайн уу ${nicknameRef.current}! Хоёулаа гэрийн даалгавраа хамтдаа хийцгээе.`;
+    await speak(text);
     if (!homeworkRef.current) {
       await speak(
         `${nicknameRef.current}, эхлээд даалгаврынхаа зургийг зүүн талд оруулна уу.`,
@@ -342,6 +411,7 @@ export function useTutor({ nickname, homeworkContext, interpretCommand }) {
     isThinking,
     error,
     lastText,
+    chatMessages,
     greet,
     announceHomework,
     explainProblem,
@@ -351,5 +421,7 @@ export function useTutor({ nickname, homeworkContext, interpretCommand }) {
     startAlwaysListen,
     stopAlwaysListen,
     stopCurrentAudio,
+    isManualRecording,
+    toggleManualRecord,
   };
 }

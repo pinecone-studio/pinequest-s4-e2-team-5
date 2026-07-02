@@ -51,9 +51,20 @@
 
 .mcs-ground {
   position: absolute; left: 0; right: 0; bottom: 0;
-  height: 13%;
-  background: linear-gradient(#74bd3f 0 24%, #8a5a32 24% 100%);
-  box-shadow: inset 0 8px 0 rgba(0, 0, 0, 0.06);
+  height: 15%;
+  /* Майнкрафт шороон блок: жижиг чулуу/сондуулга + блок-заадас тор */
+  background-color: #825531;
+  background-image:
+    radial-gradient(circle at 10% 66%, rgba(0, 0, 0, 0.16) 0 4px, transparent 5px),
+    radial-gradient(circle at 26% 84%, rgba(255, 255, 255, 0.08) 0 3px, transparent 4px),
+    radial-gradient(circle at 44% 60%, rgba(0, 0, 0, 0.14) 0 5px, transparent 6px),
+    radial-gradient(circle at 63% 82%, rgba(0, 0, 0, 0.13) 0 4px, transparent 5px),
+    radial-gradient(circle at 82% 64%, rgba(255, 255, 255, 0.07) 0 3px, transparent 4px),
+    radial-gradient(circle at 93% 85%, rgba(0, 0, 0, 0.14) 0 5px, transparent 6px),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.09) 0 2px, transparent 2px 60px),
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.05) 0 2px, transparent 2px 46px),
+    linear-gradient(180deg, #7a4d2b 0 6%, #8a5a32 34%, #7c5030 100%);
+  box-shadow: inset 0 -34px 46px rgba(0, 0, 0, 0.1);
 }
 
 /* Газар дээр зогсох том чимэглэл (байшин, морь, зомби) */
@@ -67,9 +78,49 @@
   0%, 100% { transform: translateY(0); }
   50%      { transform: translateY(-4px); }
 }
+/* Өвсний блокийн дээд гадаргуу + гэрэлт зурвас */
 .mcs-ground::before {
-  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 11px;
-  background: repeating-linear-gradient(90deg, #74bd3f 0 20px, #66a836 20px 40px);
+  content: ""; position: absolute; top: 0; left: 0; right: 0;
+  height: 26%;
+  background: linear-gradient(180deg, #93da55 0 34%, #78bd42 34% 100%);
+  box-shadow: inset 0 4px 0 rgba(255, 255, 255, 0.18);
+}
+/* Өвс → шороо руу унжсан блок шүд (жинхэнэ grass block ирмэг) */
+.mcs-ground::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 26%; height: 9px;
+  background: repeating-linear-gradient(90deg, #78bd42 0 15px, transparent 15px 30px);
+}
+
+/* ── Газрын ургамал: пиксел цэцэг + өвсний иш (өвсний гадаргуу дээр) ── */
+.mcs-flower, .mcs-sprout {
+  position: absolute; bottom: 14%; z-index: 1; pointer-events: none;
+  transform-origin: bottom center;
+  animation: mcs-plant-sway 4s ease-in-out infinite;
+}
+.mcs-sprout {
+  width: 3px; height: 11px; background: #4c9a34;
+  box-shadow:
+    5px 2px 0 #57ab3c,
+    -5px 3px 0 #43892f,
+    2px -4px 0 #5cb340;
+}
+.mcs-flower {
+  width: 3px; height: 13px; background: #3f8f2b; /* иш */
+}
+.mcs-flower::before { /* навч */
+  content: ""; position: absolute; bottom: 3px; left: -4px;
+  width: 4px; height: 3px; background: #4c9a34;
+  box-shadow: 7px 2px 0 #4c9a34;
+}
+.mcs-flower::after { /* цэцгийн толгой */
+  content: ""; position: absolute; top: -7px; left: -4px;
+  width: 11px; height: 9px; border-radius: 2px;
+  background: var(--fc, #e0554e);
+  box-shadow: 0 -3px 0 var(--fc, #e0554e), inset 0 0 0 2px rgba(255, 255, 255, 0.28);
+}
+@keyframes mcs-plant-sway {
+  0%, 100% { transform: rotate(-4deg); }
+  50%      { transform: rotate(4deg); }
 }
 
 /* ── maynkrap найз: center=ТОМ голд, split=ЖИЖИГ зүүн-дээд ── */
@@ -90,40 +141,197 @@
   50%      { transform: translateY(-10px); }
 }
 
+/* ── 3D Steve (start хуудаснаас авчирсан) learn хуудсанд ── */
+.mc-stage--3d {
+  overflow: visible;
+  animation: none;
+  aspect-ratio: 1 / 1;
+}
+.mc-stage--3d .minecraft-steve-stage {
+  overflow: visible;
+}
+/* compact хувилбарт start хуудасны soft-light vignette хэрэггүй */
+.mc-stage--3d .minecraft-steve-stage--compact::before {
+  display: none;
+}
+/* world (бүтэн дэлгэц) хувилбарт ч vignette хэрэггүй — доод талын хүрэн
+   өнгөлөлт нь хиймэл шороон зурвас мэт харагдуулдаг тул авна. */
+.minecraft-steve-stage--world::before {
+  display: none;
+}
+/* Center/world үед CSS дэвсгэр чимэглэл (нар/үүл/шороон газар) илүүц —
+   бүтэн 3D ертөнц бүх дэлгэцийг эзэлдэг тул нуув. */
+.ta-mc.ta-root-center .mcs-bg {
+  display: none;
+}
+
 .ta-mc.ta-root-center .ta-robot-col {
   align-items: center;
   justify-content: center;
   gap: 14px;
   padding: 20px;
 }
-.ta-mc.ta-root-center .mc-stage { height: min(70vh, 580px); }
+.ta-mc.ta-root-center .mc-stage { height: min(66vh, 540px); }
+
+/* Immersive 3D Minecraft ертөнц (даалгавар эхлэхээс өмнө): бүтэн .ta-root-г дүүргэнэ.
+   Chat барын нөөцлөлтийг цуцалж, Стивийг сценийн дотор зүүн тийш offset хийсэн. */
+.ta-mc.ta-root-center .ta-robot-col { margin-right: 0; }
+.ta-mc.ta-root-center .mc-stage--world {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  aspect-ratio: auto;
+  max-width: none;
+  z-index: 0;
+}
+
+/* Эхлэлийн (world/start) горимд чат оруулах хэсгийг нуув —
+   зөвхөн бодлого (interactive) эхлэхэд л чат гарч ирнэ. */
+.ta-mc.ta-root-center .ta-chat-dock {
+  display: none;
+}
+
+/* Center горимд бүх элемент normal flow-д байна — absolute positioning хийхгүй */
+.ta-mc.ta-root-center .ta-robot-col {
+  justify-content: flex-start;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px 0 16px;
+  gap: 10px;
+}
+.ta-mc.ta-root-center .ta-chat-log {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  transform: none;
+  max-height: 160px;
+  width: min(88%, 300px);
+  align-self: center;
+  margin-top: 4px;
+}
+.ta-mc.ta-root-center .ta-text-input-row {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  transform: none;
+  width: min(88%, 300px);
+  align-self: center;
+  padding-bottom: 8px;
+  flex-shrink: 0;
+}
 
 .ta-mc.ta-root-split .ta-robot-col {
   position: absolute;
   top: 0; left: 0;
   width: auto;
-  max-width: min(42%, 360px);
+  max-width: min(38%, 320px);
   height: auto;
   flex: none;
   z-index: 5;
   align-items: flex-start;
   justify-content: flex-start;
   gap: 12px;
-  padding: 20px 22px;
+  padding: 58px 22px 20px; /* avatar-ыг жаахан доош буулгав */
   border: none;
   pointer-events: none;
 }
+/* Split горимд input болон chat log interactive байна */
+.ta-mc.ta-root-split .ta-chat-log,
+.ta-mc.ta-root-split .ta-text-input-row {
+  pointer-events: auto;
+}
 .ta-mc.ta-root-split .mc-stage { height: clamp(130px, 17vh, 200px); }
-/* Интерактивийг дээш өргөж, доод талын морьтой тулахаас сэргийлнэ */
-.ta-mc.ta-root-split .ta-problem-pane { padding-top: 36px; padding-bottom: 16vh; }
 
-/* Ярианы бөмбөлөг + статус */
+/* Бодлого идэвхтэй үед (split): чатыг зүүн талд, Стив аватарын шууд доор дээш
+   нь өргөж, хайрцгийг арилган ард талын тэнгэр/үүлтэй ижил (ил тод) болгов.
+   Мессежүүд өөрсдийн бөмбөлөгтэй тул уншигдацгүй болохгүй. */
+.ta-mc.ta-root-split .ta-chat-dock {
+  left: 22px;
+  right: auto;
+  top: clamp(320px, 42vh, 470px);
+  bottom: clamp(70px, 16vh, 150px);
+  height: auto;
+  width: min(320px, 34vw);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  animation: ta-dock-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+/* Интерактивийг дээш өргөж, доод талын морьтой тулахаас сэргийлнэ.
+   Зүүн дээд булангийн Стив+чат overlay-тай давхцахгүйн тулд баруун тийш зөөнө. */
+.ta-mc.ta-root-split .ta-problem-pane {
+  padding-top: 36px;
+  padding-bottom: 16vh;
+  padding-left: clamp(16px, 20vw, 430px); /* чат overlay-тай давхцахгүй болгож баруун тийш */
+}
+
+/* Код-ын ард гарч буй шар нар — session дээр хэрэггүй, авъя */
+.ta-mc .mcs-sun { display: none; }
+
+/* Буцах товч (← Бодлогууд) — Майнкрафт session дээр нуув */
+.ta-mc .ta-back-btn { display: none; }
+
+/* Явцын заагчийг гэрэлт тэнгэр дээр тод болгоно */
+.ta-mc .ta-problem-progress {
+  color: #24401a;
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(90, 140, 60, 0.4);
+}
+
+/* Интерактив картын ГАДНА ХҮРЭЭ + дотоод тэнгэр/газрыг авна —
+   Майнкрафт хуудасны ертөнц дээр "хайрцаг доторх хайрцаг" болохгүй,
+   контент шууд хуудсанд шингэнэ. (Зөвхөн багш дотор; /mc-first хэвээр.) */
+.ta-mc .mfp-root {
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  max-width: 700px;
+  overflow: visible;
+}
+.ta-mc .mfp-root .mfp-bg { display: none; }
+
+/* Гэрэлт тэнгэр дээр чатын мессежийг ТОД (бараан) болгоно — цайвар биш */
+.ta-mc .ta-chat-log { max-width: 320px; }
+.ta-mc .ta-chat-text {
+  font-size: 13px;
+  box-shadow: 0 3px 10px rgba(60, 110, 40, 0.18);
+}
+.ta-mc .ta-chat-msg--user .ta-chat-text {
+  background: rgba(255, 255, 255, 0.94);
+  color: #24401a;
+  border: 1.5px solid rgba(90, 140, 60, 0.35);
+}
+.ta-mc .ta-chat-msg--assistant .ta-chat-text {
+  background: rgba(184, 228, 152, 0.95);
+  color: #1c3810;
+  border: 1.5px solid rgba(90, 140, 60, 0.35);
+}
+/* Оруулах талбар ба алдааг ч тод болгоно */
+.ta-mc .ta-text-input {
+  background: rgba(255, 255, 255, 0.95);
+  color: #24401a;
+  border-color: rgba(90, 140, 60, 0.4);
+}
+.ta-mc .ta-text-input::placeholder { color: rgba(60, 100, 40, 0.6); }
+
+/* Ярианы бөмбөлөг + статус — start горимд аватарын доор хөвүүлнэ */
 .ta-mc.ta-root-center .sb-wrap {
-  position: static; transform: none; left: auto; bottom: auto; margin: 0;
-  width: min(82%, 380px); align-self: center;
+  position: absolute;
+  left: 40%;
+  bottom: 18%;
+  transform: translateX(-50%);
+  margin: 0;
+  width: min(82%, 380px);
+  z-index: 6;
 }
 .ta-mc.ta-root-center .ta-status-row {
-  position: static; transform: none; left: auto; bottom: auto; margin-top: 0;
+  position: absolute;
+  left: 40%;
+  bottom: 13%;
+  transform: translateX(-50%);
+  margin-top: 0;
+  z-index: 6;
 }
 .ta-mc.ta-root-center .sb-box { text-align: center; justify-content: center; }
 .ta-mc.ta-root-split .sb-wrap { align-self: flex-start; width: 100%; }
@@ -185,5 +393,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mcs-block, .mcs-cloud, .mcs-ground-item, .mc-stage img { animation: none !important; }
+  .mcs-block, .mcs-cloud, .mcs-ground-item, .mc-stage img,
+  .mcs-flower, .mcs-sprout { animation: none !important; }
 }

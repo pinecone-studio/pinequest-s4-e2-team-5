@@ -44,6 +44,9 @@ export default function ContactsSection({
   const [pickerOpen, setPickerOpen] = useState(false);
   const [showError, setShowError] = useState(false);
   const [errorTick, setErrorTick] = useState(0);
+  const goToParents = () => {
+    window.open('/parents', 'parentMonitor', 'popup,width=960,height=700,noopener,noreferrer');
+  };
 
   const selectedName =
     AVATARS.find((a) => a.id === selectedAvatar)?.name ?? null;
@@ -152,10 +155,16 @@ export default function ContactsSection({
             }}
             className="text-center leading-normal"
           >
-            <AnimatedButton
-              text="Найзаа сонгох"
-              onClick={() => setPickerOpen(true)}
-            />
+            <div className="flex flex-col gap-3 sm:flex-row sm:gap-4 justify-center items-center">
+              <AnimatedButton
+                text="Найзаа сонгох"
+                onClick={() => setPickerOpen(true)}
+              />
+              <AnimatedButton
+                text="Эцэг эх"
+                onClick={goToParents}
+              />
+            </div>
           </div>
 
           {/* Selected avatar confirmation */}

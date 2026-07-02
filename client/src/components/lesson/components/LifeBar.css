@@ -1,0 +1,5 @@
+.life-bar{
+    display:flex;
+    gap:6px;
+    font-size:28px;
+}

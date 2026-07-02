@@ -8,6 +8,8 @@ const TYPE_ICON = {
   division: '➗',
   comparison: '⚖️',
   missing_addend: '🔲',
+  number_sequence: '🔢',
+  number_neighbor: '↔️',
   word: '📖',
 }
 

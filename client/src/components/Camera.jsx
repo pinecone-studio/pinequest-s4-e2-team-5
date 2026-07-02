@@ -11,7 +11,11 @@ export default function Camera() {
   const [fps, setFps] = useState(0);
 
   const connectWS = useCallback(() => {
-    setWsStatus("connecting");
+    // ЗАССАН ХЭСЭГ: useEffect дотор синхроноор render унагахгүйн тулд асинхрон болгов
+    setTimeout(() => {
+      setWsStatus("connecting");
+    }, 0);
+
     const ws = new WebSocket("ws://localhost:3000/ws");
     wsRef.current = ws;
 
@@ -39,8 +43,10 @@ export default function Camera() {
         video: { width: 640, height: 480 },
         audio: false,
       });
-      videoRef.current.srcObject = stream;
-      await videoRef.current.play();
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
       setCameraOn(true);
 
       const canvas = canvasRef.current;
@@ -54,7 +60,9 @@ export default function Camera() {
 
         canvas.width = 320;
         canvas.height = 240;
-        ctx.drawImage(videoRef.current, 0, 0, 320, 240);
+        if (videoRef.current) {
+          ctx.drawImage(videoRef.current, 0, 0, 320, 240);
+        }
         const frame = canvas.toDataURL("image/jpeg", 0.6);
         ws.send(JSON.stringify({ type: "frame", data: frame }));
 
@@ -71,11 +79,18 @@ export default function Camera() {
     }
   }, []);
 
+  // ЗАССАН ХЭСЭГ: Холболтыг аюулгүй хаадаг болгов
   useEffect(() => {
     const ws = connectWS();
     return () => {
       stopCamera();
-      ws.close();
+      if (
+        ws &&
+        (ws.readyState === WebSocket.OPEN ||
+          ws.readyState === WebSocket.CONNECTING)
+      ) {
+        ws.close();
+      }
     };
   }, [connectWS, stopCamera]);
 
@@ -121,7 +136,7 @@ export default function Camera() {
             width: "100%",
             height: "100%",
             objectFit: "cover",
-            transform: "scaleX(-1)", // mirror
+            transform: "scaleX(-1)",
             display: cameraOn ? "block" : "none",
           }}
         />
@@ -172,11 +187,13 @@ export default function Camera() {
               width: 8,
               height: 8,
               borderRadius: "50%",
-              background: dot[wsStatus],
-              boxShadow: `0 0 6px ${dot[wsStatus]}`,
+              background: dot[wsStatus] || dot.idle,
+              boxShadow: `0 0 6px ${dot[wsStatus] || dot.idle}`,
             }}
           />
-          <span style={{ color: "#fff", fontSize: 12 }}>{label[wsStatus]}</span>
+          <span style={{ color: "#fff", fontSize: 12 }}>
+            {label[wsStatus] || label.idle}
+          </span>
         </div>
 
         {cameraOn && (

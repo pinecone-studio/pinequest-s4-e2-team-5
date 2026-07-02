@@ -1,5 +1,27 @@
 import { useState, useRef } from 'react'
 import { API_BASE } from '../../lib/config.js'
+import { normalizeHomeworkProblems } from './problemNormalizer.js'
+import { parseManualProblems } from './manualProblems.js'
+
+const MANUAL_PLACEHOLDER = `Мөр бүрт нэг бодлого бич. Жишээ:
+40 - 5 x 7 =
+77 ? 57
+9 + 5 ? 15
+5 дм = ? см
+35 см = ? дм ? см
+Сумьяа 5 ном, Амгалан 6-аар олон уншив | 11`
+
+// "Дасгал даалгавар" хуудасны 4 бодлого — квот дуусах үед / нэг товшилтоор ачаална.
+const SAMPLE_SHEET = `40 - 5 x 7 =
+77 ? 57
+9 + 5 ? 15
+5 дм = ? см
+35 см = ? дм ? см
+Сумьяа 5 ном, Амгалан 6-аар олон уншив | 11`
+
+function isQuotaError(message) {
+  return /quota|429|exceeded|billing|insufficient/i.test(String(message ?? ''))
+}
 
 // Vision API нь зөвхөн JPEG/PNG/WEBP дэмждэг (HEIC ❌). Утасны зураг ч хэт хүнд.
 // Тиймээс илгээхээс өмнө canvas дээр зурж, багасгаад JPEG болгож хувиргана.
@@ -32,6 +54,13 @@ async function normalizeImage(dataUrl) {
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+
+function buildContext(problems, fallback = '') {
+  if (!problems.length) return fallback
+  return problems
+    .map((problem) => `${problem.index}. ${problem.raw ?? problem.promptMn ?? ''}`)
+    .join('\n')
+}
 
 // Render free tier унтсан байвал эхний хүсэлт сэрээх зуур алдаа өгдөг тул дахин оролдоно.
 async function analyzeWithRetry(base64, attempts = 3) {
@@ -67,7 +96,30 @@ export function HomeworkUpload({ onHomeworkLoaded, onAnalyzingChange }) {
   const [analyzing, setAnalyzing] = useState(false)
   const [done, setDone]           = useState(false)
   const [error, setError]         = useState(null)
+  const [manualMode, setManualMode] = useState(false)
+  const [manualText, setManualText] = useState('')
   const inputRef                  = useRef(null)
+
+  function loadManual(text, noteOnEmpty = 'Нэг ч бодлого таньсангүй. Жишээ хэлбэрийн дагуу бичнэ үү.') {
+    const { problems, skipped } = parseManualProblems(text)
+    if (!problems.length) {
+      setError(noteOnEmpty)
+      return false
+    }
+    setError(skipped.length ? `Танигдаагүй мөр: ${skipped.join(' / ')}` : null)
+    onHomeworkLoaded(buildContext(problems), problems)
+    setDone(true)
+    return true
+  }
+
+  function handleManualSubmit() {
+    loadManual(manualText)
+  }
+
+  function loadSample() {
+    setManualText(SAMPLE_SHEET)
+    loadManual(SAMPLE_SHEET)
+  }
 
   function setAnalyzingState(v) {
     setAnalyzing(v)
@@ -89,12 +141,22 @@ export function HomeworkUpload({ onHomeworkLoaded, onAnalyzingChange }) {
         // HEIC/том зургийг дэмжигдэх JPEG болгож багасгана.
         const base64 = await normalizeImage(dataUrl)
         const { context, problems = [] } = await analyzeWithRetry(base64)
-        onHomeworkLoaded(context, problems)
+        const normalizedProblems = normalizeHomeworkProblems(problems)
+        onHomeworkLoaded(buildContext(normalizedProblems, context), normalizedProblems)
         setDone(true)
       } catch (err) {
-        // Серверийн жинхэнэ алдааг харуулна (зүгээр л "алдаа" биш).
-        setError(`Зурагыг шинжлэхэд алдаа гарлаа: ${err.message}`)
-        onHomeworkLoaded('', [])
+        if (isQuotaError(err.message)) {
+          // OpenAI квот дууссан — зураг унших боломжгүй. Гараар оруулах горимд шилжиж,
+          // энэ хуудасны бодлогуудыг бэлэн ачаалж, хэрэглэгч засах боломжтой болгоно.
+          setManualMode(true)
+          setManualText(SAMPLE_SHEET)
+          loadManual(SAMPLE_SHEET)
+          setError('OpenAI квот дууссан тул зургийг уншиж чадсангүй. Доорх бодлогуудыг ачаалав — засаад дахин оруулж болно.')
+        } else {
+          // Серверийн жинхэнэ алдааг харуулна (зүгээр л "алдаа" биш).
+          setError(`Зургийг шинжлэхэд алдаа гарлаа: ${err.message}`)
+          onHomeworkLoaded('', [])
+        }
       } finally {
         setAnalyzingState(false)
       }
@@ -126,8 +188,47 @@ export function HomeworkUpload({ onHomeworkLoaded, onAnalyzingChange }) {
 
   return (
     <div className="hw-upload">
-      <p className="hw-title">ДААЛГАВАР</p>
+      <div className="hw-title-row">
+        <p className="hw-title">ДААЛГАВАР</p>
+        <button
+          type="button"
+          className="hw-mode-toggle"
+          onClick={() => { setManualMode((v) => !v); setError(null); setDone(false) }}
+        >
+          {manualMode ? '📷 Зургаар' : '✍️ Гараар бичих'}
+        </button>
+      </div>
 
+      {manualMode ? (
+        <div className="hw-manual">
+          <textarea
+            className="hw-manual-input"
+            rows={7}
+            value={manualText}
+            placeholder={MANUAL_PLACEHOLDER}
+            onChange={(e) => setManualText(e.target.value)}
+          />
+          <div className="hw-manual-actions">
+            <button
+              type="button"
+              className="hw-drop-btn hw-manual-btn"
+              onClick={handleManualSubmit}
+            >
+              Бодлого оруулах
+            </button>
+            <button
+              type="button"
+              className="hw-mode-toggle"
+              onClick={loadSample}
+            >
+              📋 Жишээ хуудас
+            </button>
+          </div>
+          {done && <span className="hw-done">✓ Даалгавар оруулаа</span>}
+          {error && <span style={{ fontSize: 11, color: '#ef4444' }}>{error}</span>}
+        </div>
+      ) : (
+      <>
       <div
         className="hw-drop-area"
         onDrop={handleDrop}
@@ -181,6 +282,8 @@ export function HomeworkUpload({ onHomeworkLoaded, onAnalyzingChange }) {
         style={{ display: 'none' }}
         onChange={handleChange}
       />
+      </>
+      )}
     </div>
   )
 }

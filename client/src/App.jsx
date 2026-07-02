@@ -1,20 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./App.css";
 import "./components/avatar/avatar.css";
 import { getPageFromPath } from "./navigation.js";
 import { AvatarSession } from "./components/avatar/AvatarSession.jsx";
 import { AvatarIntro } from "./components/avatar/AvatarIntro.jsx";
 import { WarpTransition } from "./components/avatar/WarpTransition.jsx";
-import { MathLesson } from "./components/lesson/MathLesson.jsx";
+import { MathLesson } from "./components/lesson/components/MathLesson.jsx";
 import { TypingLesson } from "./components/lesson/TypingLesson.jsx";
 import { BigAddLesson } from "./components/lesson/BigAddLesson.jsx";
+import { MinecraftWorksheet } from "./components/avatar/MinecraftWorksheet.jsx";
 import Landing from "./components/Landing.jsx";
+import ParentPage from "./components/ParentPage.jsx";
 import { stopAllAudio } from "./components/avatar/audioBus.js";
 
 function normalizeAvatar(avatar) {
   if (avatar === "robot" || avatar === "hero") return "robot";
   if (avatar === "minecraft") return "minecraft";
   if (avatar === "mcqueen") return "mcqueen";
+  if (avatar === "astronaut") return "astronaut";
+  if (avatar === "barbie") return "barbie";
   return "sun-buddy";
 }
 
@@ -24,6 +28,14 @@ function App() {
   );
   // Username → Bodoh хооронд warp шилжилт үзүүлэх үед {nickname, avatar}-г барина.
   const [warpTo, setWarpTo] = useState(null);
+  // Хүүхдийн байнгын identifier — localStorage-д хадгалагдана, WS room болон recordings-д ашиглана
+  const familyCode = useMemo(() => {
+    const stored = localStorage.getItem("childFamilyCode");
+    if (stored) return stored;
+    const code = Math.random().toString(36).slice(2, 8).toUpperCase();
+    localStorage.setItem("childFamilyCode", code);
+    return code;
+  }, []);
   const selectedAvatar = normalizeAvatar(
     window.history.state?.avatar || window.sessionStorage.getItem("selectedAvatar"),
   );
@@ -40,6 +52,9 @@ function App() {
   const navigate = (path, state = {}) => {
     stopAllAudio();
     window.history.pushState(state, "", path);
+    // next/navigation шимийн usePathname-г синк байлгана. Үгүй бол PageTransition-ий
+    // overlay буцаж хаагдахгүй үлдэж, дараагийн шилжилтэд дэлгэц харанхуйлж гацна.
+    window.dispatchEvent(new Event("pushstate-internal"));
     setPage(getPageFromPath(path));
   };
 
@@ -79,6 +94,10 @@ function App() {
     return <BigAddLesson onBack={() => navigate("/")} />;
   }
 
+  if (page === "mc-first") {
+    return <MinecraftWorksheet onBack={() => navigate("/")} />;
+  }
+
   if (page === "learn") {
     const name = window.history.state?.nickname || "хүүхэд";
     const avatar = normalizeAvatar(window.history.state?.avatar || selectedAvatar);
@@ -92,12 +111,20 @@ function App() {
           ←
         </button>
 
-        <AvatarSession nickname={name} avatar={avatar} />
+        <div className="parent-code-badge">
+          Код: <strong>{familyCode}</strong>
+        </div>
+
+        <AvatarSession nickname={name} avatar={avatar} sessionCode={familyCode} familyCode={familyCode} />
       </main>
     );
   }
 
-  // Үндсэн landing хуудас (өмнө нь Next.js project байсныг энд оруулсан).
+
+  if (page === "parents") {
+    return <ParentPage onBack={() => navigate("/")} />;
+  }
+
   return <Landing />;
 }
 

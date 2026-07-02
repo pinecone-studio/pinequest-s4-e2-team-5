@@ -1,0 +1,14 @@
+.speech-bubble{
+
+    background:white;
+
+    padding:16px;
+
+    border-radius:18px;
+
+    font-size:20px;
+
+    font-weight:600;
+
+    box-shadow:0 5px 15px rgba(0,0,0,.15);
+}

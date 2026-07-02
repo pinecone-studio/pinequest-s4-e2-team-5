@@ -24,6 +24,22 @@
   transition: background 0.2s ease, transform 0.2s ease;
 }
 .learn-back:hover { background: #fff; transform: translateX(-2px); }
+.parent-code-badge {
+  position: absolute;
+  top: 76px;
+  right: 16px;
+  z-index: 20;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(22, 43, 42, 0.14);
+  border-radius: 10px;
+  padding: 6px 14px;
+  font-size: 13px;
+  color: var(--ink);
+  box-shadow: 0 4px 14px rgba(8, 20, 19, 0.10);
+  font-family: inherit;
+}
+.parent-code-badge strong { color: var(--green); letter-spacing: 2px; font-size: 15px; }
 .home-nav, .topbar { height: 90px; max-width: 1180px; margin: 0 auto; padding: 0 28px; display: flex; align-items: center; justify-content: space-between; }
 .brand { color: var(--ink); text-decoration: none; font-size: 18px; font-weight: 800; display: inline-flex; align-items: center; gap: 10px; }
 .brand span { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 13px; background: var(--green); color: white; font-size: 20px; }

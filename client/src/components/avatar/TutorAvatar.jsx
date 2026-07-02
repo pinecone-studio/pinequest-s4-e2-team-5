@@ -2,15 +2,32 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MascotScene } from '../KidMascotScene.jsx'
 import { useTutor } from './useTutor.js'
 import { NumberVisual, COLORS } from '../lesson/NumberVisual.jsx'
-import { RobotInteractive } from './RobotInteractive.jsx'
+import { MulDivInteractive } from './MulDivInteractive.jsx'
+import { ColumnMathInteractive } from './ColumnMathInteractive.jsx'
 import { ComparisonInteractive } from './ComparisonInteractive.jsx'
 import { MissingAddendInteractive } from './MissingAddendInteractive.jsx'
+import { NumberSequenceInteractive } from './NumberSequenceInteractive.jsx'
+import { NeighborNumberInteractive } from './NeighborNumberInteractive.jsx'
+import { WordProblemInteractive } from './WordProblemInteractive.jsx'
+import { TensOnesInteractive } from './TensOnesInteractive.jsx'
+import { EquationBalanceInteractive } from './EquationBalanceInteractive.jsx'
+import { LongExpressionInteractive } from './LongExpressionInteractive.jsx'
+import { MinecraftFirstProblem } from './MinecraftFirstProblem.jsx'
+import { MinecraftCompare } from './MinecraftCompare.jsx'
+import { MinecraftLengthOne } from './MinecraftLengthOne.jsx'
+import { MinecraftWordOne } from './MinecraftWordOne.jsx'
+import { extractStory } from './mcUtils.js'
+import { tokenizeExpression } from './expressionSteps.js'
 import { ProblemList } from './ProblemList.jsx'
 import { CelebrationBurst } from './CelebrationBurst.jsx'
-import { JoyBackground, JoyRobot } from './JoyScene.jsx'
+import { SplineScene } from '../SplineScene.jsx'
 import { MinecraftBackground } from './MinecraftScene.jsx'
+import { MinecraftSteveScene } from './MinecraftSteveScene.jsx'
 import { McQueenBackground } from './McQueenScene.jsx'
+import { AstronautScene } from './AstronautScene.jsx'
+import './astronaut-loader.css'
 import { extractProblemNumber } from './extractProblemNumber.js'
+import { normalizeHomeworkProblems } from './problemNormalizer.js'
 import '../lesson/lesson.css'
 import '../lesson/big-add-lesson.css'
 
@@ -52,7 +69,136 @@ function parseMath(ctx) {
   return null
 }
 
+function makeNeighborProblem(n, raw) {
+  return {
+    index: 1,
+    raw,
+    type: 'number_neighbor',
+    operator: null,
+    operands: [n],
+    neighborTarget: n,
+    missingPosition: null,
+    knownResult: null,
+    answer: [n - 1, n + 1],
+    promptMn: `${n} тооны өмнөх ба дараах хөрш тоог олоорой.`,
+  }
+}
+
+function parseNeighbor(ctx) {
+  if (!ctx) return null
+  const nums = ctx.match(/-?\d+/g)?.map(Number) ?? []
+  if (nums.length !== 1) return null
+  const n = nums[0]
+  if (!Number.isInteger(n) || n < 1 || n > 100) return null
+  const hasNeighborWord =
+    /х[өо]рш|өмн[өо]х|урд|хойно|neighbor|hursh|h[öo]rsh|(?:тооны|тооныхоо)\s+дараах/i.test(ctx)
+  const onlyNumber = /^-?\d+$/.test(ctx.trim())
+  if (!hasNeighborWord && !onlyNumber) return null
+  return makeNeighborProblem(n, ctx)
+}
+
+function parseSequence(ctx) {
+  if (!ctx) return null
+  const nums = ctx.match(/-?\d+/g)?.map(Number) ?? []
+  const tokenMatches = ctx.match(/-?\d+|\.{2,}|…|_{1,}|□|▢|\?/g) ?? []
+  const hasBlank = tokenMatches.some((t) => /\.{2,}|…|_{1,}|□|▢|\?/.test(t))
+
+  if (hasBlank) {
+    const slots = tokenMatches.map((t) => (/^-?\d+$/.test(t) ? Number(t) : null))
+    const known = slots
+      .map((value, index) => ({ value, index }))
+      .filter((item) => Number.isFinite(item.value))
+    if (known.length >= 2 && slots.some((value) => value === null)) {
+      let step = null
+      for (let i = 1; i < known.length; i++) {
+        const gap = known[i].index - known[i - 1].index
+        const diff = known[i].value - known[i - 1].value
+        if (gap > 0 && diff % gap === 0) {
+          step = diff / gap
+          break
+        }
+      }
+      if (step !== null) {
+        const first = known[0].value - step * known[0].index
+        const complete = slots.map((_, i) => first + step * i)
+        const isConsistent = known.every(({ value, index }) => complete[index] === value)
+        if (isConsistent) {
+          const missingPositions = slots
+            .map((value, index) => (value === null ? index : -1))
+            .filter((index) => index >= 0)
+          const answer = missingPositions.map((index) => complete[index])
+          return {
+            index: 1,
+            raw: ctx,
+            type: 'number_sequence',
+            operator: null,
+            operands: slots.filter((value) => Number.isFinite(value)),
+            sequenceSlots: slots,
+            missingPositions,
+            missingPosition: missingPositions[0] ?? null,
+            knownResult: null,
+            answer,
+            sequenceStep: step,
+            answerCount: answer.length,
+            promptMn: `${slots.map((v) => (v == null ? '?' : v)).join(', ')} дарааллыг гүйцээгээрэй.`,
+          }
+        }
+      }
+    }
+  }
+
+  const looksLikeSequence =
+    /дараал|дараагийн|дараах|г[үу]йцээ|үргэлжлүүл/i.test(ctx) ||
+    (nums.length >= 3 && /[,;\s]\s*-?\d+\s*[,;\s]/.test(ctx))
+  if (!looksLikeSequence || nums.length < 2) return null
+  const step = nums[nums.length - 1] - nums[nums.length - 2]
+  const isArithmetic = nums.length < 3 || nums.every((n, i) => i === 0 || n - nums[i - 1] === step)
+  if (isArithmetic) {
+    return {
+      index: 1,
+      raw: ctx,
+      type: 'number_sequence',
+      operator: null,
+      operands: nums,
+      sequenceSlots: [...nums, null, null, null],
+      missingPositions: [nums.length, nums.length + 1, nums.length + 2],
+      missingPosition: nums.length,
+      knownResult: null,
+      answer: [1, 2, 3].map((i) => nums[nums.length - 1] + step * i),
+      sequenceStep: step,
+      answerCount: 3,
+      promptMn: `${nums.join(', ')} дарааллын дараагийн 3 тоог олоорой.`,
+    }
+  }
+
+  const ratio = nums[nums.length - 2] !== 0 ? nums[nums.length - 1] / nums[nums.length - 2] : null
+  const isGeometric =
+    ratio !== null &&
+    Number.isFinite(ratio) &&
+    nums.every((n, i) => i === 0 || nums[i - 1] !== 0 && n / nums[i - 1] === ratio)
+  if (!isGeometric) return null
+  return {
+    index: 1,
+    raw: ctx,
+    type: 'number_sequence',
+    operator: null,
+    operands: nums,
+    sequenceSlots: [...nums, null, null, null],
+    missingPositions: [nums.length, nums.length + 1, nums.length + 2],
+    missingPosition: nums.length,
+    knownResult: null,
+    answer: [1, 2, 3].map((i) => nums[nums.length - 1] * ratio ** i),
+    sequenceRatio: ratio,
+    answerCount: 3,
+    promptMn: `${nums.join(', ')} дарааллын дараагийн 3 тоог олоорой.`,
+  }
+}
+
 function fallbackProblem(ctx) {
+  const neighbor = parseNeighbor(ctx)
+  if (neighbor) return neighbor
+  const seq = parseSequence(ctx)
+  if (seq) return seq
   const m = parseMath(ctx)
   if (!m) return null
   const type = m.op === '+' ? 'addition' : 'subtraction'
@@ -64,9 +210,18 @@ function fallbackProblem(ctx) {
 }
 
 /* structured problem → RobotInteractive/VisualMath-д хэрэгтэй { a, b, op } */
+function inferOperator(p) {
+  if (p?.operator) return p.operator
+  if (p?.type === 'addition') return '+'
+  if (p?.type === 'subtraction') return '-'
+  if (p?.type === 'multiplication') return '*'
+  if (p?.type === 'division') return '/'
+  return '+'
+}
+
 function toAB(p) {
   const [a, b] = (p.operands ?? []).map(Number)
-  return { a: a ?? 0, b: b ?? 0, op: p.operator ?? '+' }
+  return { a: a ?? 0, b: b ?? 0, op: inferOperator(p) }
 }
 
 function problemKey(p) {
@@ -206,18 +361,61 @@ function AnswerChoice({ problem, onCorrect, onWrong }) {
 }
 
 /* ── Төрлөөр нь тохирох интерактивийг сонгоно ── */
-function ProblemInteractive({ problem, isSpeaking, onCorrect, onWrong }) {
+// Тухайн бодлого яг "40 − 5 × 7" мөн эсэх (× / x / х / * ямар ч хэлбэрээр)
+function isFortyMinusFiveTimesSeven(raw) {
+  const norm = String(raw ?? '').replace(/[xхX]/g, '×') // латин/кирилл x → ×
+  const t = tokenizeExpression(norm) // × ба ÷ -г * / болгон нормчилно
+  return t.length === 5 && t[0] === '40' && t[1] === '-' && t[2] === '5' && t[3] === '*' && t[4] === '7'
+}
+
+export function ProblemInteractive({ problem, onCorrect, onWrong }) {
   if (!problem) return null
-  if (problem.type === 'comparison')
-    return <ComparisonInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+  // 40 − 5 × 7 → тусгай Minecraft интерактив (сагс, баганан бичлэг, зээлэх, алга таших)
+  if (problem.type === 'long_expression' && isFortyMinusFiveTimesSeven(problem.raw))
+    return <MinecraftFirstProblem onDone={onCorrect} onWrong={onWrong} />
+
+  if (problem.type === 'comparison') {
+    // Хоёр тал 0..99 бол аравт/нэгж Minecraft шоогоор (илэрхийлэлтэй талыг өөрөө бодуулна)
+    const [ca, cb] = (problem.operands ?? []).map(Number)
+    const fits = [ca, cb].every((n) => Number.isInteger(n) && n >= 0 && n <= 99)
+    return fits
+      ? <MinecraftCompare problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+      : <ComparisonInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+  }
   if (problem.type === 'missing_addend')
     return <MissingAddendInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+  if (problem.type === 'number_sequence')
+    return <NumberSequenceInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+  if (problem.type === 'number_neighbor')
+    return <NeighborNumberInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+  if (problem.type === 'word') {
+    // 2 тоотой энгийн нэмэх/хасах үгэн бодлого бол Minecraft номын түүхээр
+    return extractStory(problem)
+      ? <MinecraftWordOne problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+      : <WordProblemInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+  }
+  if (problem.type === 'tens_ones')
+    return <TensOnesInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+  if (problem.type === 'equation_balance')
+    return <EquationBalanceInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+  if (problem.type === 'long_expression')
+    return <LongExpressionInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+  if (problem.type === 'length_unit')
+    return <MinecraftLengthOne problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
 
-  const op = problem.operator
+  const op = inferOperator(problem)
   if (op === '*' || op === '/')
-    return <RobotInteractive problem={toAB(problem)} isSpeaking={isSpeaking} onCorrect={onCorrect} onWrong={onWrong} />
-  if (op === '+' || op === '-')
-    return <VisualMathAuto problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+    return <MulDivInteractive problem={problem} op={op} onCorrect={onCorrect} onWrong={onWrong} />
+  if (op === '+' || op === '-') {
+    const [a, b] = (problem.operands ?? []).map(Number)
+    const answer = op === '+' ? a + b : a - b
+    // 2 оронтой тоо орсон эсвэл хариу нь ≥10 бол өнгөт аравт/нэгж баганаар;
+    // жижиг дан оронтойг блок домино хэлбэрээр.
+    const useColumn = a >= 10 || b >= 10 || answer >= 10
+    return useColumn
+      ? <ColumnMathInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+      : <VisualMathAuto problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+  }
 
   return <AnswerChoice problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
 }
@@ -229,24 +427,28 @@ function trimBubble(text) {
   return first.length > 60 ? first.slice(0, 57) + '…' : first
 }
 
-function SpeechBubble({ text, isThinking }) {
+// Typewriter эффектийг тусад нь салгав: shortText солигдоход key-ээр дахин mount
+// хийгдэж, дотоод state автоматаар reset болно (effect дотор синхрон setState хэрэггүй).
+function Typewriter({ text }) {
   const [displayed, setDisplayed] = useState('')
-  const shortText = trimBubble(text)
   const idxRef = useRef(0)
-  const timerRef = useRef(null)
 
   useEffect(() => {
-    if (!shortText) return
-    setDisplayed('')
+    if (!text) return
     idxRef.current = 0
-    clearInterval(timerRef.current)
-    timerRef.current = setInterval(() => {
+    const timer = setInterval(() => {
       idxRef.current++
-      setDisplayed(shortText.slice(0, idxRef.current))
-      if (idxRef.current >= shortText.length) clearInterval(timerRef.current)
+      setDisplayed(text.slice(0, idxRef.current))
+      if (idxRef.current >= text.length) clearInterval(timer)
     }, 25)
-    return () => clearInterval(timerRef.current)
-  }, [shortText])
+    return () => clearInterval(timer)
+  }, [text])
+
+  return <p className="sb-text">{displayed}</p>
+}
+
+function SpeechBubble({ text, isThinking }) {
+  const shortText = trimBubble(text)
 
   if (!text && !isThinking) return null
 
@@ -256,9 +458,30 @@ function SpeechBubble({ text, isThinking }) {
         {isThinking && !shortText ? (
           <span className="sb-dots"><span /><span /><span /></span>
         ) : (
-          <p className="sb-text">{displayed}</p>
+          <Typewriter key={shortText} text={shortText} />
         )}
       </div>
+    </div>
+  )
+}
+
+/* ── Chat log ── */
+function ChatLog({ messages }) {
+  const logRef = useRef(null)
+  // Шинэ мессеж нэмэгдэх бүрт chat log-оо доош нь гүйлгэж хамгийн сүүлийн
+  // мессежийг үргэлж харагдуулна (хуудсыг биш зөвхөн log-оо гүйлгэнэ).
+  useEffect(() => {
+    const el = logRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [messages])
+  if (!messages.length) return null
+  return (
+    <div className="ta-chat-log" ref={logRef}>
+      {messages.map((msg, i) => (
+        <div key={i} className={`ta-chat-msg ta-chat-msg--${msg.role}`}>
+          <span className="ta-chat-text">{msg.text}</span>
+        </div>
+      ))}
     </div>
   )
 }
@@ -271,42 +494,69 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
 
   const {
     isSpeaking, isListening, isThinking, error,
-    lastText, greet, chat, explainProblem, speak,
+    lastText, chatMessages, greet, chat, explainProblem, speak,
     startAlwaysListen, stopAlwaysListen, stopCurrentAudio,
   } = useTutor({ nickname, homeworkContext, interpretCommand })
+
+  const isJoy  = avatar === 'robot'
+  const isMc   = avatar === 'minecraft'
+  const isMcq  = avatar === 'mcqueen'
+  const isAstro = avatar === 'astronaut'
+
+  const [inputText, setInputText] = useState('')
+
+  const handleSendText = useCallback(() => {
+    const text = inputText.trim()
+    if (!text || isThinking) return
+    setInputText('')
+    chat(text)
+  }, [inputText, isThinking, chat])
 
   const greetedRef = useRef(false)
   const askedRef = useRef(false)
   const analyzingSaidRef = useRef(false)
   const lastExplainedRef = useRef('')
-  const [selectedIndex, setSelectedIndex] = useState(null)
+  // Олон бодлого орж ирэхэд ЭХНИЙ бодлогоос эхэлнэ (жагсаалтаас сонгуулж асуухгүй)
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  // Хүүхэд "← Бодлогууд" дарж бүх бодлогын жагсаалтыг үзэхийг хүсвэл л жагсаалт нээгдэнэ
+  const [showListView, setShowListView] = useState(false)
   // Зөв хариулсан үед background-ийг богино хугацаанд баяр хөөртэй болгоно
   const [celebrating, setCelebrating] = useState(false)
 
   // structured problems, эс бол хуучин нэг текстээс fallback
   const structuredProblems = useMemo(() => {
-    if (problems?.length) return problems
+    if (problems?.length) return normalizeHomeworkProblems(problems)
     const fb = fallbackProblem(homeworkContext)
-    return fb ? [fb] : []
+    return fb ? normalizeHomeworkProblems([fb]) : []
   }, [problems, homeworkContext])
 
-  // Шинэ даалгавар орж ирэхэд сонголтыг цэвэрлэнэ
+  // Шинэ даалгавар орж ирэхэд эхний бодлогоос эхэлнэ.
+  // State-ийг render үед өмнөх утгатай харьцуулж reset хийнэ (effect дотор setState хийхээс зайлсхийв).
+  const [prevProblems, setPrevProblems] = useState(structuredProblems)
+  if (prevProblems !== structuredProblems) {
+    setPrevProblems(structuredProblems)
+    setSelectedIndex(0)
+    setShowListView(false)
+  }
+  // Ref-үүдийг зөвхөн effect дотор reset хийнэ (render үед ref өөрчилж болохгүй).
   useEffect(() => {
-    setSelectedIndex(null)
     askedRef.current = false
     lastExplainedRef.current = ''
   }, [structuredProblems])
 
-  const effectiveIndex = selectedIndex != null
-    ? selectedIndex
-    : (structuredProblems.length === 1 ? 0 : null)
-  // Зөвхөн зураг дээрх бодлогыг ашиглана (AI шинэ бодлого зохиохгүй)
-  const activeProblem = effectiveIndex != null ? structuredProblems[effectiveIndex] : null
+  const effectiveIndex = structuredProblems.length
+    ? Math.min(selectedIndex ?? 0, structuredProblems.length - 1)
+    : null
 
-  const showList = structuredProblems.length > 1 && selectedIndex == null
+  const showList = structuredProblems.length > 1 && showListView
+  // Зөвхөн зураг дээрх бодлогыг ашиглана (AI шинэ бодлого зохиохгүй)
+  const activeProblem = !showList && effectiveIndex != null
+    ? structuredProblems[effectiveIndex]
+    : null
 
   const selectProblem = useCallback((i) => {
     setSelectedIndex(i)
+    setShowListView(false)
   }, [])
 
   // interpretCommand логикийг рендер бүрийн дараа шинэчилнэ (сүүлийн state-ийг барина)
@@ -315,7 +565,7 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
       if (!structuredProblems.length) return false
       // Тусламж/асуулт бол сонголт БИШ — chat руу дамжуулж AI дахин тайлбарлана.
       if (HELP_RE.test(text.toLowerCase())) return false
-      const selecting = selectedIndex == null && structuredProblems.length > 1
+      const selecting = showListView && structuredProblems.length > 1
       const idx = extractProblemNumber(text, { requireKeyword: !selecting })
       if (idx == null || idx < 1 || idx > structuredProblems.length) return false
       // Одоогийн бодлогоо дахин нэрлэвэл шилжихгүй — chat-аар дахин тайлбарлуулна.
@@ -334,13 +584,14 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
     return () => { stopAlwaysListen(); stopCurrentAudio() }
   }, [nickname]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Олон бодлого орж ирэхэд "аль вэ?" гэж асууна
+  // Хүүхэд бүх бодлогын жагсаалтыг нээвэл "аль вэ?" гэж асууна
   useEffect(() => {
-    if (structuredProblems.length > 1 && selectedIndex == null && !askedRef.current && greetedRef.current) {
+    if (structuredProblems.length > 1 && showListView && !askedRef.current && greetedRef.current) {
       askedRef.current = true
       speak(`${nickname}, аль бодлогыг хамт бодох вэ? Дугаарыг нь хэлээрэй.`)
     }
-  }, [structuredProblems.length, selectedIndex, nickname, speak])
+    if (!showListView) askedRef.current = false
+  }, [structuredProblems.length, showListView, nickname, speak])
 
   // Зураг шинжиж байх үед зааварчилгааны оронд "түр хүлээ" гэж хэлнэ
   useEffect(() => {
@@ -374,9 +625,9 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
       if (next < total) {
         setSelectedIndex(next)
       } else if (total > 1) {
-        // Бүх бодлого дууссан — жагсаалт руу буцна
-        setSelectedIndex(null)
-        speak(`Сайн байна ${nickname}! Бүх бодлогоо дууслаа.`)
+        // Бүх бодлого дууслаа — жагсаалт руу БУЦААХГҮЙ (дахин "аль вэ?" гэж асуухгүй).
+        // Сүүлийн бодлого баяр хүргэсэн хэвээрээ үлдэнэ.
+        speak(`Сайн байна ${nickname}! Бүх бодлогоо дууслаа. Гоё ажиллалаа!`)
       } else {
         speak(`Гайхалтай ${nickname}! Бодлогоо зөв бодлоо.`)
       }
@@ -401,16 +652,12 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
 
   // Бодлого бүрд background-ийн өнгө аяс өөр болгоно (5 палитр эргэлдэнэ)
   const themeIndex = ((effectiveIndex ?? 0) % 5 + 5) % 5
-  const isJoy = avatar === 'robot'
-  const isMc = avatar === 'minecraft'
-  const isMcq = avatar === 'mcqueen'
 
   return (
     <div
-      className={`ta-root${showProblemPane ? ' ta-root-split' : ' ta-root-center'}${celebrating ? ' ta-celebrate' : ''}${isJoy ? ' ta-joy' : ''}${isMc ? ' ta-mc' : ''}${isMcq ? ' ta-mcq' : ''}`}
+      className={`ta-root${showProblemPane ? ' ta-root-split' : ' ta-root-center'}${celebrating ? ' ta-celebrate' : ''}${isJoy ? ' ta-joy' : ''}${isMc ? ' ta-mc' : ''}${isMcq ? ' ta-mcq' : ''}${isAstro ? ' ta-astro' : ''}`}
       data-theme={themeIndex}
     >
-      {isJoy && <JoyBackground />}
       {isMc && <MinecraftBackground />}
       {isMcq && <McQueenBackground />}
       <div className="ta-blob ta-blob-1" />
@@ -430,14 +677,18 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
           ) : activeProblem ? (
             <>
               {structuredProblems.length > 1 && (
-                <button className="ta-back-btn" onClick={() => setSelectedIndex(null)}>
-                  ← Бодлогууд
-                </button>
+                <div className="ta-problem-nav">
+                  <button className="ta-back-btn" onClick={() => setShowListView(true)}>
+                    ← Бодлогууд
+                  </button>
+                  <span className="ta-problem-progress">
+                    Бодлого {(effectiveIndex ?? 0) + 1} / {structuredProblems.length}
+                  </span>
+                </div>
               )}
               <ProblemInteractive
                 key={problemKey(activeProblem)}
                 problem={activeProblem}
-                isSpeaking={isSpeaking}
                 onCorrect={handleCorrect}
                 onWrong={handleWrong}
               />
@@ -449,16 +700,23 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
       {/* RIGHT (or centered) — robot + speech bubble + status */}
       <div className="ta-robot-col">
         {isJoy ? (
-          <div className="joy-stage">
-            <JoyRobot mood={mascotMood} />
+          <div className={`tutor-spline-wrap tutor-spline-big${showProblemPane ? ' tutor-spline-side' : ''}`}>
+            <SplineScene className="tutor-mascot" />
           </div>
         ) : isMc ? (
-          <div className="mc-stage">
-            <img src="/maynkrap.png" alt="Майнкрафт найз" draggable="false" />
+          <div className={`mc-stage mc-stage--3d${showProblemPane ? '' : ' mc-stage--world'}`}>
+            <MinecraftSteveScene
+              variant={showProblemPane ? 'compact' : 'world'}
+              mood={celebrating ? 'celebrate' : mascotMood}
+            />
           </div>
         ) : isMcq ? (
           <div className="mcq-stage">
             <img src="/McQueen.png" alt="Маккуин найз" draggable="false" />
+          </div>
+        ) : isAstro ? (
+          <div className="astro-stage">
+            <AstronautScene variant={showProblemPane ? 'compact' : 'world'} />
           </div>
         ) : (
           <div className={`tutor-spline-wrap tutor-spline-big${showProblemPane ? ' tutor-spline-side' : ''}`}>
@@ -471,6 +729,29 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
           <span className={`tutor-status${statusCls ? ` ${statusCls}` : ''}`}>{statusText}</span>
         </div>
         {error && <p className="tutor-error">{error}</p>}
+      </div>
+
+      {/* Chat dock — доод-баруун булан, аватар бүрд өвөрмөц бар */}
+      <div className="ta-chat-dock">
+        <ChatLog messages={chatMessages} />
+        <div className="ta-text-input-row">
+          <input
+            className="ta-text-input"
+            type="text"
+            value={inputText}
+            onChange={e => setInputText(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleSendText()}
+            placeholder="Бич эсвэл яриарай..."
+            disabled={isThinking}
+          />
+          <button
+            className="ta-text-send-btn"
+            onClick={handleSendText}
+            disabled={!inputText.trim() || isThinking}
+          >
+            ➤
+          </button>
+        </div>
       </div>
     </div>
   )
