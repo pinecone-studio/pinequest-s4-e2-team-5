@@ -911,8 +911,8 @@ function MinecraftWorld({ reducedMotion, mood, variant = "full" }) {
         scale={
           world
             ? narrow
-              ? 0.82
-              : 1.0
+              ? 1.05
+              : 1.32
             : compact
               ? narrow
                 ? 0.98
@@ -923,7 +923,7 @@ function MinecraftWorld({ reducedMotion, mood, variant = "full" }) {
         }
         position={
           world
-            ? [narrow ? -1.7 : -2.5, 0, 1.6]
+            ? [narrow ? -1.7 : -2.4, 0.22, 1.6]
             : compact
               ? [narrow ? -0.1 : -0.12, -0.28, 0]
               : [narrow ? 0 : 0.05, narrow ? -0.06 : 0, 0]
@@ -1108,15 +1108,18 @@ function BlockyTerrain() {
   const inGerFootprint = (x, z) => x >= 1 && x <= 4 && z >= -2 && z <= 2;
   const cells = useMemo(() => {
     const out = [];
-    for (let x = -5; x <= 5; x++) {
-      for (let z = 2; z >= -4; z--) {
+    for (let x = -6; x <= 6; x++) {
+      // Зөвхөн ард талын (z <= 1) толгодыг (rise > 0) л зурна. Урд/хавтгай
+      // хэсгийг хол ногоон плантай орхиж, зэрэгцээ гадаргуунуудын z-fight
+      // (хазайсан зурас) ба урд эгнээний хүрэн ирмэгийг хоёуланг нь арилгана.
+      for (let z = 1; z >= -4; z--) {
         if (inWater(x, z)) continue;
-        const rise = inGerFootprint(x, z)
-          ? 0
-          : Math.max(
-              0,
-              Math.round(Math.sin(x * 0.7) * 0.6 + Math.cos(z * 0.6) * 0.6),
-            );
+        if (inGerFootprint(x, z)) continue;
+        const rise = Math.max(
+          0,
+          Math.round(Math.sin(x * 0.7) * 0.6 + Math.cos(z * 0.6) * 0.6),
+        );
+        if (rise <= 0) continue;
         out.push({ x, z, rise });
       }
     }

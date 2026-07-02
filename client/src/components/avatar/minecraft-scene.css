@@ -154,6 +154,16 @@
 .mc-stage--3d .minecraft-steve-stage--compact::before {
   display: none;
 }
+/* world (бүтэн дэлгэц) хувилбарт ч vignette хэрэггүй — доод талын хүрэн
+   өнгөлөлт нь хиймэл шороон зурвас мэт харагдуулдаг тул авна. */
+.minecraft-steve-stage--world::before {
+  display: none;
+}
+/* Center/world үед CSS дэвсгэр чимэглэл (нар/үүл/шороон газар) илүүц —
+   бүтэн 3D ертөнц бүх дэлгэцийг эзэлдэг тул нуув. */
+.ta-mc.ta-root-center .mcs-bg {
+  display: none;
+}
 
 .ta-mc.ta-root-center .ta-robot-col {
   align-items: center;
@@ -176,13 +186,10 @@
   z-index: 0;
 }
 
-/* Эхлэлийн (world) горимд чат баруун доод буланд ТОД харагдана — хоосон үедээ
-   контентоороо хэмжээгээ авч, том хоосон хайрцаг болохгүй. */
+/* Эхлэлийн (world/start) горимд чат оруулах хэсгийг нуув —
+   зөвхөн бодлого (interactive) эхлэхэд л чат гарч ирнэ. */
 .ta-mc.ta-root-center .ta-chat-dock {
-  height: auto;
-  max-height: min(62vh, 460px);
-  bottom: 20px;
-  right: 20px;
+  display: none;
 }
 
 /* Center горимд бүх элемент normal flow-д байна — absolute positioning хийхгүй */
@@ -308,13 +315,23 @@
 }
 .ta-mc .ta-text-input::placeholder { color: rgba(60, 100, 40, 0.6); }
 
-/* Ярианы бөмбөлөг + статус */
+/* Ярианы бөмбөлөг + статус — start горимд аватарын доор хөвүүлнэ */
 .ta-mc.ta-root-center .sb-wrap {
-  position: static; transform: none; left: auto; bottom: auto; margin: 0;
-  width: min(82%, 380px); align-self: center;
+  position: absolute;
+  left: 40%;
+  bottom: 18%;
+  transform: translateX(-50%);
+  margin: 0;
+  width: min(82%, 380px);
+  z-index: 6;
 }
 .ta-mc.ta-root-center .ta-status-row {
-  position: static; transform: none; left: auto; bottom: auto; margin-top: 0;
+  position: absolute;
+  left: 40%;
+  bottom: 13%;
+  transform: translateX(-50%);
+  margin-top: 0;
+  z-index: 6;
 }
 .ta-mc.ta-root-center .sb-box { text-align: center; justify-content: center; }
 .ta-mc.ta-root-split .sb-wrap { align-self: flex-start; width: 100%; }
