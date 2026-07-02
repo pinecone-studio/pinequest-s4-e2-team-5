@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { API_BASE, WS_BASE } from "../lib/config.js";
+import { API_BASE, WS_BASE, ICE_SERVERS } from "../lib/config.js";
 
 function fmtDate(iso) {
   const d = new Date(iso);
@@ -28,14 +28,16 @@ export default function ParentPage({ onBack }) {
   const [recordings, setRecordings] = useState([]);
   const [playingId, setPlayingId] = useState(null);
   const wsRef = useRef(null);
-  const cameraCanvasRef = useRef(null);
-  const screenCanvasRef = useRef(null);
-  // playingId-ийг ref-т тусгаж WS дотроос хамгийн сүүлийн утгыг уншина
-  // (эс тэгвэл onmessage хаалт хуучирсан утга барина).
-  const playingIdRef = useRef(null);
-  useEffect(() => {
-    playingIdRef.current = playingId;
-  }, [playingId]);
+  const cameraVideoRef = useRef(null);
+  const screenVideoRef = useRef(null);
+  const cameraPcRef = useRef(null);
+  const screenPcRef = useRef(null);
+  const pendingCameraCandidatesRef = useRef([]);
+  const pendingScreenCandidatesRef = useRef([]);
+  // Video элемент нь бичлэг тоглуулж байх үед DOM-оос салдаг тул MediaStream-ийг
+  // тусад нь хадгалж, дахин mount хийгдэх үед srcObject-д буцааж холбоно.
+  const cameraStreamRef = useRef(null);
+  const screenStreamRef = useRef(null);
 
   const fetchRecordings = useCallback((fc) => {
     if (!fc) return;
@@ -43,6 +45,69 @@ export default function ParentPage({ onBack }) {
       .then((r) => r.json())
       .then((d) => setRecordings(d.recordings ?? []))
       .catch(() => {});
+  }, []);
+
+  // Бичлэг тоглуулж байх үед screen video элемент DOM-оос салж дахин mount
+  // хийгддэг тул амьд stream-ийг буцааж холбоно.
+  useEffect(() => {
+    if (!playingId && screenVideoRef.current && screenStreamRef.current) {
+      screenVideoRef.current.srcObject = screenStreamRef.current;
+    }
+  }, [playingId]);
+
+  const closePeerConnections = useCallback(() => {
+    cameraPcRef.current?.close();
+    cameraPcRef.current = null;
+    screenPcRef.current?.close();
+    screenPcRef.current = null;
+    pendingCameraCandidatesRef.current = [];
+    pendingScreenCandidatesRef.current = [];
+    cameraStreamRef.current = null;
+    screenStreamRef.current = null;
+    if (cameraVideoRef.current) cameraVideoRef.current.srcObject = null;
+    if (screenVideoRef.current) screenVideoRef.current.srcObject = null;
+    setScreenOn(false);
+  }, []);
+
+  const handleOffer = useCallback(async (ws, msg) => {
+    const isScreen = msg.kind === "screen";
+    const pcRef = isScreen ? screenPcRef : cameraPcRef;
+    const videoRef = isScreen ? screenVideoRef : cameraVideoRef;
+    const streamRef = isScreen ? screenStreamRef : cameraStreamRef;
+    const pendingRef = isScreen ? pendingScreenCandidatesRef : pendingCameraCandidatesRef;
+
+    pcRef.current?.close();
+    pendingRef.current = [];
+    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    pcRef.current = pc;
+
+    pc.ontrack = (e) => {
+      const stream = e.streams[0];
+      streamRef.current = stream;
+      if (videoRef.current) videoRef.current.srcObject = stream;
+      if (isScreen) setScreenOn(true);
+      else setStatus("live");
+    };
+    pc.onicecandidate = (e) => {
+      if (e.candidate && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "ice-candidate", kind: msg.kind, candidate: e.candidate }));
+      }
+    };
+    pc.onconnectionstatechange = () => {
+      if (pc.connectionState === "failed") setStatus("error");
+    };
+
+    try {
+      await pc.setRemoteDescription(msg.sdp);
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "answer", kind: msg.kind, sdp: answer }));
+      }
+      pendingRef.current.splice(0).forEach((c) => pc.addIceCandidate(c).catch(() => {}));
+    } catch {
+      /* offer/answer солилцоо амжилтгүй болов */
+    }
   }, []);
 
   const connect = useCallback(() => {
@@ -63,11 +128,17 @@ export default function ParentPage({ onBack }) {
       try {
         const msg = JSON.parse(e.data);
         if (msg.type === "child-disconnected") {
+          closePeerConnections();
           setStatus("offline");
           setTimeout(() => fetchRecordings(code), 3000);
           return;
         }
-        if (msg.type === "screen-disconnected") {
+        if (msg.type === "screen-ended") {
+          screenPcRef.current?.close();
+          screenPcRef.current = null;
+          pendingScreenCandidatesRef.current = [];
+          screenStreamRef.current = null;
+          if (screenVideoRef.current) screenVideoRef.current.srcObject = null;
           setScreenOn(false);
           return;
         }
@@ -75,32 +146,19 @@ export default function ParentPage({ onBack }) {
           fetchRecordings(msg.code);
           return;
         }
-        if (msg.type === "camera" && msg.data) {
-          setStatus("live");
-          const canvas = cameraCanvasRef.current;
-          if (!canvas) return;
-          const img = new Image();
-          img.onload = () => {
-            const ctx = canvas.getContext("2d");
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-          };
-          img.src = msg.data;
+        if (msg.type === "offer" && msg.kind) {
+          handleOffer(ws, msg);
+          return;
         }
-        if (msg.type === "screen" && msg.data) {
-          setScreenOn(true);
-          if (playingIdRef.current) return;
-          const canvas = screenCanvasRef.current;
-          if (!canvas) return;
-          const img = new Image();
-          img.onload = () => {
-            const ctx = canvas.getContext("2d");
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-          };
-          img.src = msg.data;
+        if (msg.type === "ice-candidate" && msg.kind) {
+          const isScreen = msg.kind === "screen";
+          const pc = (isScreen ? screenPcRef : cameraPcRef).current;
+          const pendingRef = isScreen ? pendingScreenCandidatesRef : pendingCameraCandidatesRef;
+          if (pc?.remoteDescription) {
+            pc.addIceCandidate(msg.candidate).catch(() => {});
+          } else {
+            pendingRef.current.push(msg.candidate);
+          }
         }
       } catch {
         /* буруу форматтай мессежийг үл тоомсорлоно */
@@ -113,11 +171,13 @@ export default function ParentPage({ onBack }) {
     return () => {
       ws.close();
       wsRef.current = null;
+      closePeerConnections();
     };
-  }, [step, code, fetchRecordings]);
+  }, [step, code, fetchRecordings, handleOffer, closePeerConnections]);
 
   const goBack = () => {
     wsRef.current?.close();
+    closePeerConnections();
     setStep("input");
     setStatus("idle");
     setScreenOn(false);
@@ -231,7 +291,7 @@ export default function ParentPage({ onBack }) {
 
           {/* Main feed area */}
           <div style={mainArea}>
-            <canvas ref={cameraCanvasRef} style={{ display: "none" }} />
+            <video ref={cameraVideoRef} autoPlay playsInline muted style={{ display: "none" }} />
 
             {playingId ? (
               <div
@@ -281,8 +341,11 @@ export default function ParentPage({ onBack }) {
               >
                 <p style={feedLabel}>ДЭЛГЭЦ</p>
                 <div style={{ ...feedBox, flex: 1 }}>
-                  <canvas
-                    ref={screenCanvasRef}
+                  <video
+                    ref={screenVideoRef}
+                    autoPlay
+                    playsInline
+                    muted
                     style={{
                       width: "100%",
                       height: "100%",
@@ -323,7 +386,7 @@ function statusText(s) {
 
 const pageWrap = {
   minHeight: "100dvh",
-  background: "#f8faf9",
+  background: "#f7f5ee",
   display: "flex",
   flexDirection: "column",
   fontFamily: "inherit",
@@ -353,6 +416,7 @@ const topTitle = {
   fontSize: "16px",
   fontWeight: 700,
   color: "#162b2a",
+  fontFamily: "'Rubik', 'Manrope', sans-serif",
   flex: 1,
 };
 const statusBadge = { display: "flex", alignItems: "center", gap: "6px" };
@@ -369,7 +433,7 @@ const inputCard = {
   background: "#fff",
   borderRadius: "20px",
   padding: "40px 36px",
-  boxShadow: "0 8px 40px rgba(0,0,0,0.08)",
+  boxShadow: "0 8px 40px rgba(22,43,42,0.10)",
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
@@ -381,6 +445,7 @@ const inputTitle = {
   fontSize: "20px",
   fontWeight: 800,
   color: "#162b2a",
+  fontFamily: "'Rubik', 'Manrope', sans-serif",
   margin: 0,
   textAlign: "center",
 };
@@ -447,6 +512,7 @@ const sidebarTitle = {
   fontWeight: 700,
   letterSpacing: "1.5px",
   color: "#9ca3af",
+  fontFamily: "'Rubik', 'Manrope', sans-serif",
   margin: "0 0 2px",
   padding: "0 14px",
 };
@@ -503,6 +569,7 @@ const feedLabel = {
   fontWeight: 700,
   letterSpacing: "1.5px",
   color: "#9ca3af",
+  fontFamily: "'Rubik', 'Manrope', sans-serif",
   margin: 0,
 };
 const feedBox = {

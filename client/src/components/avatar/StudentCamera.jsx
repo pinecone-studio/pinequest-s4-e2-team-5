@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { API_BASE, WS_BASE } from "../../lib/config.js";
+import { API_BASE, WS_BASE, ICE_SERVERS } from "../../lib/config.js";
 
 function getRecorderMimeType() {
   if (!window.MediaRecorder) return "";
@@ -20,13 +20,11 @@ export function StudentCamera({ childId = "хүүхэд", sessionCode }) {
   const [on, setOn] = useState(false);
   const [err, setErr] = useState(false);
   const [recordStatus, setRecordStatus] = useState("idle");
-  const streamWsRef = useRef(null);
-  const streamCanvasRef = useRef(null);
-  const streamIntervalRef = useRef(null);
+  // WebRTC: signaling socket + one { cameraPc, screenPc } pair per watching parent.
+  const signalingWsRef = useRef(null);
+  const peersRef = useRef(new Map());
+  const cameraStreamRef = useRef(null);
   const screenStreamRef = useRef(null);
-  const screenWsRef = useRef(null);
-  const screenCanvasRef = useRef(null);
-  const screenIntervalRef = useRef(null);
 
   const uploadRecording = useCallback(
     async (blob, durationMs) => {
@@ -96,6 +94,123 @@ export function StudentCamera({ childId = "хүүхэд", sessionCode }) {
     recorder.stop();
   }, []);
 
+  const getPeerEntry = (parentId) => {
+    let entry = peersRef.current.get(parentId);
+    if (!entry) {
+      entry = {
+        cameraPc: null,
+        screenPc: null,
+        pendingCameraCandidates: [],
+        pendingScreenCandidates: [],
+      };
+      peersRef.current.set(parentId, entry);
+    }
+    return entry;
+  };
+
+  // Тухайн эцэг эхэд (parentId) камер эсвэл дэлгэцийн RTCPeerConnection нээж,
+  // offer илгээнэ. Хоёр төрөл тус бүрдээ өөр PeerConnection ашигладаг тул
+  // дэлгэц хуваалцалт хожуу эхэлсэн ч renegotiation хэрэггүй — зүгээр шинэ
+  // PeerConnection нээгээд ердийн offer/answer хийнэ.
+  const openPeerConnection = (parentId, kind) => {
+    const stream =
+      kind === "screen" ? screenStreamRef.current : cameraStreamRef.current;
+    if (!stream) return;
+    const entry = getPeerEntry(parentId);
+    const pcKey = kind === "screen" ? "screenPc" : "cameraPc";
+    if (entry[pcKey]) return;
+
+    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+    pc.onicecandidate = (e) => {
+      if (e.candidate && signalingWsRef.current?.readyState === WebSocket.OPEN) {
+        signalingWsRef.current.send(
+          JSON.stringify({
+            type: "ice-candidate",
+            target: parentId,
+            kind,
+            candidate: e.candidate,
+          }),
+        );
+      }
+    };
+    entry[pcKey] = pc;
+
+    pc.createOffer()
+      .then((offer) => pc.setLocalDescription(offer).then(() => offer))
+      .then((offer) => {
+        signalingWsRef.current?.send(
+          JSON.stringify({ type: "offer", target: parentId, kind, sdp: offer }),
+        );
+      })
+      .catch(() => {});
+  };
+
+  const closePeerPair = (parentId) => {
+    const entry = peersRef.current.get(parentId);
+    if (!entry) return;
+    entry.cameraPc?.close();
+    entry.screenPc?.close();
+    peersRef.current.delete(parentId);
+  };
+
+  const closeAllScreenPeers = () => {
+    for (const entry of peersRef.current.values()) {
+      entry.screenPc?.close();
+      entry.screenPc = null;
+      entry.pendingScreenCandidates = [];
+    }
+  };
+
+  const closeAllPeers = () => {
+    for (const parentId of Array.from(peersRef.current.keys())) closePeerPair(parentId);
+  };
+
+  const handleSignalingMessage = useCallback((e) => {
+    let msg;
+    try {
+      msg = JSON.parse(e.data);
+    } catch {
+      return;
+    }
+    if (msg.type === "parent-joined") {
+      openPeerConnection(msg.parentId, "camera");
+      if (screenStreamRef.current) openPeerConnection(msg.parentId, "screen");
+      return;
+    }
+    if (msg.type === "parent-left") {
+      closePeerPair(msg.parentId);
+      return;
+    }
+    if (msg.type === "answer" && msg.from) {
+      const entry = peersRef.current.get(msg.from);
+      const pc = msg.kind === "screen" ? entry?.screenPc : entry?.cameraPc;
+      if (!pc) return;
+      pc.setRemoteDescription(msg.sdp).then(() => {
+        const pending =
+          msg.kind === "screen"
+            ? entry.pendingScreenCandidates
+            : entry.pendingCameraCandidates;
+        pending.splice(0).forEach((c) => pc.addIceCandidate(c).catch(() => {}));
+      });
+      return;
+    }
+    if (msg.type === "ice-candidate" && msg.from) {
+      const entry = peersRef.current.get(msg.from);
+      if (!entry) return;
+      const pc = msg.kind === "screen" ? entry.screenPc : entry.cameraPc;
+      if (pc?.remoteDescription) {
+        pc.addIceCandidate(msg.candidate).catch(() => {});
+      } else {
+        const pending =
+          msg.kind === "screen"
+            ? entry.pendingScreenCandidates
+            : entry.pendingCameraCandidates;
+        pending.push(msg.candidate);
+      }
+    }
+  }, []);
+
   const start = useCallback(async () => {
     setErr(false);
     setRecordStatus("idle");
@@ -117,19 +232,12 @@ export function StudentCamera({ childId = "хүүхэд", sessionCode }) {
       await videoRef.current.play();
       startRecording(stream);
       setOn(true);
+      cameraStreamRef.current = stream;
 
       if (sessionCode) {
         const ws = new WebSocket(`${WS_BASE}/ws?role=child&code=${sessionCode}&family=${encodeURIComponent(childId)}`);
-        streamWsRef.current = ws;
-        const canvas = streamCanvasRef.current;
-        const ctx = canvas.getContext("2d");
-        streamIntervalRef.current = setInterval(() => {
-          if (!ws || ws.readyState !== WebSocket.OPEN) return;
-          canvas.width = 1280;
-          canvas.height = 720;
-          if (videoRef.current) ctx.drawImage(videoRef.current, 0, 0, 1280, 720);
-          ws.send(JSON.stringify({ type: "camera", data: canvas.toDataURL("image/jpeg", 0.9) }));
-        }, 150);
+        signalingWsRef.current = ws;
+        ws.onmessage = handleSignalingMessage;
       }
 
       // Камертай зэрэг дэлгэц хуваалцалтыг автоматаар эхлүүлнэ
@@ -139,36 +247,21 @@ export function StudentCamera({ childId = "хүүхэд", sessionCode }) {
             video: { displaySurface: "window", frameRate: 5, cursor: "always" },
             audio: false,
           });
-          
+
           screenStreamRef.current = screenStream;
-          const sVideo = document.createElement("video");
-          sVideo.srcObject = screenStream;
-          sVideo.muted = true;
-          await sVideo.play();
 
           const stopScreen = () => {
-            clearInterval(screenIntervalRef.current);
-            screenIntervalRef.current = null;
             screenStream.getTracks().forEach((t) => t.stop());
             screenStreamRef.current = null;
-            screenWsRef.current?.close();
-            screenWsRef.current = null;
+            closeAllScreenPeers();
+            if (signalingWsRef.current?.readyState === WebSocket.OPEN) {
+              signalingWsRef.current.send(JSON.stringify({ type: "screen-ended" }));
+            }
           };
           screenStream.getVideoTracks()[0]?.addEventListener("ended", stopScreen);
 
-          const sWs = new WebSocket(`${WS_BASE}/ws?role=screen&code=${sessionCode}`);
-          screenWsRef.current = sWs;
-          const sCanvas = screenCanvasRef.current;
-          const sCtx = sCanvas.getContext("2d");
-          screenIntervalRef.current = setInterval(() => {
-            if (!sWs || sWs.readyState !== WebSocket.OPEN) return;
-            if (!sVideo.videoWidth) return;
-            const scale = Math.min(1, 1280 / sVideo.videoWidth);
-            sCanvas.width = Math.round(sVideo.videoWidth * scale);
-            sCanvas.height = Math.round(sVideo.videoHeight * scale);
-            sCtx.drawImage(sVideo, 0, 0, sCanvas.width, sCanvas.height);
-            sWs.send(JSON.stringify({ type: "screen", data: sCanvas.toDataURL("image/jpeg", 0.7) }));
-          }, 500);
+          // Аль хэдийн холбогдсон эцэг эх бүрт дэлгэцийн шинэ PeerConnection нээнэ
+          for (const parentId of peersRef.current.keys()) openPeerConnection(parentId, "screen");
         } catch (error) {
           console.log("Screen share cancelled or failed:", error);
           // Хэрэглэгч цуцалсан — камер хэвээр ажиллана
@@ -179,7 +272,7 @@ export function StudentCamera({ childId = "хүүхэд", sessionCode }) {
       setRecordStatus("idle");
       console.error("Error accessing media devices.", error);
     }
-  }, [startRecording, sessionCode]);
+  }, [startRecording, sessionCode, handleSignalingMessage]);
 
   const stop = useCallback(() => {
     stopRecording();
@@ -187,17 +280,13 @@ export function StudentCamera({ childId = "хүүхэд", sessionCode }) {
       videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
       videoRef.current.srcObject = null;
     }
-    clearInterval(streamIntervalRef.current);
-    streamIntervalRef.current = null;
-    streamWsRef.current?.close();
-    streamWsRef.current = null;
+    cameraStreamRef.current = null;
+    closeAllPeers();
+    signalingWsRef.current?.close();
+    signalingWsRef.current = null;
     // Дэлгэц хуваалцалтыг зогсооно
-    clearInterval(screenIntervalRef.current);
-    screenIntervalRef.current = null;
     screenStreamRef.current?.getTracks().forEach((t) => t.stop());
     screenStreamRef.current = null;
-    screenWsRef.current?.close();
-    screenWsRef.current = null;
     setOn(false);
   }, [stopRecording]);
 
@@ -262,9 +351,6 @@ export function StudentCamera({ childId = "хүүхэд", sessionCode }) {
       {recordStatus === "error" && (
         <p className="student-cam-status is-error">Бичлэг хадгалж чадсангүй</p>
       )}
-
-      <canvas ref={streamCanvasRef} style={{ display: "none" }} />
-      <canvas ref={screenCanvasRef} style={{ display: "none" }} />
     </div>
   );
 }

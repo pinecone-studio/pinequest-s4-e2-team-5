@@ -645,9 +645,11 @@ app.post("/api/ai/generate-game", async (req: any, res: any) => {
   }
 });
 
-// Parent monitoring: WebSocket room system
-// rooms: code → { child, parents }
-const rooms = new Map<string, { child: WebSocket | null; screen: WebSocket | null; parents: Set<WebSocket>; familyCode: string | null }>();
+// Parent monitoring: WebSocket signaling relay for WebRTC (camera + screen are
+// peer-to-peer between child and parent; this server only routes SDP/ICE
+// signaling messages, no media/frame data passes through it).
+// rooms: code → { child, parents: parentId → ws }
+const rooms = new Map<string, { child: WebSocket | null; parents: Map<string, WebSocket>; familyCode: string | null }>();
 
 const httpServer = createServer(app);
 const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
@@ -658,54 +660,77 @@ wss.on("connection", (ws, req) => {
   const role = url.searchParams.get("role");
   if (!code) { ws.close(); return; }
 
-  if (!rooms.has(code)) rooms.set(code, { child: null, screen: null, parents: new Set(), familyCode: null });
+  if (!rooms.has(code)) rooms.set(code, { child: null, parents: new Map(), familyCode: null });
   const room = rooms.get(code)!;
 
   const familyParam = url.searchParams.get("family");
 
   if (role === "parent") {
-    room.parents.add(ws);
-    // Notify child that a parent joined
+    const parentId = crypto.randomUUID();
+    room.parents.set(parentId, ws);
+    // Notify child that a parent joined (so it can open an RTCPeerConnection for them)
     if (room.child?.readyState === WebSocket.OPEN)
-      room.child.send(JSON.stringify({ type: "parent-joined" }));
+      room.child.send(JSON.stringify({ type: "parent-joined", parentId }));
     // Send family code if child already connected
     if (room.familyCode)
       ws.send(JSON.stringify({ type: "family-code", code: room.familyCode }));
+
+    // Signaling messages from this parent (answer / ice-candidate) → route to the child,
+    // stamping `from` so the child knows which of its RTCPeerConnections it belongs to.
+    ws.on("message", (data) => {
+      if (room.child?.readyState !== WebSocket.OPEN) return;
+      try {
+        const msg = JSON.parse(data.toString());
+        room.child.send(JSON.stringify({ ...msg, from: parentId }));
+      } catch {
+        /* буруу форматтай мессежийг үл тоомсорлоно */
+      }
+    });
+
     ws.on("close", () => {
-      room.parents.delete(ws);
-      if (!room.child && !room.screen && room.parents.size === 0) rooms.delete(code);
+      room.parents.delete(parentId);
+      if (room.child?.readyState === WebSocket.OPEN)
+        room.child.send(JSON.stringify({ type: "parent-left", parentId }));
+      if (!room.child && room.parents.size === 0) rooms.delete(code);
     });
   } else {
-    // Sender: camera child (role=child) эсвэл дэлгэц (role=screen)
-    const isScreen = role === "screen";
-    if (isScreen) {
-      room.screen = ws;
-    } else {
-      room.child = ws;
-      if (familyParam) {
-        room.familyCode = familyParam;
-        for (const p of room.parents)
-          if (p.readyState === WebSocket.OPEN)
-            p.send(JSON.stringify({ type: "family-code", code: familyParam }));
-      }
+    // Sender: хүүхдийн signaling холболт (камер + дэлгэц хоёулаа энэ нэг
+    // WebSocket-оор дамжина, тус бүрдээ өөр RTCPeerConnection нээгдэнэ)
+    room.child = ws;
+    if (familyParam) {
+      room.familyCode = familyParam;
+      for (const p of room.parents.values())
+        if (p.readyState === WebSocket.OPEN)
+          p.send(JSON.stringify({ type: "family-code", code: familyParam }));
     }
-    ws.on("message", (data, isBinary) => {
-      for (const p of room.parents)
-        if (p.readyState === WebSocket.OPEN) p.send(data, { binary: isBinary });
-    });
-    ws.on("close", () => {
-      if (isScreen) {
-        room.screen = null;
-        for (const p of room.parents)
-          if (p.readyState === WebSocket.OPEN)
-            p.send(JSON.stringify({ type: "screen-disconnected" }));
-      } else {
-        room.child = null;
-        for (const p of room.parents)
-          if (p.readyState === WebSocket.OPEN)
-            p.send(JSON.stringify({ type: "child-disconnected" }));
+    // Хүүхэд холбогдох үед аль хэдийн холбогдсон эцэг эх бүрийг мэдэгдэнэ
+    // (эс тэгвэл хүүхдээс өмнө орж ирсэн эцэг эхэд offer хэзээ ч илгээгдэхгүй)
+    for (const parentId of room.parents.keys())
+      ws.send(JSON.stringify({ type: "parent-joined", parentId }));
+
+    // Signaling messages from the child (offer / ice-candidate) carry an explicit
+    // `target` parentId → route only to that parent.
+    ws.on("message", (data) => {
+      try {
+        const msg = JSON.parse(data.toString());
+        if (msg.type === "screen-ended") {
+          for (const p of room.parents.values())
+            if (p.readyState === WebSocket.OPEN) p.send(JSON.stringify(msg));
+          return;
+        }
+        const target = msg.target ? room.parents.get(msg.target) : null;
+        if (target?.readyState === WebSocket.OPEN) target.send(JSON.stringify(msg));
+      } catch {
+        /* буруу форматтай мессежийг үл тоомсорлоно */
       }
-      if (!room.child && !room.screen && room.parents.size === 0) rooms.delete(code);
+    });
+
+    ws.on("close", () => {
+      room.child = null;
+      for (const p of room.parents.values())
+        if (p.readyState === WebSocket.OPEN)
+          p.send(JSON.stringify({ type: "child-disconnected" }));
+      if (!room.child && room.parents.size === 0) rooms.delete(code);
     });
   }
 });
