@@ -729,7 +729,7 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
         {error && <p className="tutor-error">{error}</p>}
       </div>
 
-      {/* Chat dock — доод-баруун булан, аватар бүрд өвөрмөц бар */}
+      {/* Chat dock — доод-баруун булан, панельгүй (bubble + input шууд background дээр) */}
       <div className="ta-chat-dock">
         <ChatLog messages={chatMessages} />
         <div className="ta-text-input-row">
