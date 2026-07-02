@@ -108,6 +108,22 @@ export function StudentCamera({ childId = "хүүхэд", sessionCode }) {
     return entry;
   };
 
+  // sender.setParameters()-ийг аюулгүй дуудах туслах функц — дэмждэггүй
+  // орчинд чимээгүй унана (encoding параметрүүд тохируулагдахгүй л үлдэнэ).
+  const applyEncodingParams = (sender, { encoding, degradationPreference }) => {
+    try {
+      const params = sender.getParameters();
+      if (!params.encodings || params.encodings.length === 0) {
+        params.encodings = [{}];
+      }
+      Object.assign(params.encodings[0], encoding);
+      if (degradationPreference) params.degradationPreference = degradationPreference;
+      sender.setParameters(params).catch(() => {});
+    } catch {
+      // setParameters unsupported / sender not ready — non-fatal
+    }
+  };
+
   // Тухайн эцэг эхэд (parentId) камер эсвэл дэлгэцийн RTCPeerConnection нээж,
   // offer илгээнэ. Хоёр төрөл тус бүрдээ өөр PeerConnection ашигладаг тул
   // дэлгэц хуваалцалт хожуу эхэлсэн ч renegotiation хэрэггүй — зүгээр шинэ
@@ -120,21 +136,34 @@ export function StudentCamera({ childId = "хүүхэд", sessionCode }) {
     const pcKey = kind === "screen" ? "screenPc" : "cameraPc";
     if (entry[pcKey]) return;
 
-    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-    stream.getTracks().forEach((track) => {
+    const pc = new RTCPeerConnection({
+      iceServers: ICE_SERVERS,
+      iceCandidatePoolSize: 1,
+    });
+
+    // Эцэг эхийн камерын <video> нь display:none + muted бөгөөд өөр хэн ч
+    // сонсдоггүй тул камерын аудио трек нь дэлгэц хуваалцалттай хуваалцдаг
+    // uplink-ийг дэмий эзэлж байсан — огт илгээхгүй.
+    const tracksToSend =
+      kind === "camera"
+        ? stream.getTracks().filter((track) => track.kind !== "audio")
+        : stream.getTracks();
+
+    tracksToSend.forEach((track) => {
       const sender = pc.addTrack(track, stream);
       if (kind === "camera" && track.kind === "video") {
-        try {
-          const params = sender.getParameters();
-          if (!params.encodings || params.encodings.length === 0) {
-            params.encodings = [{}];
-          }
-          params.encodings[0].maxBitrate = 250_000;
-          params.encodings[0].scaleResolutionDownBy = 2;
-          sender.setParameters(params).catch(() => {});
-        } catch {
-          // setParameters unsupported / sender not ready — non-fatal
-        }
+        applyEncodingParams(sender, {
+          encoding: { maxBitrate: 250_000, scaleResolutionDownBy: 2 },
+        });
+      }
+      if (kind === "screen" && track.kind === "video") {
+        // Дэлгэц хуваалцалт: bandwidth хумигдвал резолюц буурч болно,
+        // харин frame rate тогтвортой хэвээр байх ёстой — эцэг эх
+        // "live" мэдрэмжийг алдахгүй байхын тулд.
+        applyEncodingParams(sender, {
+          encoding: { maxBitrate: 4_000_000 },
+          degradationPreference: "maintain-framerate",
+        });
       }
     });
     pc.onicecandidate = (e) => {
