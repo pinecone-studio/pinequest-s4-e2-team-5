@@ -1,9 +1,9 @@
-// 1-2-р ангийн хүүхдэд зориулсан Minecraft загварын интерактив бодлого:
-//   40 − 5 × 7 = ?
-// Түүх: Стив-д 40 очир алмаз бий. 5 Крийпер ирээд тус бүр 7 алмаз хулгайлна.
-//   1) Эхлээд ҮРЖИХ: 5 крийпер × 7 = хэдэн алмаз хулгайлав? (35)
-//   2) Дараа нь ХАСАХ: 40 − 35 = хэдэн алмаз үлдэв? (5)
-// Блок, крийпер, нисдэг алмаз бүгд хөдөлгөөнтэй (CSS animation).
+// 1-р бодлого: 40 − 5 × 7 = ?  — багшийн заадаг арга, Minecraft блокоор.
+// 1) ҮРЖИХ: 5 сагс × 7 блок. Хүүхэд 5×7-г мэдэхгүй тул 7+7+7+7+7 гэж
+//    задалж, гүйх нийлбэрээр (7,14,21,28,35) тоолж заана.
+// 2) ХАСАХ: 40 − 35 нь том тоо тул БАГАНАН бичлэгээр, ЗЭЭЛЭХ аргаар:
+//    0 − 5 болохгүй → аравтаас 1 зээлнэ (4→3, 0→10) → 10 − 5 = 5, 3 − 3 = 0.
+// 3) Хүүхэд 5-г дарангуут алга таших 👏 + баяр + урам.
 import { useMemo, useState } from 'react'
 import { CelebrationBurst } from './CelebrationBurst.jsx'
 import { MinecraftBg } from './mcShared.jsx'
@@ -11,83 +11,61 @@ import { makeChoices } from './mcUtils.js'
 import './minecraft-first-problem.css'
 
 const TOTAL = 40
-const CREEPERS = 5
+const GROUPS = 5
 const PER = 7
-const STOLEN = CREEPERS * PER // 35
+const STOLEN = GROUPS * PER // 35
 const LEFT = TOTAL - STOLEN // 5
 
-/* Minecraft крийперын нүүр — цэвэр CSS пиксел арт */
-function Creeper({ munching }) {
-  return (
-    <span className={`mfp-creeper${munching ? ' mfp-creeper-munch' : ''}`} aria-label="крийпер">
-      <span className="mfp-creeper-face">
-        <span className="mfp-eye mfp-eye-l" />
-        <span className="mfp-eye mfp-eye-r" />
-        <span className="mfp-mouth" />
-      </span>
-    </span>
-  )
-}
+const TILE = '/Minecraft1.png'
+const HERO = '/block.png'
+// Гүйх нийлбэр: 7, 14, 21, 28, 35 (7-оор тоолно)
+const RUNNING = Array.from({ length: GROUPS }, (_, i) => PER * (i + 1))
+// Блок хагарахад бутрах 7 алмазны чиглэл (тойрог хэлбэрээр)
+const SPARKS = Array.from({ length: PER }, (_, j) => {
+  const ang = (j / PER) * Math.PI * 2 - Math.PI / 2
+  return { dx: Math.round(Math.cos(ang) * 36), dy: Math.round(Math.sin(ang) * 30) }
+})
 
-/* Алмазан овоо — count ширхэг очир алмаз */
-function DiamondPile({ count, flying }) {
-  return (
-    <div className="mfp-pile" aria-label={`${count} очир алмаз`}>
-      {[...Array(Math.max(0, count))].map((_, i) => (
-        <span
-          key={i}
-          className={`mfp-diamond${flying ? ' mfp-diamond-fly' : ''}`}
-          style={{ '--i': i, '--d': `${(i % 8) * 0.05}s` }}
-        >
-          💎
-        </span>
-      ))}
-    </div>
-  )
+function Block({ style }) {
+  return <img src={TILE} alt="" className="mfb-block" style={style} draggable={false} />
 }
 
 export function MinecraftFirstProblem({ onCorrect, onWrong, onDone }) {
-  // phase: 'mul' (5×7) → 'steal' (анимэйшн) → 'sub' (40−35) → 'done'
-  const [phase, setPhase] = useState('mul')
+  const [phase, setPhase] = useState('mul') // 'mul' | 'sub' | 'done'
+  const [subStep, setSubStep] = useState(0) // 0 танилцуулга · 1 зээлсэн · 2 нэгж асуух
   const [wrong, setWrong] = useState(null)
 
   const mulChoices = useMemo(() => makeChoices(STOLEN, [5, -5, 2, -2, 7, -7, 10, -10]), [])
-  const subChoices = useMemo(() => makeChoices(LEFT, [5, -5, 2, -2, 3, -3, 10, -10]), [])
+  const onesChoices = useMemo(() => makeChoices(LEFT, [1, -1, 2, -2, 3, -3]), []) // ~4,5,6
 
-  const pick = (value, answer, nextPhase) => {
-    if (value === answer) {
-      setWrong(null)
-      onCorrect?.()
-      if (nextPhase === 'steal') {
-        setPhase('steal')
-        // алмаз нисэх анимэйшн дуустал хүлээгээд дараагийн алхам руу
-        setTimeout(() => setPhase('sub'), 1400)
-      } else {
-        setPhase('done')
-        onDone?.()
-      }
-    } else {
-      setWrong(value)
-      onWrong?.()
-      setTimeout(() => setWrong(null), 700)
-    }
+  const pickMul = (n) => {
+    if (n === STOLEN) { setWrong(null); onCorrect?.(); setPhase('sub'); setSubStep(0) }
+    else { setWrong(n); onWrong?.(); setTimeout(() => setWrong(null), 700) }
+  }
+  const pickOnes = (n) => {
+    if (n === LEFT) { setWrong(null); onCorrect?.(); setPhase('done'); onDone?.() }
+    else { setWrong(n); onWrong?.(); setTimeout(() => setWrong(null), 700) }
   }
 
-  const stealing = phase === 'steal'
-  const remaining = phase === 'done' ? LEFT : TOTAL
+  // Баганан бичлэгийн төлөв
+  const borrowed = phase === 'done' || subStep >= 1
+  const onesTop = borrowed ? '10' : '0'
 
   return (
-    <div className="mfp-root">
+    <div className="mfp-root mfb-root">
       <MinecraftBg />
 
-      <h2 className="mfp-title">Стивийн очир алмаз 💎</h2>
+      <div className="mfb-title-row">
+        <img src={HERO} alt="" className="mfb-hero" draggable={false} />
+        <h2 className="mfp-title">Стивийн блокууд</h2>
+        <img src={HERO} alt="" className="mfb-hero mfb-hero-2" draggable={false} />
+      </div>
 
-      {/* Гол тэгшитгэл — идэвхтэй хэсэг нь гэрэлтэнэ */}
       <div className="mfp-equation">
         <span className="mfp-num">{TOTAL}</span>
         <span className="mfp-op">−</span>
         <span className={`mfp-group${phase === 'mul' ? ' mfp-hot' : ''}`}>
-          <span className="mfp-num mfp-num-sm">{CREEPERS}</span>
+          <span className="mfp-num mfp-num-sm">{GROUPS}</span>
           <span className="mfp-op">×</span>
           <span className="mfp-num mfp-num-sm">{PER}</span>
         </span>
@@ -95,100 +73,147 @@ export function MinecraftFirstProblem({ onCorrect, onWrong, onDone }) {
         <span className="mfp-ans">{phase === 'done' ? LEFT : '?'}</span>
       </div>
 
-      {/* Тайзан дээрх дүр зураг */}
-      <div className="mfp-stage">
-        <div className="mfp-steve-col">
-          <span className="mfp-steve" aria-label="Стив">🧑‍🌾</span>
-          <DiamondPile count={remaining} flying={stealing} />
-          <div className="mfp-steve-label">Стив: {remaining} алмаз</div>
-        </div>
-
-        {phase !== 'mul' && (
-          <div className="mfp-creepers">
-            {[...Array(CREEPERS)].map((_, i) => (
-              <div key={i} className="mfp-creeper-slot" style={{ '--i': i }}>
-                <Creeper munching={stealing} />
-                <span className="mfp-creeper-take">×{PER}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Алхам 1: Үржих */}
+      {/* ── Алхам 1: ҮРЖИХ — сүхээр алмаз олборлоно ── */}
       {phase === 'mul' && (
         <div className="mfp-step">
-          <p className="mfp-prompt">
-            <b>1-р алхам — эхлээд ҮРЖИХ.</b> {CREEPERS} крийпер ирлээ. Тус бүр нь{' '}
-            <b>{PER}</b> алмаз хулгайлна. Крийперүүд нийт хэдэн алмаз хулгайлах вэ?
+          <p className="mfp-prompt mine-prompt">
+            💎 <b>5 блок</b>, тус бүрт <b>7 алмаз</b>. Сүх цохиж бүгдийг ол — нийт хэд вэ?
           </p>
-          <div className="mfp-mini">
-            <span className="mfp-num-sm">{CREEPERS}</span>
+
+          <div className="mine-scene">
+            <img src="/gal.png" alt="" className="mine-lantern" draggable={false} />
+            <img src="/sukh.png" alt="" className="mine-pick" draggable={false} />
+            <div className="mine-row">
+              {RUNNING.map((sum, i) => (
+                <div className="mine-ore" key={i} style={{ '--i': i }}>
+                  <img src="/lerobrine.png" alt="" className="mine-ore-img" draggable={false} />
+                  {SPARKS.map((s, j) => (
+                    <img
+                      key={j}
+                      src="/lerobrine.png"
+                      alt=""
+                      className="mine-spark"
+                      style={{ '--dx': `${s.dx}px`, '--dy': `${s.dy}px`, '--j': j }}
+                      draggable={false}
+                    />
+                  ))}
+                  <span className="mine-count">{sum}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mfp-mini mine-eq">
+            <span className="mfp-num-sm">{GROUPS}</span>
             <span className="mfp-op">×</span>
             <span className="mfp-num-sm">{PER}</span>
             <span className="mfp-op">=</span>
             <span className="mfp-q">?</span>
           </div>
+
           <div className="mfp-choices">
             {mulChoices.map((n) => (
-              <button
-                key={n}
-                type="button"
+              <button key={n} type="button"
                 className={`mfp-choice${wrong === n ? ' mfp-choice-wrong' : ''}`}
-                onClick={() => pick(n, STOLEN, 'steal')}
-              >
-                {n}
-              </button>
+                onClick={() => pickMul(n)}>{n}</button>
             ))}
           </div>
         </div>
       )}
 
-      {/* Завсрын анимэйшн */}
-      {phase === 'steal' && (
-        <div className="mfp-step">
-          <p className="mfp-prompt mfp-prompt-flash">
-            Крийперүүд <b>{STOLEN}</b> алмаз хулгайлж яваа… 💨
-          </p>
-        </div>
-      )}
-
-      {/* Алхам 2: Хасах */}
+      {/* ── Алхам 2: ХАСАХ = баганан бичлэг + зээлэх ── */}
       {phase === 'sub' && (
         <div className="mfp-step">
           <p className="mfp-prompt">
-            <b>2-р алхам — одоо ХАСАХ.</b> Стивд <b>{TOTAL}</b> алмаз байсан. Крийперүүд{' '}
-            <b>{STOLEN}</b> алмаз аваад явлаа. Стивд хэдэн алмаз үлдэв?
+            <b>2) ХАСАХ.</b> Стивд <b>{TOTAL}</b> блок байсан, <b>{STOLEN}</b>-г зарцууллаа.
+            Том тоо тул <b>баганаар</b> бичиж хасъя.
           </p>
-          <div className="mfp-mini">
-            <span className="mfp-num-sm">{TOTAL}</span>
-            <span className="mfp-op">−</span>
-            <span className="mfp-num-sm">{STOLEN}</span>
-            <span className="mfp-op">=</span>
-            <span className="mfp-q">?</span>
+
+          {/* Баганан бичлэг */}
+          <div className="mfb-col">
+            <div className="mfb-col-head"><span>аравт</span><span>нэгж</span></div>
+            <div className={`mfb-col-row${subStep === 0 ? ' mfb-col-hot' : ''}`}>
+              <span className="mfb-cell">
+                {borrowed && <span className="mfb-borrow-new">3</span>}
+                <span className={borrowed ? 'mfb-borrow-old' : ''}>4</span>
+              </span>
+              <span className="mfb-cell mfb-cell-ones">
+                {borrowed && <span className="mfb-borrow-new mfb-borrow-fly">1</span>}
+                <span className={borrowed ? 'mfb-ten-grow' : ''}>{onesTop}</span>
+              </span>
+            </div>
+            <div className="mfb-col-row">
+              <span className="mfb-cell"><span className="mfb-minus">−</span>3</span>
+              <span className="mfb-cell mfb-cell-ones">5</span>
+            </div>
+            <div className="mfb-col-line" />
+            <div className="mfb-col-row mfb-col-result">
+              <span className="mfb-cell">{phase === 'done' ? '0' : ''}</span>
+              <span className="mfb-cell mfb-cell-ones">{phase === 'done' ? LEFT : ''}</span>
+            </div>
           </div>
-          <div className="mfp-choices">
-            {subChoices.map((n) => (
-              <button
-                key={n}
-                type="button"
-                className={`mfp-choice${wrong === n ? ' mfp-choice-wrong' : ''}`}
-                onClick={() => pick(n, LEFT, 'done')}
-              >
-                {n}
-              </button>
-            ))}
-          </div>
+
+          {subStep === 0 && (
+            <>
+              <p className="mfp-prompt mfb-borrow-msg">
+                Нэгжийн орон: <b>{onesTop} − 5</b> ⟶ 0-оос 5-ыг хасч <b>болохгүй</b> 😮.
+                Аравтаас нэгийг зээлье!
+              </p>
+              <button className="mfb-next-btn" onClick={() => setSubStep(1)}>Зээлэх 👉</button>
+            </>
+          )}
+
+          {subStep === 1 && (
+            <>
+              <p className="mfp-prompt mfb-borrow-msg">
+                Аравтаас <b>1</b> зээллээ: аравт <b>4 → 3</b>, нэгж <b>0 → 10</b> боллоо.
+                Одоо <b>10 − 5</b> хасаж болно!
+              </p>
+              <button className="mfb-next-btn" onClick={() => setSubStep(2)}>Хасъя 👉</button>
+            </>
+          )}
+
+          {subStep === 2 && (
+            <>
+              <p className="mfp-prompt mfb-borrow-msg">
+                Нэгж: <b>10 − 5 = ?</b> &nbsp;(дараа нь аравт 3 − 3 = 0). Хариу нь хэд вэ?
+              </p>
+              <div className="mfb-mini">
+                <span className="mfp-num-sm">10</span>
+                <span className="mfp-op">−</span>
+                <span className="mfp-num-sm">5</span>
+                <span className="mfp-op">=</span>
+                <span className="mfp-q">?</span>
+              </div>
+              <div className="mfp-choices">
+                {onesChoices.map((n) => (
+                  <button key={n} type="button"
+                    className={`mfp-choice${wrong === n ? ' mfp-choice-wrong' : ''}`}
+                    onClick={() => pickOnes(n)}>{n}</button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
 
-      {/* Дуусгавар */}
+      {/* ── Дуусгавар: алга таших + баяр ── */}
       {phase === 'done' && (
-        <div className="mfp-done">
-          <p className="mfp-success">
-            🎉 Гоё! <b>40 − 5 × 7 = {LEFT}</b>. Эхлээд үржиж, дараа нь хассан — зөв дараалал!
-          </p>
-          <CelebrationBurst />
+        <div className="mfp-step">
+          <div className="mfb-grid mfb-grid-final">
+            {[...Array(LEFT)].map((_, i) => (
+              <Block key={i} style={{ animationDelay: `${i * 0.08}s` }} />
+            ))}
+          </div>
+          <div className="mfb-clap" aria-hidden="true">
+            <span>👏</span><span>🎉</span><span>👏</span>
+          </div>
+          <div className="mfp-done">
+            <p className="mfp-success">
+              🌟 Чи чадлаа! <b>40 − 5 × 7 = {LEFT}</b>. Эхлээд үржиж, дараа нь зээлж хассан — маш зөв!
+            </p>
+            <CelebrationBurst />
+          </div>
         </div>
       )}
     </div>

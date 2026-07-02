@@ -12,7 +12,12 @@ import { WordProblemInteractive } from './WordProblemInteractive.jsx'
 import { TensOnesInteractive } from './TensOnesInteractive.jsx'
 import { EquationBalanceInteractive } from './EquationBalanceInteractive.jsx'
 import { LongExpressionInteractive } from './LongExpressionInteractive.jsx'
-import { LengthUnitInteractive } from './LengthUnitInteractive.jsx'
+import { MinecraftFirstProblem } from './MinecraftFirstProblem.jsx'
+import { MinecraftCompare } from './MinecraftCompare.jsx'
+import { MinecraftLengthOne } from './MinecraftLengthOne.jsx'
+import { MinecraftWordOne } from './MinecraftWordOne.jsx'
+import { extractStory } from './mcUtils.js'
+import { tokenizeExpression } from './expressionSteps.js'
 import { ProblemList } from './ProblemList.jsx'
 import { CelebrationBurst } from './CelebrationBurst.jsx'
 import { SplineScene } from '../SplineScene.jsx'
@@ -356,18 +361,39 @@ function AnswerChoice({ problem, onCorrect, onWrong }) {
 }
 
 /* ── Төрлөөр нь тохирох интерактивийг сонгоно ── */
+// Тухайн бодлого яг "40 − 5 × 7" мөн эсэх (× / x / х / * ямар ч хэлбэрээр)
+function isFortyMinusFiveTimesSeven(raw) {
+  const norm = String(raw ?? '').replace(/[xхX]/g, '×') // латин/кирилл x → ×
+  const t = tokenizeExpression(norm) // × ба ÷ -г * / болгон нормчилно
+  return t.length === 5 && t[0] === '40' && t[1] === '-' && t[2] === '5' && t[3] === '*' && t[4] === '7'
+}
+
 function ProblemInteractive({ problem, onCorrect, onWrong }) {
   if (!problem) return null
-  if (problem.type === 'comparison')
-    return <ComparisonInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+  // 40 − 5 × 7 → тусгай Minecraft интерактив (сагс, баганан бичлэг, зээлэх, алга таших)
+  if (problem.type === 'long_expression' && isFortyMinusFiveTimesSeven(problem.raw))
+    return <MinecraftFirstProblem onDone={onCorrect} onWrong={onWrong} />
+
+  if (problem.type === 'comparison') {
+    // Хоёр тал 0..99 бол аравт/нэгж Minecraft шоогоор (илэрхийлэлтэй талыг өөрөө бодуулна)
+    const [ca, cb] = (problem.operands ?? []).map(Number)
+    const fits = [ca, cb].every((n) => Number.isInteger(n) && n >= 0 && n <= 99)
+    return fits
+      ? <MinecraftCompare problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+      : <ComparisonInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+  }
   if (problem.type === 'missing_addend')
     return <MissingAddendInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
   if (problem.type === 'number_sequence')
     return <NumberSequenceInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
   if (problem.type === 'number_neighbor')
     return <NeighborNumberInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
-  if (problem.type === 'word')
-    return <WordProblemInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+  if (problem.type === 'word') {
+    // 2 тоотой энгийн нэмэх/хасах үгэн бодлого бол Minecraft номын түүхээр
+    return extractStory(problem)
+      ? <MinecraftWordOne problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+      : <WordProblemInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+  }
   if (problem.type === 'tens_ones')
     return <TensOnesInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
   if (problem.type === 'equation_balance')
@@ -375,7 +401,7 @@ function ProblemInteractive({ problem, onCorrect, onWrong }) {
   if (problem.type === 'long_expression')
     return <LongExpressionInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
   if (problem.type === 'length_unit')
-    return <LengthUnitInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+    return <MinecraftLengthOne problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
 
   const op = inferOperator(problem)
   if (op === '*' || op === '/')
