@@ -148,6 +148,14 @@ function useSteveMaterials() {
         color: "#7a4a24",
         roughness: 0.8,
       }),
+      gerBand: new THREE.MeshStandardMaterial({
+        color: "#2b2b2e",
+        roughness: 0.85,
+      }),
+      gerRoof: new THREE.MeshStandardMaterial({
+        color: "#9c6b3a",
+        roughness: 0.82,
+      }),
       // 3D газрын нэмэлт материал
       grassTop: new THREE.MeshStandardMaterial({
         color: "#6dbb45",
@@ -169,13 +177,14 @@ function useSteveMaterials() {
   );
 }
 
-function BoxPart({ args, position, material, radius = 0.025, children }) {
+function BoxPart({ args, position, rotation = [0, 0, 0], material, radius = 0.025, children }) {
   return (
     <RoundedBox
       args={args}
       radius={radius}
       smoothness={2}
       position={position}
+      rotation={rotation}
       castShadow
       receiveShadow
     >
@@ -1096,15 +1105,18 @@ function BlockyTerrain() {
   const m = useSteveMaterials();
   const surfaceY = -1.55;
   const inWater = (x, z) => x >= 3 && x <= 5 && z <= -2 && z >= -4;
+  const inGerFootprint = (x, z) => x >= 1 && x <= 4 && z >= -2 && z <= 2;
   const cells = useMemo(() => {
     const out = [];
     for (let x = -5; x <= 5; x++) {
       for (let z = 2; z >= -4; z--) {
         if (inWater(x, z)) continue;
-        const rise = Math.max(
-          0,
-          Math.round(Math.sin(x * 0.7) * 0.6 + Math.cos(z * 0.6) * 0.6),
-        );
+        const rise = inGerFootprint(x, z)
+          ? 0
+          : Math.max(
+              0,
+              Math.round(Math.sin(x * 0.7) * 0.6 + Math.cos(z * 0.6) * 0.6),
+            );
         out.push({ x, z, rise });
       }
     }
@@ -1142,44 +1154,57 @@ function BlockyTerrain() {
 /* ── Цагаан ноосон блокоор барьсан Монгол ger (Minecraft хэв маяг) ── */
 function WoolGer({ position = [0, 0, 0], scale = 1 }) {
   const m = useSteveMaterials();
-  const sides = 10;
-  const radius = 1.55;
-  const wallH = 0.9;
-  const wall = [];
-  for (let i = 0; i < sides; i++) {
-    const a = (i / sides) * Math.PI * 2;
-    wall.push([Math.cos(a) * radius, Math.sin(a) * radius]);
-  }
-  const roof = [];
-  [0, 1].forEach((lvl) => {
-    const r = radius * (1 - (lvl + 1) * 0.28);
-    const y = wallH * 2 + 0.12 + lvl * 0.38;
-    for (let i = 0; i < sides; i++) {
-      const a = (i / sides) * Math.PI * 2 + 0.15;
-      roof.push([Math.cos(a) * r, y, Math.sin(a) * r, `${lvl}-${i}`]);
-    }
-  });
-  const toonoY = wallH * 2 + 0.12 + 2 * 0.38;
+  const sides = 16;
+  const radius = 1.6;
+  const wallTierH = 0.85;
+
+  const ring = (r, n = sides, offset = 0) =>
+    Array.from({ length: n }, (_, i) => {
+      const a = (i / n) * Math.PI * 2 + offset;
+      return { x: Math.cos(a) * r, z: Math.sin(a) * r, a };
+    });
+
+  const wallPositions = useMemo(() => ring(radius), []);
+  const roofTiers = useMemo(() => {
+    const tiers = [
+      { r: 1.5, w: 0.76, th: 0.3, y: 1.75 },
+      { r: 1.11, w: 0.56, th: 0.28, y: 1.93 },
+      { r: 0.821, w: 0.42, th: 0.26, y: 2.09 },
+      { r: 0.608, w: 0.31, th: 0.24, y: 2.24 },
+      { r: 0.45, w: 0.23, th: 0.22, y: 2.38 },
+    ];
+    return tiers.map((t, lvl) => ({ ...t, cells: ring(t.r, sides, lvl * 0.1) }));
+  }, []);
+
   return (
     <group position={position} scale={scale}>
-      {wall.map(([x, z], i) => (
+      {wallPositions.map(({ x, z, a }, i) => (
         <group key={i}>
-          <BoxPart args={[0.6, wallH, 0.6]} position={[x, wallH / 2, z]} material={m.woolWhite} radius={0.02} />
-          <BoxPart args={[0.58, wallH, 0.58]} position={[x, wallH * 1.5, z]} material={m.woolWhite} radius={0.02} />
-          <BoxPart args={[0.64, 0.22, 0.64]} position={[x, wallH, z]} material={m.woolBlue} radius={0.015} />
+          <BoxPart args={[0.22, wallTierH, 0.8]} position={[x, wallTierH / 2, z]} rotation={[0, -a, 0]} material={m.woolWhite} radius={0.02} />
+          <BoxPart args={[0.22, wallTierH, 0.8]} position={[x, wallTierH * 1.5, z]} rotation={[0, -a, 0]} material={m.woolWhite} radius={0.02} />
+          <BoxPart args={[0.24, 0.16, 0.86]} position={[x, wallTierH, z]} rotation={[0, -a, 0]} material={m.gerBand} radius={0.015} />
         </group>
       ))}
-      {roof.map(([x, y, z, k]) => (
-        <BoxPart key={k} args={[0.5, 0.34, 0.5]} position={[x, y, z]} material={m.woolWhite} radius={0.02} />
-      ))}
+      {roofTiers.map((tier, lvl) =>
+        tier.cells.map(({ x, z, a }, i) => (
+          <BoxPart
+            key={`${lvl}-${i}`}
+            args={[0.4, tier.th, tier.w]}
+            position={[x, tier.y, z]}
+            rotation={[0, -a, 0]}
+            material={m.gerRoof}
+            radius={0.02}
+          />
+        )),
+      )}
       {/* Тооно (орой) */}
-      <BoxPart args={[0.7, 0.26, 0.7]} position={[0, toonoY, 0]} material={m.gerFrame} radius={0.02} />
+      <BoxPart args={[0.7, 0.26, 0.7]} position={[0, 2.62, 0]} material={m.gerFrame} radius={0.02} />
       {/* Хаалга — урд тал (+z) */}
       <group position={[0, 0, radius + 0.05]}>
         <BoxPart args={[0.78, 1.4, 0.16]} position={[0, 0.7, 0]} material={m.gerDoor} radius={0.02} />
-        <BoxPart args={[0.95, 0.16, 0.14]} position={[0, 1.45, 0]} material={m.woolBlue} radius={0.01} />
-        <BoxPart args={[0.16, 1.5, 0.14]} position={[-0.45, 0.75, 0]} material={m.woolBlue} radius={0.01} />
-        <BoxPart args={[0.16, 1.5, 0.14]} position={[0.45, 0.75, 0]} material={m.woolBlue} radius={0.01} />
+        <BoxPart args={[0.95, 0.16, 0.14]} position={[0, 1.45, 0]} material={m.gerBand} radius={0.01} />
+        <BoxPart args={[0.16, 1.5, 0.14]} position={[-0.45, 0.75, 0]} material={m.gerBand} radius={0.01} />
+        <BoxPart args={[0.16, 1.5, 0.14]} position={[0.45, 0.75, 0]} material={m.gerBand} radius={0.01} />
       </group>
     </group>
   );
