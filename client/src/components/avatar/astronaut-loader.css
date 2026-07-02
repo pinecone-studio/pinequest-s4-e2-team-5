@@ -17,7 +17,8 @@
 }
 .ta-astro .sb-text { color: #1b2350; }
 .ta-astro .tutor-status { color: #cdd7ff; }
-.ta-astro .ta-back-btn { color: #dbe4ff; border-color: rgba(150, 180, 255, 0.35); }
+/* Буцах товч (← Бодлогууд) — сансрын нисгэгч дээр нуув */
+.ta-astro .ta-back-btn { display: none; }
 
 /* AstronautLoader-ийн дотоод элементүүд absolute тул тайз нь
    position: relative + overflow: hidden байх ёстой */
@@ -33,6 +34,10 @@
 }
 
 /* ── Center: нисгэгч ТОМ, голдоо ── */
+/* Бодлого эхлээгүй үед чат нуугдана — зөвхөн interactive гарахад л гарч ирнэ */
+.ta-astro.ta-root-center .ta-chat-dock {
+  display: none;
+}
 .ta-astro.ta-root-center .ta-robot-col {
   align-items: center;
   justify-content: center;
@@ -40,6 +45,8 @@
   padding: 20px;
   position: relative;
   z-index: 2;
+  /* Чат баруунд нөөцөлсөн зайг цуцалж нисгэгчийг яг голлуулна */
+  margin-right: 0;
 }
 .ta-astro.ta-root-center .astro-stage {
   width: min(80vw, 560px);
@@ -81,10 +88,22 @@
   pointer-events: none;
 }
 .ta-astro.ta-root-split .astro-stage {
-  width: clamp(150px, 22vw, 240px);
-  height: clamp(150px, 22vw, 240px);
+  width: clamp(200px, 28vw, 320px);
+  height: clamp(200px, 28vw, 320px);
 }
 .ta-astro.ta-root-split .sb-wrap { align-self: flex-start; width: 100%; }
 .ta-astro.ta-root-split .sb-box { text-align: left; justify-content: flex-start; }
 .ta-astro.ta-root-split .sb-text { text-align: left; }
-.ta-astro.ta-root-split .ta-problem-pane { padding-top: 44px; }
+/* Interactive-ийг баруун тийш зайлуулж чат/нисгэгчтэй давхцахгүй болгоно */
+.ta-astro.ta-root-split .ta-problem-pane {
+  padding-top: 44px;
+  padding-left: clamp(320px, 35vw, 380px);
+}
+/* Чатыг нисгэгчийн доор дээшлүүлж, зүүн доод бүсийг дүүргэнэ */
+.ta-astro.ta-root-split .ta-chat-dock {
+  left: 22px;
+  right: auto;
+  top: clamp(320px, 40vw, 460px);
+  bottom: 20px;
+  height: auto;
+}

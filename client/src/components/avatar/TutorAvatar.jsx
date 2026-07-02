@@ -368,7 +368,7 @@ function isFortyMinusFiveTimesSeven(raw) {
   return t.length === 5 && t[0] === '40' && t[1] === '-' && t[2] === '5' && t[3] === '*' && t[4] === '7'
 }
 
-function ProblemInteractive({ problem, onCorrect, onWrong }) {
+export function ProblemInteractive({ problem, onCorrect, onWrong }) {
   if (!problem) return null
   // 40 − 5 × 7 → тусгай Minecraft интерактив (сагс, баганан бичлэг, зээлэх, алга таших)
   if (problem.type === 'long_expression' && isFortyMinusFiveTimesSeven(problem.raw))

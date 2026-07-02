@@ -599,6 +599,17 @@
 
 .mcw-slot { margin: 0 auto; max-width: 660px; }
 
+/* Даалгаврын зураг оруулах хэсэг — HomeworkUpload-ыг төвд байрлуулна */
+.mcw-upload-slot {
+  margin: 24px auto 0;
+  max-width: 460px;
+  background: rgba(255, 255, 255, 0.92);
+  border: 3px solid #3a5a2a;
+  border-bottom-width: 5px;
+  border-radius: 14px;
+  padding: 18px;
+}
+
 .mcw-nav { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 16px auto 0; max-width: 660px; }
 .mcw-nav-btn {
   padding: 10px 16px; font-size: 15px; font-weight: 800; cursor: pointer; color: #234;
