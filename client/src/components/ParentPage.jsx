@@ -78,7 +78,10 @@ export default function ParentPage({ onBack }) {
 
     pcRef.current?.close();
     pendingRef.current = [];
-    const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+    const pc = new RTCPeerConnection({
+      iceServers: ICE_SERVERS,
+      iceCandidatePoolSize: 1,
+    });
     pcRef.current = pc;
 
     pc.ontrack = (e) => {
