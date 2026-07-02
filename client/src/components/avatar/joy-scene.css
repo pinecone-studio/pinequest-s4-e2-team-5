@@ -6,6 +6,12 @@
 
 /* ── Робот + нүд ── */
 .joy-robot {
+  transform-style: preserve-3d;
+
+  transform: perspective(1000px) rotateX(var(--rx, 0deg))
+    rotateY(var(--ry, 0deg));
+
+  transition: transform 0.18s;
   --gx: 0;
   --gy: 0;
   position: relative;
@@ -26,8 +32,13 @@
   animation: joy-float 5s ease-in-out infinite;
 }
 @keyframes joy-float {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-2.2%); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2.2%);
+  }
 }
 
 .joy-robot-img {
@@ -57,18 +68,34 @@
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: radial-gradient(ellipse at center, rgba(120, 224, 255, 0.55) 0%, rgba(120, 224, 255, 0.12) 45%, transparent 70%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(120, 224, 255, 0.55) 0%,
+    rgba(120, 224, 255, 0.12) 45%,
+    transparent 70%
+  );
   filter: blur(2px);
   animation: joy-podium-pulse 3.2s ease-in-out infinite;
 }
 .joy-podium-ring--2 {
   inset: 18% 8%;
-  background: radial-gradient(ellipse at center, rgba(190, 150, 255, 0.5) 0%, transparent 65%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(190, 150, 255, 0.5) 0%,
+    transparent 65%
+  );
   animation-delay: 1.1s;
 }
 @keyframes joy-podium-pulse {
-  0%, 100% { opacity: 0.65; transform: scale(1); }
-  50%      { opacity: 1;    transform: scale(1.04); }
+  0%,
+  100% {
+    opacity: 0.65;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
 }
 
 /* Робот эргэн тойрны зөөлөн туяа */
@@ -79,15 +106,24 @@
   width: 72%;
   height: 60%;
   transform: translate(-50%, -50%);
-  background: radial-gradient(circle at center, rgba(120, 224, 255, 0.35), transparent 65%);
+  background: radial-gradient(
+    circle at center,
+    rgba(120, 224, 255, 0.35),
+    transparent 65%
+  );
   filter: blur(34px);
   z-index: 0;
   pointer-events: none;
   animation: joy-glow-breathe 4.5s ease-in-out infinite;
 }
 @keyframes joy-glow-breathe {
-  0%, 100% { opacity: 0.7; }
-  50%      { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 /* Нүүрний дэлгэц — жинхэнэ нүдийг дарж нуудаг харанхуй талбай.
@@ -101,7 +137,11 @@
   z-index: 3;
   border-radius: 26% / 30%;
   background:
-    radial-gradient(120% 85% at 50% 8%, rgba(110, 135, 190, 0.55), transparent 52%),
+    radial-gradient(
+      120% 85% at 50% 8%,
+      rgba(110, 135, 190, 0.55),
+      transparent 52%
+    ),
     linear-gradient(176deg, #2c3f6c 0%, #243358 55%, #1c2a4c 100%);
   box-shadow:
     inset 0 2px 6px rgba(130, 165, 220, 0.3),
@@ -109,18 +149,48 @@
   overflow: hidden;
 }
 /* Дэлгэцний гялалзсан дээд гэрэл */
-.joy-screen::before {
+
+.joy-robot::before {
   content: "";
+
   position: absolute;
-  left: 8%;
-  top: 6%;
-  width: 84%;
-  height: 30%;
+
+  width: 8px;
+
+  height: 8px;
+
   border-radius: 50%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent);
-  pointer-events: none;
+
+  top: 18%;
+
+  left: 60%;
+
+  background: #8ffcff;
+
+  box-shadow:
+    0 0 12px cyan,
+    0 0 30px cyan;
+
+  animation: orb 4s linear infinite;
 }
 
+@keyframes orb {
+  0% {
+    transform: translate(0, 0);
+
+    opacity: 0;
+  }
+
+  25% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(-40px, -80px);
+
+    opacity: 0;
+  }
+}
 /* Нэг нүд — gaze-ийн дагуу хөдөлнө (joy.png-д тааруулсан) */
 .joy-eye {
   position: absolute;
@@ -130,8 +200,12 @@
   transform: translate(calc(var(--gx) * 13%), calc(var(--gy) * 11%));
   transition: transform 0.32s cubic-bezier(0.34, 1.4, 0.5, 1);
 }
-.joy-eye--l { left: 13%; }
-.joy-eye--r { left: 63%; }
+.joy-eye--l {
+  left: 13%;
+}
+.joy-eye--r {
+  left: 63%;
+}
 
 /* Гэрэлтсэн оч — анивчих/мэдрэмжийн scale энд хийгдэнэ */
 .joy-eye > i {
@@ -139,7 +213,13 @@
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: radial-gradient(circle at 50% 36%, #e6fffb 0%, #6cf2e6 36%, #2fd8ce 68%, #15bdb4 100%);
+  background: radial-gradient(
+    circle at 50% 36%,
+    #e6fffb 0%,
+    #6cf2e6 36%,
+    #2fd8ce 68%,
+    #15bdb4 100%
+  );
   box-shadow:
     0 0 9px rgba(56, 224, 208, 0.9),
     0 0 22px rgba(56, 224, 208, 0.55);
@@ -147,37 +227,92 @@
   transform-origin: center;
 }
 /* LED цэгэн бүтэц (matrix мэдрэмж) */
-.joy-eye > i::after {
+.joy-screen::after {
   content: "";
+
   position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background-image: radial-gradient(rgba(0, 0, 0, 0.22) 0.5px, transparent 1.4px);
-  background-size: 5px 5px;
-  mix-blend-mode: multiply;
-  opacity: 0.5;
+
+  left: 0;
+
+  width: 100%;
+
+  height: 18%;
+
+  background: linear-gradient(
+    transparent,
+    rgba(255, 255, 255, 0.25),
+    transparent
+  );
+
+  animation: scan 2.8s linear infinite;
+}
+
+@keyframes scan {
+  from {
+    top: -20%;
+  }
+
+  to {
+    top: 120%;
+  }
 }
 
 /* Анивчих */
-.joy-robot.is-blink .joy-eye > i { transform: scaleY(0.12); }
+.joy-robot.is-blink .joy-eye > i {
+  transform: scaleY(0.12);
+}
 
 /* Сонсож байх үед нүд томрно */
-.joy-robot--listening .joy-eye > i { transform: scale(1.12); }
-.joy-robot--listening.is-blink .joy-eye > i { transform: scaleY(0.12); }
+.joy-robot--listening .joy-eye > i {
+  transform: scale(1.12);
+}
+.joy-robot--listening.is-blink .joy-eye > i {
+  transform: scaleY(0.12);
+}
 
 /* Ярьж байх үед нүд бага зэрэг "ярианы" хэлбэлзэлтэй */
-.joy-robot--speaking .joy-eye > i { animation: joy-talk 0.5s ease-in-out infinite alternate; }
-.joy-robot--speaking.is-blink .joy-eye > i { animation: none; transform: scaleY(0.12); }
+.joy-robot--speaking .joy-eye > i {
+  animation: joy-talk 0.5s ease-in-out infinite alternate;
+
+  animation:
+    eyePulse 0.25s infinite,
+    talkGlow 0.25s infinite alternate;
+}
+
+@keyframes talkGlow {
+  from {
+    box-shadow:
+      0 0 8px cyan,
+      0 0 18px cyan;
+  }
+
+  to {
+    box-shadow:
+      0 0 18px cyan,
+      0 0 45px cyan;
+  }
+}
+
+.joy-robot--speaking.is-blink .joy-eye > i {
+  animation: none;
+  transform: scaleY(0.12);
+}
 @keyframes joy-talk {
-  from { transform: scaleY(1); }
-  to   { transform: scaleY(0.82); }
+  from {
+    transform: scaleY(1);
+  }
+  to {
+    transform: scaleY(0.82);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .joy-robot-figure,
   .joy-podium-ring,
   .joy-robot-glow,
-  .joy-eye > i { animation: none !important; }
+  .joy-eye > i {
+    animation: none !important;
+  }
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -209,8 +344,16 @@
   animation: joy-grid-move 9s linear infinite;
 }
 @keyframes joy-grid-move {
-  from { background-position: 0 0, 0 0; }
-  to   { background-position: 0 44px, 0 0; }
+  from {
+    background-position:
+      0 0,
+      0 0;
+  }
+  to {
+    background-position:
+      0 44px,
+      0 0;
+  }
 }
 
 /* Холограм цагираг */
@@ -237,7 +380,9 @@
   animation-direction: reverse;
 }
 @keyframes joy-spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Хөвөгч тунгалаг шоонууд */
@@ -245,7 +390,11 @@
   position: absolute;
   width: var(--s);
   height: var(--s);
-  background: linear-gradient(135deg, rgba(160, 230, 255, 0.5), rgba(190, 160, 255, 0.28));
+  background: linear-gradient(
+    135deg,
+    rgba(160, 230, 255, 0.5),
+    rgba(190, 160, 255, 0.28)
+  );
   border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: 6px;
   box-shadow: 0 6px 18px rgba(90, 140, 220, 0.25);
@@ -253,8 +402,13 @@
   animation: joy-cube-float ease-in-out infinite;
 }
 @keyframes joy-cube-float {
-  0%, 100% { transform: translateY(0) rotate(12deg); }
-  50%      { transform: translateY(-16px) rotate(-8deg); }
+  0%,
+  100% {
+    transform: translateY(0) rotate(12deg);
+  }
+  50% {
+    transform: translateY(-16px) rotate(-8deg);
+  }
 }
 
 /* Тоон блокууд — дотроо тоо/тэмдэг солигдоно */
@@ -265,7 +419,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Rubik', system-ui, sans-serif;
+  font-family: "Rubik", system-ui, sans-serif;
   font-weight: 800;
   font-size: calc(var(--s) * 0.5);
   color: #1f2f8a;
@@ -278,19 +432,38 @@
   animation: joy-block-float ease-in-out infinite;
 }
 @keyframes joy-block-float {
-  0%, 100% { transform: translateY(0) rotate(-4deg); }
-  50%      { transform: translateY(-20px) rotate(4deg); }
+  0%,
+  100% {
+    transform: translateY(0) rotate(-4deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(4deg);
+  }
 }
 /* Тоо солигдох мөчид "поп" */
-.joy-num-block.is-pop { animation: joy-pop 0.36s ease; }
+.joy-num-block.is-pop {
+  animation: joy-pop 0.36s ease;
+}
 @keyframes joy-pop {
-  0%   { transform: scale(1); }
-  40%  { transform: scale(1.28); box-shadow: 0 0 24px rgba(120, 200, 255, 0.7); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.28);
+    box-shadow: 0 0 24px rgba(120, 200, 255, 0.7);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .joy-bg-grid, .joy-bg-ring, .joy-cube, .joy-num-block { animation: none !important; }
+  .joy-bg-grid,
+  .joy-bg-ring,
+  .joy-cube,
+  .joy-num-block {
+    animation: none !important;
+  }
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -301,16 +474,29 @@
 .ta-root.ta-joy {
   /* Илүү тод, амьд өнгө — цайвар хэвээр ч контраст нэмэгдсэн */
   background:
-    radial-gradient(110% 82% at 15% 6%, rgba(70, 208, 240, 0.6), transparent 55%),
-    radial-gradient(110% 90% at 88% 94%, rgba(170, 120, 255, 0.55), transparent 60%),
+    radial-gradient(
+      110% 82% at 15% 6%,
+      rgba(70, 208, 240, 0.6),
+      transparent 55%
+    ),
+    radial-gradient(
+      110% 90% at 88% 94%,
+      rgba(170, 120, 255, 0.55),
+      transparent 60%
+    ),
     linear-gradient(158deg, #def3ff 0%, #e2e7ff 50%, #efe2ff 100%);
   background-size: 100% 100%;
   animation: none;
 }
 /* Цэнхэр оддын давхаргыг цагаан дэвсгэр дээр унтраана */
-.ta-root.ta-joy::before { opacity: 0; }
+.ta-root.ta-joy::before {
+  opacity: 0;
+}
 
-.ta-joy .ta-blob { opacity: 0.32; mix-blend-mode: multiply; }
+.ta-joy .ta-blob {
+  opacity: 0.32;
+  mix-blend-mode: multiply;
+}
 
 /* Ярианы бөмбөлөг — цагаан дэвсгэрт тохирох гэрэл загвар */
 .ta-joy .sb-box {
@@ -318,9 +504,16 @@
   border-color: rgba(120, 140, 200, 0.22);
   box-shadow: 0 10px 30px rgba(90, 110, 190, 0.16);
 }
-.ta-joy .sb-text { color: #2a2550; }
-.ta-joy .tutor-status { color: #5b5580; }
-.ta-joy .ta-back-btn { color: #4a4570; border-color: rgba(120, 140, 200, 0.3); }
+.ta-joy .sb-text {
+  color: #2a2550;
+}
+.ta-joy .tutor-status {
+  color: #5b5580;
+}
+.ta-joy .ta-back-btn {
+  color: #4a4570;
+  border-color: rgba(120, 140, 200, 0.3);
+}
 
 /* ── Joy робот: хүрээгүй цэвэр робот.
    Бодлогогүй (center) → ТОМ, баруун хэсгийн ГОЛД зогсоно.
@@ -340,7 +533,9 @@
   gap: 14px;
   padding: 20px;
 }
-.ta-joy.ta-root-center .joy-stage { height: min(70vh, 600px); }
+.ta-joy.ta-root-center .joy-stage {
+  height: min(70vh, 600px);
+}
 
 .ta-joy.ta-root-center .sb-wrap {
   position: static;
@@ -358,8 +553,13 @@
   bottom: auto;
   margin-top: 0;
 }
-.ta-joy.ta-root-center .sb-box { text-align: center; justify-content: center; }
-.ta-joy.ta-root-center .sb-text { text-align: center; }
+.ta-joy.ta-root-center .sb-box {
+  text-align: center;
+  justify-content: center;
+}
+.ta-joy.ta-root-center .sb-text {
+  text-align: center;
+}
 
 /* Split: робот ЖИЖИГ, зүүн-дээд буланд absolute HUD — interactive гарахад
    баруун тийш шилжихгүй, зүүн дээд буландаа очино */
@@ -379,10 +579,20 @@
   border: none;
   pointer-events: none;
 }
-.ta-joy.ta-root-split .joy-stage { height: clamp(110px, 15vh, 180px); }
-.ta-joy.ta-root-split .sb-wrap { align-self: flex-start; width: 100%; }
-.ta-joy.ta-root-split .sb-box { text-align: left; justify-content: flex-start; }
-.ta-joy.ta-root-split .sb-text { text-align: left; }
+.ta-joy.ta-root-split .joy-stage {
+  height: clamp(110px, 15vh, 180px);
+}
+.ta-joy.ta-root-split .sb-wrap {
+  align-self: flex-start;
+  width: 100%;
+}
+.ta-joy.ta-root-split .sb-box {
+  text-align: left;
+  justify-content: flex-start;
+}
+.ta-joy.ta-root-split .sb-text {
+  text-align: left;
+}
 
 /* Бодлого идэвхтэй үед interactive нь зүүн-дээд робототой давхцахгүйн тулд
    дээд талд зай үлдээнэ */
@@ -400,7 +610,9 @@
   position: relative;
   overflow: visible;
   border-radius: 26px;
-  transition: transform 0.14s cubic-bezier(0.34, 1.5, 0.5, 1), box-shadow 0.14s ease;
+  transition:
+    transform 0.14s cubic-bezier(0.34, 1.5, 0.5, 1),
+    box-shadow 0.14s ease;
   /* fallback (color-mix дэмжихгүй браузерт) */
   background: linear-gradient(168deg, #ffffff 0%, #eef2ff 100%);
   border: 2.5px solid #b9c4ee;
@@ -409,8 +621,11 @@
     0 20px 30px rgba(70, 90, 180, 0.22),
     inset 0 2px 5px rgba(255, 255, 255, 0.95);
   /* тооныхоо өнгөөр (орчин үеийн браузер) */
-  background:
-    linear-gradient(168deg, #ffffff 0%, color-mix(in srgb, var(--card-c) 28%, #ffffff) 100%);
+  background: linear-gradient(
+    168deg,
+    #ffffff 0%,
+    color-mix(in srgb, var(--card-c) 28%, #ffffff) 100%
+  );
   border: 2.5px solid color-mix(in srgb, var(--card-c) 58%, #ffffff);
   box-shadow:
     0 11px 0 color-mix(in srgb, var(--card-c) 42%, #c7d2f0),
@@ -452,9 +667,15 @@
   background: linear-gradient(168deg, #fff0f4 0%, #ffdbe5 100%);
 }
 
-.ta-joy .vm-op { color: #5a4fd0; }
-.ta-joy .vm-word-prompt { color: #2a2f66; }
-.ta-joy .ta-back-btn:hover { background: rgba(124, 131, 255, 0.12); }
+.ta-joy .vm-op {
+  color: #5a4fd0;
+}
+.ta-joy .vm-word-prompt {
+  color: #2a2f66;
+}
+.ta-joy .ta-back-btn:hover {
+  background: rgba(124, 131, 255, 0.12);
+}
 
 /* Хариултын нүх — урихаар зөөлөн гэрэлтэж "энд тавь" гэж дохино */
 .ta-joy .vm-ans-slot {
@@ -464,8 +685,13 @@
   animation: joy-slot-pulse 1.9s ease-in-out infinite;
 }
 @keyframes joy-slot-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(124, 131, 255, 0); }
-  50%      { box-shadow: 0 0 0 9px rgba(124, 131, 255, 0.13); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(124, 131, 255, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 9px rgba(124, 131, 255, 0.13);
+  }
 }
 
 /* Тоонуудын өнгө — цайвар дэвсгэр/цагаан картан дээр тод харагдах харанхуй индиго */
@@ -522,6 +748,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ta-joy .vm-ans-slot { animation: none !important; }
-  .ta-joy .vm-choice-btn { transition: none !important; }
+  .ta-joy .vm-ans-slot {
+    animation: none !important;
+  }
+  .ta-joy .vm-choice-btn {
+    transition: none !important;
+  }
 }
