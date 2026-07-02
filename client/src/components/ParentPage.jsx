@@ -87,6 +87,12 @@ export default function ParentPage({ onBack }) {
       if (videoRef.current) videoRef.current.srcObject = stream;
       if (isScreen) setScreenOn(true);
       else setStatus("live");
+      try {
+        if ("jitterBufferTarget" in e.receiver) e.receiver.jitterBufferTarget = 0;
+        if ("playoutDelayHint" in e.receiver) e.receiver.playoutDelayHint = 0;
+      } catch {
+        // experimental/legacy APIs — not supported everywhere
+      }
     };
     pc.onicecandidate = (e) => {
       if (e.candidate && ws.readyState === WebSocket.OPEN) {

@@ -121,7 +121,22 @@ export function StudentCamera({ childId = "хүүхэд", sessionCode }) {
     if (entry[pcKey]) return;
 
     const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-    stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+    stream.getTracks().forEach((track) => {
+      const sender = pc.addTrack(track, stream);
+      if (kind === "camera" && track.kind === "video") {
+        try {
+          const params = sender.getParameters();
+          if (!params.encodings || params.encodings.length === 0) {
+            params.encodings = [{}];
+          }
+          params.encodings[0].maxBitrate = 250_000;
+          params.encodings[0].scaleResolutionDownBy = 2;
+          sender.setParameters(params).catch(() => {});
+        } catch {
+          // setParameters unsupported / sender not ready — non-fatal
+        }
+      }
+    });
     pc.onicecandidate = (e) => {
       if (e.candidate && signalingWsRef.current?.readyState === WebSocket.OPEN) {
         signalingWsRef.current.send(
@@ -244,11 +259,14 @@ export function StudentCamera({ childId = "хүүхэд", sessionCode }) {
       if (sessionCode && navigator.mediaDevices?.getDisplayMedia) {
         try {
           const screenStream = await navigator.mediaDevices.getDisplayMedia({
-            video: { displaySurface: "window", frameRate: 5, cursor: "always" },
+            video: { displaySurface: "window", frameRate: { ideal: 30 }, cursor: "always" },
             audio: false,
           });
 
           screenStreamRef.current = screenStream;
+
+          const [screenVideoTrack] = screenStream.getVideoTracks();
+          if (screenVideoTrack) screenVideoTrack.contentHint = "motion";
 
           const stopScreen = () => {
             screenStream.getTracks().forEach((t) => t.stop());
