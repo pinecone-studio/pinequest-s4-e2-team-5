@@ -1,3 +1,5 @@
+import { applyWorksheetPresets } from './worksheetPresets.js'
+
 function numbersFromText(value) {
   if (typeof value !== 'string') return []
   return value.match(/-?\d+/g)?.map(Number).filter(Number.isFinite) ?? []
@@ -397,7 +399,10 @@ function normalizeSequence(problem, rawText, ops) {
 
 export function normalizeHomeworkProblems(problems) {
   if (!Array.isArray(problems)) return []
-  return problems.map((problem, index) => {
+  // Мэдэгдэж буй "Дасгал даалгавар" хуудас бол OpenAI-гаас үл хамааран тогтмол,
+  // гар тааруулсан бодлогуудыг ашиглана (интерактив болгонд ижил гарна).
+  const source = applyWorksheetPresets(problems) ?? problems
+  return source.map((problem, index) => {
     const out = { ...problem, index: problem.index ?? index + 1 }
     const rawText = `${out.raw ?? ''} ${out.promptMn ?? ''}`
     const ops = Array.isArray(out.operands)

@@ -225,6 +225,13 @@
 .mfb-mine-stage { text-align: center; }
 .mfb-hint { position: relative; z-index: 1; text-align: center; font-size: 14px; font-weight: 700; color: #2a7d2a; margin: 4px 0 10px; }
 
+/* AI амаар тайлбарладаг тул интерактив дээрх БҮХ тайлбар текстийг нуув —
+   зөвхөн тэнцэтгэл, тоо, сонголт, визуал (блок/шоо) үлдэнэ. */
+.mfp-title,
+.mfp-prompt,
+.mfp-success,
+.mcc-legend { display: none; }
+
 /* ═══════════ Үржих: сүхээр алмаз олборлох дүр зураг ═══════════ */
 .mine-prompt { text-align: center; }
 .mine-scene {

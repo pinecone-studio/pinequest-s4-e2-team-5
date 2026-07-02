@@ -42,9 +42,10 @@ function Choices({ list, wrong, onPick }) {
   )
 }
 
-export function MinecraftLengthOne({ problem, onCorrect, onWrong }) {
+export function MinecraftLengthOne({ problem, onCorrect, onWrong, review = false }) {
   const info = useMemo(() => parseLength(problem.raw), [problem.raw])
-  const [phase, setPhase] = useState('q1') // q1 → (q2) → done
+  // review=true үед бодогдсон бодлогыг дахин үзэж байгаа тул шууд дууссан (хариутай) төлөв.
+  const [phase, setPhase] = useState(review ? 'done' : 'q1') // q1 → (q2) → done
   const [wrong, setWrong] = useState(null)
 
   // Тоонуудыг найдвартай авах

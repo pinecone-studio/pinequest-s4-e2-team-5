@@ -30,8 +30,9 @@ function Block({ style }) {
   return <img src={TILE} alt="" className="mfb-block" style={style} draggable={false} />
 }
 
-export function MinecraftFirstProblem({ onCorrect, onWrong, onDone }) {
-  const [phase, setPhase] = useState('mul') // 'mul' | 'sub' | 'done'
+export function MinecraftFirstProblem({ onCorrect, onWrong, onDone, review = false }) {
+  // review=true үед бодогдсон бодлогыг дахин үзэж байгаа тул шууд дууссан (хариутай) төлөв.
+  const [phase, setPhase] = useState(review ? 'done' : 'mul') // 'mul' | 'sub' | 'done'
   const [subStep, setSubStep] = useState(0) // 0 танилцуулга · 1 зээлсэн · 2 нэгж асуух
   const [wrong, setWrong] = useState(null)
 
@@ -76,10 +77,6 @@ export function MinecraftFirstProblem({ onCorrect, onWrong, onDone }) {
       {/* ── Алхам 1: ҮРЖИХ — сүхээр алмаз олборлоно ── */}
       {phase === 'mul' && (
         <div className="mfp-step">
-          <p className="mfp-prompt mine-prompt">
-            💎 <b>5 блок</b>, тус бүрт <b>7 алмаз</b>. Сүх цохиж бүгдийг ол — нийт хэд вэ?
-          </p>
-
           <div className="mine-scene">
             <img src="/gal.png" alt="" className="mine-lantern" draggable={false} />
             <img src="/sukh.png" alt="" className="mine-pick" draggable={false} />
@@ -124,11 +121,6 @@ export function MinecraftFirstProblem({ onCorrect, onWrong, onDone }) {
       {/* ── Алхам 2: ХАСАХ = баганан бичлэг + зээлэх ── */}
       {phase === 'sub' && (
         <div className="mfp-step">
-          <p className="mfp-prompt">
-            <b>2) ХАСАХ.</b> Стивд <b>{TOTAL}</b> блок байсан, <b>{STOLEN}</b>-г зарцууллаа.
-            Том тоо тул <b>баганаар</b> бичиж хасъя.
-          </p>
-
           {/* Баганан бичлэг */}
           <div className="mfb-col">
             <div className="mfb-col-head"><span>аравт</span><span>нэгж</span></div>
@@ -154,31 +146,16 @@ export function MinecraftFirstProblem({ onCorrect, onWrong, onDone }) {
           </div>
 
           {subStep === 0 && (
-            <>
-              <p className="mfp-prompt mfb-borrow-msg">
-                Нэгжийн орон: <b>{onesTop} − 5</b> ⟶ 0-оос 5-ыг хасч <b>болохгүй</b> 😮.
-                Аравтаас нэгийг зээлье!
-              </p>
-              <button className="mfb-next-btn" onClick={() => setSubStep(1)}>Зээлэх 👉</button>
-            </>
+            <button className="mfb-next-btn" onClick={() => setSubStep(1)}>Зээлэх 👉</button>
           )}
 
           {subStep === 1 && (
-            <>
-              <p className="mfp-prompt mfb-borrow-msg">
-                Аравтаас <b>1</b> зээллээ: аравт <b>4 → 3</b>, нэгж <b>0 → 10</b> боллоо.
-                Одоо <b>10 − 5</b> хасаж болно!
-              </p>
-              <button className="mfb-next-btn" onClick={() => setSubStep(2)}>Хасъя 👉</button>
-            </>
+            <button className="mfb-next-btn" onClick={() => setSubStep(2)}>Хасъя 👉</button>
           )}
 
           {subStep === 2 && (
             <>
-              <p className="mfp-prompt mfb-borrow-msg">
-                Нэгж: <b>10 − 5 = ?</b> &nbsp;(дараа нь аравт 3 − 3 = 0). Хариу нь хэд вэ?
-              </p>
-              <div className="mfb-mini">
+              <div className="mfp-mini">
                 <span className="mfp-num-sm">10</span>
                 <span className="mfp-op">−</span>
                 <span className="mfp-num-sm">5</span>

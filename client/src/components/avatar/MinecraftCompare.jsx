@@ -89,13 +89,14 @@ function PlaceValue({ value, decide }) {
 
 const OP_SYM = { '+': '+', '-': '−', '*': '×', '/': '÷' }
 
-export function MinecraftCompare({ problem, onCorrect, onWrong }) {
+export function MinecraftCompare({ problem, onCorrect, onWrong, review = false }) {
   const [a, b] = (problem.operands ?? [0, 0]).map(Number)
   const answer = problem.answer != null ? (problem.answer === -1 ? '<' : problem.answer === 1 ? '>' : problem.answer === 0 ? '=' : signOf(a, b)) : signOf(a, b)
   const teach = useMemo(() => findTeach(problem.raw), [problem.raw])
 
-  const [added, setAdded] = useState(false) // илэрхийлэлтэй талыг бодсон эсэх
-  const [solved, setSolved] = useState(false)
+  // review=true үед бодогдсон бодлогыг дахин үзэж байгаа тул шууд хариутай (дууссан) төлөв.
+  const [added, setAdded] = useState(review) // илэрхийлэлтэй талыг бодсон эсэх
+  const [solved, setSolved] = useState(review)
   const [wrong, setWrong] = useState(null)
 
   const addChoices = useMemo(() => (teach ? makeChoices(teach.value, [1, -1, 2, -2]) : []), [teach])

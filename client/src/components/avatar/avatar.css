@@ -2084,6 +2084,15 @@
   border-color: #65d99d;
   background: rgba(101, 217, 157, 0.15);
 }
+/* Бодогдсон бодлого — review үед хариугаа харуулна */
+.pl-item-done {
+  border-color: rgba(101, 217, 157, 0.55);
+  background: rgba(101, 217, 157, 0.1);
+}
+.pl-item-done .pl-num {
+  background: #34c98a;
+  color: #062018;
+}
 .pl-num {
   flex-shrink: 0;
   width: 38px;
@@ -2101,11 +2110,29 @@
   flex-shrink: 0;
   font-size: 26px;
 }
+.pl-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
 .pl-text {
   color: rgba(255, 255, 255, 0.92);
   font-size: 17px;
   font-weight: 600;
   line-height: 1.3;
+}
+.pl-answer {
+  align-self: flex-start;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0c1f1d;
+  background: #65d99d;
+  border-radius: 999px;
+  padding: 2px 12px;
+}
+.pl-answer b {
+  font-weight: 900;
 }
 
 /* ─────────────────────────────────────────────
@@ -2505,6 +2532,43 @@
 .ta-back-btn:hover {
   border-color: #65d99d;
   background: rgba(101, 217, 157, 0.1);
+}
+
+/* Бодлого хооронд ◀ ▶ шилжих сумнууд (review-д бодогдсон бодлогуудаа дахин үзэх) */
+.ta-problem-arrows {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 5;
+}
+.ta-arrow-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    border-color 0.12s,
+    background 0.12s,
+    opacity 0.12s;
+}
+.ta-arrow-btn:hover:not(:disabled) {
+  border-color: #65d99d;
+  background: rgba(101, 217, 157, 0.12);
+}
+.ta-arrow-btn:disabled {
+  opacity: 0.32;
+  cursor: default;
 }
 
 /* ─────────────────────────────────────────────
@@ -3993,28 +4057,165 @@
   cursor: not-allowed;
 }
 
-/* ── Joy (robot): neon техно бар ── */
-.ta-joy .ta-chat-dock {
-  background: linear-gradient(
-    160deg,
-    rgba(20, 26, 54, 0.94),
-    rgba(32, 20, 62, 0.94)
-  );
-  border: 1px solid rgba(120, 224, 255, 0.5);
-  box-shadow:
-    0 0 26px rgba(120, 224, 255, 0.3),
-    0 18px 44px rgba(0, 0, 0, 0.45);
-  --bar-accent: #3ed0e0;
-  animation:
-    ta-dock-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both,
-    ta-glow-joy 3s ease-in-out 0.6s infinite;
+/* Робот (Joy) цайвар theme-ийг joy-scene.css бүрэн хангадаг (дэвсгэр, ярианы бөмбөлөг,
+   статус, сонголтын товч г.м.). Энд зөвхөн түүнд байхгүй зүйлсийг нэмнэ. */
+
+/* Робот center (бодлогогүй) горим: чат докыг нуугаад роботыг голлуулна — Minecraft шиг */
+.ta-joy.ta-root-center .ta-chat-dock { display: none; }
+.ta-joy.ta-root-center .ta-robot-col { margin-right: 0; }
+
+/* «← Бодлогууд» товчийг робот дээр нуув (◀ ▶ сумаар шилжинэ). */
+.ta-root.ta-joy .ta-back-btn { display: none; }
+
+/* «Бодлого X / Y» заагчийг зүүн-дээд буланд, Avatar товчтой (top:18, right:22)
+   тэгш хэмтэй ижил зайд бэхлэв. */
+.ta-joy .ta-problem-progress {
+  position: fixed;
+  top: 18px;
+  left: 22px;
+  right: auto;
+  z-index: 120;
 }
-@keyframes ta-glow-joy {
-  0%, 100% { box-shadow: 0 0 18px rgba(120, 224, 255, 0.24), 0 18px 44px rgba(0, 0, 0, 0.45); }
-  50%      { box-shadow: 0 0 36px rgba(120, 224, 255, 0.5), 0 18px 44px rgba(0, 0, 0, 0.45); }
+
+/* ── Барби аватар (barbie) ────────────────────────────────────────────
+   Барбигийн зургийн (цагаан хайрцаг) дэвсгэртэй ЯГ ижил — цэвэр цагаан #ffffff. */
+.ta-root.ta-barbie {
+  background: #ffffff;
+  animation: none;
+}
+.ta-root.ta-barbie::before,
+.ta-root.ta-barbie::after { display: none; }
+.ta-barbie .ta-blob { display: none; }
+
+/* «← Бодлогууд» товчийг нуув (Avatar-тай давхцдаг; ◀ ▶ сумаар шилжинэ) */
+.ta-root.ta-barbie .ta-back-btn { display: none; }
+
+/* «Бодлого X / Y» заагчийг зүүн-дээд, Avatar товчтой тэгш хэмтэй */
+.ta-barbie .ta-problem-progress {
+  position: fixed;
+  top: 18px;
+  left: 22px;
+  right: auto;
+  z-index: 120;
+}
+
+/* Center (бодлогогүй): барби ТОМ, голдоо; чат нуув. */
+.ta-barbie.ta-root-center .ta-chat-dock { display: none; }
+.ta-barbie.ta-root-center .ta-robot-col { margin-right: 0; align-items: center; }
+
+/* Split (интерактив идэвхтэй): барби ЖИЖИГ, зүүн-дээд буланд очно. */
+.ta-barbie.ta-root-split .ta-robot-col {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: auto;
+  max-width: min(38%, 320px);
+  height: auto;
+  flex: none;
+  z-index: 5;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 58px 22px 20px;
+  pointer-events: none;
+}
+.ta-barbie.ta-root-split .tutor-spline-side {
+  height: clamp(130px, 17vh, 200px) !important;
+}
+
+/* Интерактивийг БАРУУН тийш — зүүн талд барби + чатад зай гаргав (давхцахгүй) */
+.ta-barbie.ta-root-split .ta-problem-pane {
+  padding-left: clamp(320px, 30vw, 460px);
+  padding-right: 22px;
+}
+/* Чатыг бараг өнгөгүй болгов — хайрцаг/хүрээгүй, дэвсгэрт уусаж хөвнө.
+   ЗҮҮН талд (барбигийн доор). */
+.ta-barbie .ta-chat-dock {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.ta-barbie.ta-root-split .ta-chat-dock {
+  left: 22px;
+  right: auto;
+  top: clamp(258px, 32vh, 360px);
+  bottom: 20px;
+  height: auto;
+  width: min(360px, 30vw);
+}
+/* Чат яларахгүй — мессежийн хайрцаг огт байхгүй, зөвхөн бичвэр цагаан дээр хөвнө */
+.ta-barbie .ta-chat-text { background: transparent; color: #6a3350; box-shadow: none; backdrop-filter: none; padding: 4px 6px; }
+.ta-barbie .ta-chat-msg--user .ta-chat-text { background: transparent; color: #9a4a72; }
+.ta-barbie .sb-box { background: transparent; border: none; box-shadow: none; backdrop-filter: none; }
+.ta-barbie .sb-text { color: #6a3350; }
+.ta-barbie .tutor-status { color: #b07a95; }
+/* Оруулах талбар зөвхөн бага зэрэг мэдэгдэхүйц (ашиглах боломжтой) */
+.ta-barbie .ta-text-input {
+  background: rgba(0, 0, 0, 0.03);
+  color: #58293f;
+  border-color: rgba(200, 130, 170, 0.28);
+}
+.ta-barbie .ta-text-input::placeholder { color: rgba(150, 90, 120, 0.45); }
+.ta-barbie .ta-chat-dock .ta-text-send-btn { background: rgba(236, 79, 175, 0.45); }
+
+/* ── Joy (robot): neon техно бар ── */
+/* Чатыг бараг өнгөгүй болгов — хайрцаг/хүрээгүй, мессежүүд дэвсгэрт уусаж хөвнө */
+.ta-joy .ta-chat-dock {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  --bar-accent: #8a7de0;
+  animation: ta-dock-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+/* Split үед чатыг ЗҮҮН-доод буланд (робот зүүн-дээд тул давхцахгүй) */
+.ta-joy.ta-root-split .ta-chat-dock {
+  left: 20px;
+  right: auto;
+  top: auto;
+  bottom: 16px;
+  width: min(340px, 40vw);
 }
 .ta-joy .ta-chat-dock .ta-text-send-btn {
-  background: linear-gradient(135deg, #3ed0e0, #7c83ff);
+  background: linear-gradient(135deg, #6fd0ee, #9a7dff);
+}
+/* Мессежийг маш бүдэг тунгалаг болгов (тод цагаан биш) */
+.ta-joy .ta-chat-text {
+  background: rgba(255, 255, 255, 0.34);
+  color: #35305f;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: blur(4px);
+}
+.ta-joy .ta-chat-msg--user .ta-chat-text {
+  background: rgba(150, 195, 255, 0.3);
+  color: #29416e;
+}
+.ta-joy .ta-text-input {
+  background: rgba(255, 255, 255, 0.72);
+  color: #2f2a55;
+  border-color: rgba(150, 130, 230, 0.3);
+}
+.ta-joy .ta-text-input::placeholder { color: rgba(90, 80, 150, 0.55); }
+
+/* Робот ↔ интерактив байрыг сольсон: РОБОТ ЗҮҮН, ИНТЕРАКТИВ БАРУУН.
+   (DOM-д problem-pane эхэнд, robot-col дараа нь; row-reverse-ээр байр солигдоно.) */
+.ta-root.ta-joy.ta-root-split { flex-direction: row-reverse; }
+.ta-root.ta-joy.ta-root-split .ta-robot-col {
+  position: relative;
+  top: auto;
+  left: auto;
+  width: 40%;
+  max-width: none;
+  height: auto;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 8px 12px 0;
+  z-index: 5;
+}
+.ta-root.ta-joy.ta-root-split .tutor-spline-side {
+  height: min(40vh, 320px) !important;
 }
 
 /* ── Minecraft: модон блок бар ── */

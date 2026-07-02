@@ -16,6 +16,8 @@ import { MinecraftFirstProblem } from './MinecraftFirstProblem.jsx'
 import { MinecraftCompare } from './MinecraftCompare.jsx'
 import { MinecraftLengthOne } from './MinecraftLengthOne.jsx'
 import { MinecraftWordOne } from './MinecraftWordOne.jsx'
+import { RobotBatteryInteractive } from './RobotBatteryInteractive.jsx'
+import './joy-scene.css'
 import { extractStory } from './mcUtils.js'
 import { tokenizeExpression } from './expressionSteps.js'
 import { ProblemList } from './ProblemList.jsx'
@@ -368,19 +370,24 @@ function isFortyMinusFiveTimesSeven(raw) {
   return t.length === 5 && t[0] === '40' && t[1] === '-' && t[2] === '5' && t[3] === '*' && t[4] === '7'
 }
 
-export function ProblemInteractive({ problem, onCorrect, onWrong }) {
+export function ProblemInteractive({ problem, onCorrect, onWrong, review = false, avatar = 'minecraft' }) {
   if (!problem) return null
-  // 40 − 5 × 7 → тусгай Minecraft интерактив (сагс, баганан бичлэг, зээлэх, алга таших)
-  if (problem.type === 'long_expression' && isFortyMinusFiveTimesSeven(problem.raw))
-    return <MinecraftFirstProblem onDone={onCorrect} onWrong={onWrong} />
+  // Робот (Joy) аватар — батерей/энергийн загвартай, Minecraft блокгүй.
+  const isRobot = avatar === 'robot'
+
+  // 40 − 5 × 7 → Minecraft-д тусгай интерактив; роботод алхамчилсан урт илэрхийлэл.
+  if (isFortyMinusFiveTimesSeven(problem.raw))
+    return isRobot
+      ? <LongExpressionInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+      : <MinecraftFirstProblem onDone={onCorrect} onWrong={onWrong} review={review} />
 
   if (problem.type === 'comparison') {
-    // Хоёр тал 0..99 бол аравт/нэгж Minecraft шоогоор (илэрхийлэлтэй талыг өөрөө бодуулна)
+    // Робот: ерөнхий харьцуулах; Minecraft: аравт/нэгж шоогоор (0..99 үед)
     const [ca, cb] = (problem.operands ?? []).map(Number)
     const fits = [ca, cb].every((n) => Number.isInteger(n) && n >= 0 && n <= 99)
-    return fits
-      ? <MinecraftCompare problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
-      : <ComparisonInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+    if (isRobot || !fits)
+      return <ComparisonInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+    return <MinecraftCompare problem={problem} onCorrect={onCorrect} onWrong={onWrong} review={review} />
   }
   if (problem.type === 'missing_addend')
     return <MissingAddendInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
@@ -389,10 +396,10 @@ export function ProblemInteractive({ problem, onCorrect, onWrong }) {
   if (problem.type === 'number_neighbor')
     return <NeighborNumberInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
   if (problem.type === 'word') {
-    // 2 тоотой энгийн нэмэх/хасах үгэн бодлого бол Minecraft номын түүхээр
-    return extractStory(problem)
-      ? <MinecraftWordOne problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
-      : <WordProblemInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+    // Робот: ерөнхий үгэн бодлого; Minecraft: номын түүхээр (2 тоотой нэмэх/хасах)
+    if (isRobot || !extractStory(problem))
+      return <WordProblemInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+    return <MinecraftWordOne problem={problem} onCorrect={onCorrect} onWrong={onWrong} review={review} />
   }
   if (problem.type === 'tens_ones')
     return <TensOnesInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
@@ -401,9 +408,12 @@ export function ProblemInteractive({ problem, onCorrect, onWrong }) {
   if (problem.type === 'long_expression')
     return <LongExpressionInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
   if (problem.type === 'length_unit')
-    return <MinecraftLengthOne problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
+    return <MinecraftLengthOne problem={problem} onCorrect={onCorrect} onWrong={onWrong} review={review} />
 
   const op = inferOperator(problem)
+  // Робот аватар — бүх арифметик (нэмэх/хасах/үржих/хуваах) батерей интерактивээр.
+  if (isRobot && (op === '+' || op === '-' || op === '*' || op === '/'))
+    return <RobotBatteryInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} review={review} />
   if (op === '*' || op === '/')
     return <MulDivInteractive problem={problem} op={op} onCorrect={onCorrect} onWrong={onWrong} />
   if (op === '+' || op === '-') {
@@ -417,6 +427,8 @@ export function ProblemInteractive({ problem, onCorrect, onWrong }) {
       : <VisualMathAuto problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
   }
 
+  if (isRobot)
+    return <RobotBatteryInteractive problem={problem} onCorrect={onCorrect} onWrong={onWrong} review={review} mode="answer" />
   return <AnswerChoice problem={problem} onCorrect={onCorrect} onWrong={onWrong} />
 }
 
@@ -502,6 +514,7 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
   const isMc   = avatar === 'minecraft'
   const isMcq  = avatar === 'mcqueen'
   const isAstro = avatar === 'astronaut'
+  const isBarbie = avatar === 'barbie'
 
   const [inputText, setInputText] = useState('')
 
@@ -522,6 +535,9 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
   const [showListView, setShowListView] = useState(false)
   // Зөв хариулсан үед background-ийг богино хугацаанд баяр хөөртэй болгоно
   const [celebrating, setCelebrating] = useState(false)
+  // Бодогдсон бодлогуудыг тэмдэглэнэ ({ [index]: true }). Хүүхэд бодлогоо бодохоос
+  // өмнө дараагийнх руу алгасахаас сэргийлэхэд ашиглана.
+  const [solved, setSolved] = useState({})
 
   // structured problems, эс бол хуучин нэг текстээс fallback
   const structuredProblems = useMemo(() => {
@@ -537,6 +553,7 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
     setPrevProblems(structuredProblems)
     setSelectedIndex(0)
     setShowListView(false)
+    setSolved({})
   }
   // Ref-үүдийг зөвхөн effect дотор reset хийнэ (render үед ref өөрчилж болохгүй).
   useEffect(() => {
@@ -548,16 +565,31 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
     ? Math.min(selectedIndex ?? 0, structuredProblems.length - 1)
     : null
 
+  // Хараахан бодогдоогүй ХАМГИЙН ЭХНИЙ бодлогын index — үүнээс цааш алгасахыг хориглоно.
+  // Бодогдсон бодлогууд руу буцаж болно, гэхдээ бодоогүй бодлогыг үсэрч болохгүй.
+  const firstUnsolved = useMemo(() => {
+    for (let i = 0; i < structuredProblems.length; i++) if (!solved[i]) return i
+    return structuredProblems.length
+  }, [solved, structuredProblems.length])
+
   const showList = structuredProblems.length > 1 && showListView
   // Зөвхөн зураг дээрх бодлогыг ашиглана (AI шинэ бодлого зохиохгүй)
   const activeProblem = !showList && effectiveIndex != null
     ? structuredProblems[effectiveIndex]
     : null
+  // Идэвхтэй бодлого аль хэдийн бодогдсон эсэх — дахин үзэх (review) горим.
+  const activeSolved = effectiveIndex != null && !!solved[effectiveIndex]
 
   const selectProblem = useCallback((i) => {
+    // Урагшаа бодоогүй бодлого руу алгасахыг хориглоно: эхлээд одоогийнхоо хариуг олно.
+    if (i > firstUnsolved) {
+      setShowListView(false)
+      speak(`Эхлээд энэ бодлогынхоо хариуг олъё, дараа нь дараагийнх руу орно шүү.`)
+      return
+    }
     setSelectedIndex(i)
     setShowListView(false)
-  }, [])
+  }, [firstUnsolved, speak])
 
   // interpretCommand логикийг рендер бүрийн дараа шинэчилнэ (сүүлийн state-ийг барина)
   useEffect(() => {
@@ -597,7 +629,7 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
   useEffect(() => {
     if (analyzing && !analyzingSaidRef.current && greetedRef.current) {
       analyzingSaidRef.current = true
-      speak('Зургийг чинь шинжилж байна, түр хүлээгээрэй.')
+      speak('Зургийг чинь уншиж байна, түр хүлээгээрэй.')
     }
     if (!analyzing) analyzingSaidRef.current = false
   }, [analyzing, speak])
@@ -608,18 +640,26 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
     const key = problemKey(activeProblem)
     if (lastExplainedRef.current === key) return
     lastExplainedRef.current = key
+    // Бодогдсон бодлогыг дахин үзэх (review) үед AI дахин тайлбарлахгүй.
+    if (activeSolved) return
     explainProblem(problemToContext(activeProblem))
-  }, [activeProblem, explainProblem])
+  }, [activeProblem, explainProblem, activeSolved])
 
   const handleCorrect = useCallback(() => {
-    chat('зөв хариулт')
     // Зөв хариулсан тул background-ийг богино хугацаанд баяр хөөртэй болгоно
     setCelebrating(true)
     setTimeout(() => setCelebrating(false), 1800)
+    // Энэ бодлогыг бодогдсон гэж тэмдэглэнэ — дараагийнх руу орох "түгжээ" нээгдэнэ.
+    const cur = effectiveIndex ?? 0
+    const wasSolved = !!solved[cur]
+    setSolved((s) => (s[cur] ? s : { ...s, [cur]: true }))
+    // Дахин харах (review) үед аль хэдийн бодогдсоныг дахин бодвол: AI-г дуудахгүй,
+    // урагш шилжүүлэхгүй, дахин магтаал/асуулт хийхгүй — зүгээр л богино баяр.
+    if (wasSolved) return
+    chat('зөв хариулт')
     // Магтаалыг тоглуулах зуур түр зогсоод ЗУРАГ ДЭЭРХ дараагийн бодлого руу шилжинэ.
     // AI шинэ бодлого зохиохгүй — зөвхөн оруулсан зураг дээрх бодлогуудыг дараалуулна.
     const total = structuredProblems.length
-    const cur = effectiveIndex ?? 0
     const next = cur + 1
     setTimeout(() => {
       if (next < total) {
@@ -627,12 +667,12 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
       } else if (total > 1) {
         // Бүх бодлого дууслаа — жагсаалт руу БУЦААХГҮЙ (дахин "аль вэ?" гэж асуухгүй).
         // Сүүлийн бодлого баяр хүргэсэн хэвээрээ үлдэнэ.
-        speak(`Сайн байна ${nickname}! Бүх бодлогоо дууслаа. Гоё ажиллалаа!`)
+        speak(`Чи үнэхээр сайн байлаа, ${nickname}! Бүх ${total} даалгавраа дуусгачихлаа. Маш гоё ажиллалаа! 🎉 Хүсвэл дээрх "Бодлогууд" дээр дарж хариу, тоглоомоо дахин харж болно.`)
       } else {
-        speak(`Гайхалтай ${nickname}! Бодлогоо зөв бодлоо.`)
+        speak(`Чи үнэхээр сайн байлаа, ${nickname}! Даалгавраа зөв бодлоо. 🎉`)
       }
     }, 2500)
-  }, [chat, effectiveIndex, structuredProblems.length, nickname, speak])
+  }, [chat, effectiveIndex, structuredProblems.length, nickname, speak, solved])
 
   const handleWrong = useCallback(() => {
     chat('буруу хариулт өглөө')
@@ -655,7 +695,7 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
 
   return (
     <div
-      className={`ta-root${showProblemPane ? ' ta-root-split' : ' ta-root-center'}${celebrating ? ' ta-celebrate' : ''}${isJoy ? ' ta-joy' : ''}${isMc ? ' ta-mc' : ''}${isMcq ? ' ta-mcq' : ''}${isAstro ? ' ta-astro' : ''}`}
+      className={`ta-root${showProblemPane ? ' ta-root-split' : ' ta-root-center'}${celebrating ? ' ta-celebrate' : ''}${isJoy ? ' ta-joy' : ''}${isMc ? ' ta-mc' : ''}${isMcq ? ' ta-mcq' : ''}${isAstro ? ' ta-astro' : ''}${isBarbie ? ' ta-barbie' : ''}`}
       data-theme={themeIndex}
     >
       {isMc && <MinecraftBackground />}
@@ -673,6 +713,10 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
               problems={structuredProblems}
               selectedIndex={selectedIndex}
               onSelect={selectProblem}
+              solved={solved}
+              title={firstUnsolved >= structuredProblems.length
+                ? 'Дахин харах — хариу, тоглоомоо'
+                : undefined}
             />
           ) : activeProblem ? (
             <>
@@ -684,6 +728,27 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
                   <span className="ta-problem-progress">
                     Бодлого {(effectiveIndex ?? 0) + 1} / {structuredProblems.length}
                   </span>
+                  <div className="ta-problem-arrows">
+                    <button
+                      className="ta-arrow-btn"
+                      onClick={() => selectProblem((effectiveIndex ?? 0) - 1)}
+                      disabled={(effectiveIndex ?? 0) <= 0}
+                      aria-label="Өмнөх бодлого"
+                    >
+                      ◀
+                    </button>
+                    <button
+                      className="ta-arrow-btn"
+                      onClick={() => selectProblem((effectiveIndex ?? 0) + 1)}
+                      disabled={
+                        (effectiveIndex ?? 0) >= structuredProblems.length - 1 ||
+                        (effectiveIndex ?? 0) + 1 > firstUnsolved
+                      }
+                      aria-label="Дараах бодлого"
+                    >
+                      ▶
+                    </button>
+                  </div>
                 </div>
               )}
               <ProblemInteractive
@@ -691,6 +756,8 @@ export function TutorAvatar({ nickname, homeworkContext, problems = [], analyzin
                 problem={activeProblem}
                 onCorrect={handleCorrect}
                 onWrong={handleWrong}
+                review={activeSolved}
+                avatar={avatar}
               />
             </>
           ) : null}

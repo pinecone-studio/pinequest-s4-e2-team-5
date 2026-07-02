@@ -11,7 +11,7 @@ import { registerAudio, getNavEpoch } from "./audioBus.js";
 import "./avatar-intro.css";
 
 const AVATAR_INTRO_TEXT = {
-  robot: "Сайн байна уу? Таны нэрийг хэн гэдэг вэ? Намайг Роби гэдэг.",
+  robot: "Сайн уу? Чамайг хэн гэдэг вэ? Намайг Роби гэдэг.",
   minecraft: "Сайн уу! Намайг Стив гэдэг. Чамайг хэн гэдэг вэ?",
   mcqueen: "Сайн уу! Намайг Маккуин гэдэг. Чамайг хэн гэдэг вэ?",
   astronaut: "Сайн уу! Би сансрын нисгэгч. Чамайг хэн гэдэг вэ?",
@@ -100,7 +100,7 @@ export function AvatarIntro({
       setName(nm);
       pauseRef.current?.();
       try {
-        await playTts(`Сайн байна уу, ${nm}! Одоо хичээлээ хийцгээе.`);
+        await playTts(`Сайн  уу, ${nm}! Одоо даалгавараа  хийцгээе.`);
       } catch (e) {
         console.warn("Мэндчилгээ тоглуулж чадсангүй:", e);
       }

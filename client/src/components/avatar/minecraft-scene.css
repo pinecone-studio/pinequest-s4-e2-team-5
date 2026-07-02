@@ -241,7 +241,7 @@
 .ta-mc.ta-root-split .ta-text-input-row {
   pointer-events: auto;
 }
-.ta-mc.ta-root-split .mc-stage { height: clamp(130px, 17vh, 200px); }
+.ta-mc.ta-root-split .mc-stage { height: clamp(180px, 24vh, 290px); }
 
 /* Бодлого идэвхтэй үед (split): чатыг зүүн талд, Стив аватарын шууд доор дээш
    нь өргөж, хайрцгийг арилган ард талын тэнгэр/үүлтэй ижил (ил тод) болгов.
@@ -269,8 +269,18 @@
 /* Код-ын ард гарч буй шар нар — session дээр хэрэггүй, авъя */
 .ta-mc .mcs-sun { display: none; }
 
-/* Буцах товч (← Бодлогууд) — Майнкрафт session дээр нуув */
+/* Буцах товч (← Бодлогууд) — Майнкрафт session дээр хэрэггүй (◀ ▶ сумаар шилжинэ,
+   бодогдсон бодлого хариутайгаа гарна) тул нуув. */
 .ta-mc .ta-back-btn { display: none; }
+.ta-mc .ta-arrow-btn {
+  color: #24401a;
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(90, 140, 60, 0.4);
+}
+.ta-mc .ta-arrow-btn:hover:not(:disabled) {
+  border-color: #3a6d22;
+  background: rgba(120, 200, 90, 0.18);
+}
 
 /* Явцын заагчийг гэрэлт тэнгэр дээр тод болгоно */
 .ta-mc .ta-problem-progress {
@@ -314,6 +324,15 @@
   border-color: rgba(90, 140, 60, 0.4);
 }
 .ta-mc .ta-text-input::placeholder { color: rgba(60, 100, 40, 0.6); }
+
+/* Ярианы бөмбөлөг чат логтой давхцаж бүдгэрэхгүйн тулд дээр нь гаргаж, цайвар тод болгов */
+.ta-mc.ta-root-split .sb-wrap { z-index: 45; }
+.ta-mc.ta-root-split .sb-box {
+  background: rgba(255, 255, 255, 0.96);
+  border-color: rgba(90, 140, 60, 0.35);
+  box-shadow: 0 6px 20px rgba(60, 110, 40, 0.2);
+}
+.ta-mc.ta-root-split .sb-text { color: #1c3810; }
 
 /* Ярианы бөмбөлөг + статус — start горимд аватарын доор хөвүүлнэ */
 .ta-mc.ta-root-center .sb-wrap {
